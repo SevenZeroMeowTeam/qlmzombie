@@ -1,0 +1,144 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '6.0.+'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        name = 'KubeJS maven'
+        url = 'https://maven.saps.dev/minecraft'
+        content {
+            includeGroup 'dev.latvian.mods'
+            includeGroup 'dev.latvian.mods.kubejs'
+        }
+    }
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+        content {
+            includeGroup 'curse.maven'
+        }
+    }
+    flatDir {
+        dir 'libs'
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    compileOnly files("libs/kubejs-forge-2001.6.5-build.26.jar")
+    runtimeOnly files("libs/kubejs-forge-2001.6.5-build.26.jar")
+    compileOnly files("libs/rhino-forge-2001.2.3-build.10.jar")
+    runtimeOnly files("libs/rhino-forge-2001.2.3-build.10.jar")
+    compileOnly files("libs/architectury-9.2.14-forge.jar")
+    runtimeOnly files("libs/architectury-9.2.14-forge.jar")
+    compileOnly files("libs/Enhanced-Celestials-forge-1.20.1-5.0.3.2.jar")
+    runtimeOnly files("libs/Enhanced-Celestials-forge-1.20.1-5.0.3.2.jar")
+    compileOnly files("libs/cloth-config-11.1.136-forge.jar")
+    runtimeOnly files("libs/cloth-config-11.1.136-forge.jar")
+    compileOnly files("libs/Data_Anchor-forge-1.20.1-1.0.0.20.jar")
+    runtimeOnly files("libs/Data_Anchor-forge-1.20.1-1.0.0.20.jar")
+    compileOnly files("libs/Corgilib-Forge-1.20.1-4.0.3.4.jar")
+    runtimeOnly files("libs/Corgilib-Forge-1.20.1-4.0.3.4.jar")
+    compileOnly files("libs/kubejsadditions-forge-4.3.4.jar")
+    runtimeOnly files("libs/kubejsadditions-forge-4.3.4.jar")
+    compileOnly files("libs/lootjs-forge-1.20.1-2.13.1.jar")
+    runtimeOnly files("libs/lootjs-forge-1.20.1-2.13.1.jar")
+    compileOnly files("libs/taczjs-forge-1.4.2+mc1.20.1.jar")
+    runtimeOnly files("libs/taczjs-forge-1.4.2+mc1.20.1.jar")
+    compileOnly files("libs/tacz-1.20.1-1.1.8-hotfix.jar")
+    runtimeOnly files("libs/tacz-1.20.1-1.1.8-hotfix.jar")
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+            forge_version: forge_version, forge_version_range: forge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_authors: mod_authors, mod_description: mod_description,
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    from('libs') {
+        into('libs')
+        include '*.jar'
+        exclude 'README.txt'
+    }
+}

@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:clock"
+    },
+    "title": "advancements.qlmzombie.survival_days.title",
+    "description": "advancements.qlmzombie.survival_days.description",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:survival_days/day_30",
+  "criteria": {
+    "day_60": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["day_60"]
+  ]
+}
