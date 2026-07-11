@@ -65,7 +65,7 @@ public class QLMZombieMod {
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             LOGGER.info("[QLM Zombie] 七零喵僵尸末日生存mod 已加载");
-            LOGGER.info("[QLM Zombie] 功能: 难度渐进 + 血月/幸运之月/丰收之月 + 僵尸进化 + 尸潮系统 + 怪物封禁 + 初始物资发放 + 成就系统");
+            LOGGER.info("[QLM Zombie] 功能: 难度渐进 + 血月/幸运之月/丰收之月 + 僵尸进化 + 尸潮系统 + 怪物封禁 + 初始物资发放 + 成就系统 + 连锁挖矿/连锁砍树");
             if (needsRestart) {
                 LOGGER.warn("[QLM Zombie] ================================================");
                 LOGGER.warn("[QLM Zombie] 依赖mod已释放到 mods 目录，请重启游戏！");
