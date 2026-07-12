@@ -3,8 +3,8 @@
     "icon": {
       "item": "minecraft:red_dye"
     },
-    "title": "advancements.qlmzombie.blood_moon.title",
-    "description": "advancements.qlmzombie.blood_moon.description",
+    "title": { "translate": "advancements.qlmzombie.blood_moon.title" },
+    "description": { "translate": "advancements.qlmzombie.blood_moon.description" },
     "frame": "challenge",
     "show_toast": true,
     "announce_to_chat": true,

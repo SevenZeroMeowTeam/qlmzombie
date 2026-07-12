@@ -1,14 +1,15 @@
 package com.qlm.zombie.item;
 
-import com.qlm.zombie.QLMZombieMod;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+// 不导入 QLMZombieMod —— 避免循环 import（保持符号解析干净）
 public class QLMItems {
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, QLMZombieMod.MODID);
+    public static final String MOD_NAMESPACE = "qlmzombie";
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_NAMESPACE);
 
     public static final RegistryObject<Item> ZOMBIE_CORE = ITEMS.register("zombie_core", 
         () -> new Item(new Item.Properties().rarity(Rarity.RARE)));

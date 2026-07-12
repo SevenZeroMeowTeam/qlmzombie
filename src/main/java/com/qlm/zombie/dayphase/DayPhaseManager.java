@@ -1,6 +1,6 @@
 package com.qlm.zombie.dayphase;
 
-import com.qlm.zombie.QLMZombieMod;
+import com.mojang.logging.LogUtils;
 import com.qlm.zombie.config.QLMConfig;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -10,9 +10,11 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.server.ServerLifecycleHooks;
+import org.slf4j.Logger;
 
 public class DayPhaseManager {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final long DAY_LENGTH = 24000L;
     private static int tickCounter = 0;
     private static boolean firstDayInitialized = false;
@@ -31,7 +33,7 @@ public class DayPhaseManager {
 
         if (currentDifficulty != targetDifficulty) {
             server.setDifficulty(targetDifficulty, true);
-            QLMZombieMod.LOGGER.info("[QLM Zombie] 服务器启动: 第{}天 -> 设为阶段 {} (难度 {})", currentDay, phase.displayName(), targetDifficulty.getKey());
+            LOGGER.info("[QLM Zombie] 服务器启动: 第{}天 -> 设为阶段 {} (难度 {})", currentDay, phase.displayName(), targetDifficulty.getKey());
         }
 
         DifficultyLockState lockState = DifficultyLockState.get(server);
@@ -65,7 +67,7 @@ public class DayPhaseManager {
 
             if (initialDifficulty != phase.difficulty()) {
                 forceSetDifficulty(server, phase.difficulty());
-                QLMZombieMod.LOGGER.info("[QLM Zombie] 游戏初始化 -> 第{}天 -> 阶段 {} (难度 {})", currentDay, phase.displayName(), phase.difficulty().getKey());
+                LOGGER.info("[QLM Zombie] 游戏初始化 -> 第{}天 -> 阶段 {} (难度 {})", currentDay, phase.displayName(), phase.difficulty().getKey());
             }
             lockState.setLastAppliedDay(currentDay);
             lockState.setLastPhase(phase.name());
@@ -81,12 +83,12 @@ public class DayPhaseManager {
         if (QLMConfig.ENABLE_DIFFICULTY_LOCK.get() && lockState.isLocked()) {
             if (overworld.getDifficulty() != Difficulty.HARD) {
                 forceSetDifficulty(server, Difficulty.HARD);
-                QLMZombieMod.LOGGER.info("[QLM Zombie] 难度已锁定为 HARD (第{}天，{}阶段)，禁止更改", currentDay, phase.displayName());
+                LOGGER.info("[QLM Zombie] 难度已锁定为 HARD (第{}天，{}阶段)，禁止更改", currentDay, phase.displayName());
             }
         } else if (lockState.getLastAppliedDay() != currentDay) {
             if (overworld.getDifficulty() != phase.difficulty()) {
                 forceSetDifficulty(server, phase.difficulty());
-                QLMZombieMod.LOGGER.info("[QLM Zombie] 第{}天 -> 阶段 {} (难度 {})", currentDay, phase.displayName(), phase.difficulty().getKey());
+                LOGGER.info("[QLM Zombie] 第{}天 -> 阶段 {} (难度 {})", currentDay, phase.displayName(), phase.difficulty().getKey());
             }
             lockState.setLastAppliedDay(currentDay);
             lockState.setLastPhase(phase.name());

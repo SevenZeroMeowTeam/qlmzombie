@@ -22,7 +22,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class ScoreboardHandler {
 
     private static final String OBJECTIVE_NAME = "qlm_survival";

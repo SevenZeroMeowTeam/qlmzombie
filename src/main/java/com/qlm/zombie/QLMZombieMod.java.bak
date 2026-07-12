@@ -85,8 +85,11 @@ public class QLMZombieMod {
     }
 
     private void onAddReloadListener(AddReloadListenerEvent event) {
-        event.addListener((ResourceManagerReloadListener) (ResourceManager resourceManager) -> {
-            LOGGER.info("[QLM Zombie] 成就系统已加载");
+        event.addListener(new ResourceManagerReloadListener() {
+            @Override
+            public void onResourceManagerReload(ResourceManager resourceManager) {
+                LOGGER.info("[QLM Zombie] 成就系统已加载");
+            }
         });
     }
 }

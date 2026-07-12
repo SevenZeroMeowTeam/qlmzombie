@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class PlayerHealthHandler {
 
     private static final Map<UUID, Long> lastHealTime = new HashMap<>();

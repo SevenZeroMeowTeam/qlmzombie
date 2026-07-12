@@ -3,8 +3,8 @@
     "icon": {
       "item": "minecraft:iron_sword"
     },
-    "title": "advancements.qlmzombie.zombie_kills.title",
-    "description": "advancements.qlmzombie.zombie_kills.description",
+    "title": { "translate": "advancements.qlmzombie.zombie_kills.title" },
+    "description": { "translate": "advancements.qlmzombie.zombie_kills.description" },
     "frame": "goal",
     "show_toast": true,
     "announce_to_chat": true,

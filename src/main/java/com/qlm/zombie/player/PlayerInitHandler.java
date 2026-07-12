@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class PlayerInitHandler {
     private static final Random RANDOM = new Random();
     private static final String INIT_TAG = "qlm_zombie_init";
@@ -158,6 +158,11 @@ public class PlayerInitHandler {
         player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- 自动检测并禁用冲突 mod（如 JEI vs REI，默认保留 REI）"), false);
         player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- 如需重新启用被禁用的 mod，请删除 .disabled 后缀"), false);
         player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- 如需切换 JEI/REI 的偏好，请编辑源码中的冲突检测逻辑"), false);
+        player.displayClientMessage(net.minecraft.network.chat.Component.literal("§e⛏ 连锁挖矿 / 连锁砍树:"), false);
+        player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- 持镐子挖矿石/石头 → 一键挖掉相连的同类方块"), false);
+        player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- 持铲子挖泥土/沙子/砂砾 → 一键挖掉相连的同类方块"), false);
+        player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- 持斧头砍原木 → 整棵树的原木一并掉落"), false);
+        player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- 可在配置文件 qlmzombie-common.toml 的 [chain_mining] 中调整开关与上限"), false);
         player.displayClientMessage(net.minecraft.network.chat.Component.literal("§e📋 命令:"), false);
         player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- /qlm info §7查看当前状态"), false);
         player.displayClientMessage(net.minecraft.network.chat.Component.literal("  §f- /qlm day §7查看当前天数"), false);

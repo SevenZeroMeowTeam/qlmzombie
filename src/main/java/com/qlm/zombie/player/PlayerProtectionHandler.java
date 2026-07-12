@@ -8,7 +8,7 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class PlayerProtectionHandler {
 
     @SubscribeEvent

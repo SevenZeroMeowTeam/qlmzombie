@@ -1,6 +1,6 @@
 package com.qlm.zombie.zombie;
 
-import com.qlm.zombie.QLMZombieMod;
+import com.mojang.logging.LogUtils;
 import com.qlm.zombie.config.QLMConfig;
 import com.qlm.zombie.dayphase.DayPhase;
 import net.minecraft.server.MinecraftServer;
@@ -23,7 +23,11 @@ import java.util.Collections;
 import java.util.List;
 import net.minecraft.util.RandomSource;
 
+import org.slf4j.Logger;
+
 public class ZombieEvolutionHandler {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final String EVOLVED_TAG = "qlmzombie.evolved";
     private static final String BONUS_HEALTH_TAG = "qlmzombie.bonus_health_applied";
@@ -115,7 +119,7 @@ public class ZombieEvolutionHandler {
         zombie.setCustomName(net.minecraft.network.chat.Component.literal("进化僵尸"));
         zombie.setCustomNameVisible(true);
 
-        QLMZombieMod.LOGGER.debug("[QLM Zombie] 僵尸进化 @ day {} ({}) at {}",
+        LOGGER.debug("[QLM Zombie] 僵尸进化 @ day {} ({}) at {}",
                 currentDay, phase.displayName(), zombie.blockPosition());
     }
 
@@ -158,7 +162,7 @@ public class ZombieEvolutionHandler {
         skeleton.setCustomName(net.minecraft.network.chat.Component.literal("进化骷髅"));
         skeleton.setCustomNameVisible(true);
 
-        QLMZombieMod.LOGGER.debug("[QLM Zombie] 骷髅进化 @ day {} ({}) at {}",
+        LOGGER.debug("[QLM Zombie] 骷髅进化 @ day {} ({}) at {}",
                 currentDay, phase.displayName(), skeleton.blockPosition());
     }
 

@@ -8,7 +8,7 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class MobRestrictionHandler {
 
     @SubscribeEvent

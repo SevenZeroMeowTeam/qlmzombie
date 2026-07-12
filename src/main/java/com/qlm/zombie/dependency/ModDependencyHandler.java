@@ -1,6 +1,6 @@
 package com.qlm.zombie.dependency;
 
-import com.qlm.zombie.QLMZombieMod;
+import com.mojang.logging.LogUtils;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.*;
@@ -12,7 +12,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+
 public class ModDependencyHandler {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final String LIBS_INTERNAL_PATH = "libs/";
     private static final String DEPENDENCY_MARKER_FILE = "qlmzombie_deps_installed.txt";
@@ -389,10 +393,10 @@ public class ModDependencyHandler {
             try (InputStream is = inputStream) {
                 Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
-            QLMZombieMod.LOGGER.info("[QLM Zombie] 已从内部释放: {}", modFileName);
+            LOGGER.info("[QLM Zombie] 已从内部释放: {}", modFileName);
             return true;
         } catch (IOException e) {
-            QLMZombieMod.LOGGER.warn("[QLM Zombie] 释放失败 {}: {}", modFileName, e.getMessage());
+            LOGGER.warn("[QLM Zombie] 释放失败 {}: {}", modFileName, e.getMessage());
             return false;
         }
     }
@@ -409,11 +413,11 @@ public class ModDependencyHandler {
         totalLibsCount = internalLibs.size();
 
         if (totalLibsCount == 0) {
-            QLMZombieMod.LOGGER.info("[QLM Zombie] 未在内部 libs 发现 jar，跳过自动释放");
+            LOGGER.info("[QLM Zombie] 未在内部 libs 发现 jar，跳过自动释放");
             return;
         }
 
-        QLMZombieMod.LOGGER.info("[QLM Zombie] 扫描到内部 {} 个 mod 文件，开始自动释放...", totalLibsCount);
+        LOGGER.info("[QLM Zombie] 扫描到内部 {} 个 mod 文件，开始自动释放...", totalLibsCount);
 
         Set<String> existingMods = getExistingModsIn(modsDir);
         List<String> releasedNames = new ArrayList<>();
@@ -436,13 +440,13 @@ public class ModDependencyHandler {
         }
 
         if (!releasedNames.isEmpty()) {
-            QLMZombieMod.LOGGER.info("[QLM Zombie] 成功释放 {} 个 mod", releasedNames.size());
+            LOGGER.info("[QLM Zombie] 成功释放 {} 个 mod", releasedNames.size());
         }
         if (!skippedNames.isEmpty()) {
-            QLMZombieMod.LOGGER.info("[QLM Zombie] {} 个 mod 已存在，跳过", skippedNames.size());
+            LOGGER.info("[QLM Zombie] {} 个 mod 已存在，跳过", skippedNames.size());
         }
         if (!failedNames.isEmpty()) {
-            QLMZombieMod.LOGGER.warn("[QLM Zombie] {} 个 mod 释放失败（可能未打包进 jar）: {}",
+            LOGGER.warn("[QLM Zombie] {} 个 mod 释放失败（可能未打包进 jar）: {}",
                 failedNames.size(), failedNames.stream().limit(5).collect(Collectors.joining(", ")));
         }
 
@@ -451,9 +455,9 @@ public class ModDependencyHandler {
 
         // 写入标记（下次启动不再提示）
         if (!releasedNames.isEmpty() || !disabledMods.isEmpty() || !deletedDuplicates.isEmpty()) {
-            QLMZombieMod.needsRestart = true;
+            com.qlm.zombie.QLMZombieMod.needsRestart = true;
             writeDependencyMarker();
-            QLMZombieMod.LOGGER.info("[QLM Zombie] mod 初始化完成，提示玩家重启游戏");
+            LOGGER.info("[QLM Zombie] mod 初始化完成，提示玩家重启游戏");
         }
     }
 
@@ -498,7 +502,7 @@ public class ModDependencyHandler {
             if (keepAlwaysCount > 0) {
                 // 有白名单 mod → 全部保留（白名单 mod 不参与重复删除）
                 // 但仍可能有非白名单的重复版本，对非白名单部分做删除
-                QLMZombieMod.LOGGER.info("[QLM Zombie] 检测到必要mod包含在重复组[{}]中，保留所有必要mod: {}",
+                LOGGER.info("[QLM Zombie] 检测到必要mod包含在重复组[{}]中，保留所有必要mod: {}",
                     e.getKey(), group.stream().filter(m -> isKeepAlways(m)).collect(Collectors.joining(", ")));
                 // 只删除非白名单的多余 mod
                 detectedConflicts.add("重复 mod [" + e.getKey() + "]: " + String.join(", ", group));
@@ -514,13 +518,13 @@ public class ModDependencyHandler {
                                 try {
                                     Files.delete(jarPath);
                                     deletedDuplicates.add(m);
-                                    QLMZombieMod.LOGGER.info("[QLM Zombie] 重复 mod 已删除(非必要mod): {}", m);
+                                    LOGGER.info("[QLM Zombie] 重复 mod 已删除(非必要mod): {}", m);
                                 } catch (IOException ex) {
                                     Path disabledPath = jarPath.getParent().resolve(m + DISABLED_MARKER);
                                     try {
                                         Files.move(jarPath, disabledPath, StandardCopyOption.REPLACE_EXISTING);
                                         disabledMods.add(m);
-                                        QLMZombieMod.LOGGER.info("[QLM Zombie] 重复 mod 无法删除，降级禁用: {}", m);
+                                        LOGGER.info("[QLM Zombie] 重复 mod 无法删除，降级禁用: {}", m);
                                     } catch (IOException ignored2) {
                                     }
                                 }
@@ -552,7 +556,7 @@ public class ModDependencyHandler {
             }
 
             detectedConflicts.add("重复 mod [" + e.getKey() + "]: " + String.join(", ", group));
-            QLMZombieMod.LOGGER.warn("[QLM Zombie] 检测到重复 mod [前缀: {}]: {}", e.getKey(), group);
+            LOGGER.warn("[QLM Zombie] 检测到重复 mod [前缀: {}]: {}", e.getKey(), group);
 
             // 保留 keepName，删除其他的
             for (String m : group) {
@@ -562,13 +566,13 @@ public class ModDependencyHandler {
                         try {
                             Files.delete(jarPath);
                             deletedDuplicates.add(m);
-                            QLMZombieMod.LOGGER.info("[QLM Zombie] 重复 mod 已删除: {}", m);
+                            LOGGER.info("[QLM Zombie] 重复 mod 已删除: {}", m);
                         } catch (IOException ex) {
                             Path disabledPath = jarPath.getParent().resolve(m + DISABLED_MARKER);
                             try {
                                 Files.move(jarPath, disabledPath, StandardCopyOption.REPLACE_EXISTING);
                                 disabledMods.add(m);
-                                QLMZombieMod.LOGGER.info("[QLM Zombie] 重复 mod 无法删除，降级禁用: {}", m);
+                                LOGGER.info("[QLM Zombie] 重复 mod 无法删除，降级禁用: {}", m);
                             } catch (IOException ignored2) {
                             }
                         }
@@ -595,7 +599,7 @@ public class ModDependencyHandler {
             if (matched.size() > 1) {
                 String conflictInfo = group.groupName() + ": " + String.join(", ", matched);
                 detectedConflicts.add(conflictInfo);
-                QLMZombieMod.LOGGER.warn("[QLM Zombie] 检测到 mod 冲突: {} - {}", group.groupName(), matched);
+                LOGGER.warn("[QLM Zombie] 检测到 mod 冲突: {} - {}", group.groupName(), matched);
 
                 // 策略：保留第一个匹配的（通常在 libs 列表中排在前面的），其他重命名为 .disabled
                 // 先找 libs 列表中哪个在前，优先保留
@@ -638,9 +642,9 @@ public class ModDependencyHandler {
                             try {
                                 Files.move(jarPath, disabledPath, StandardCopyOption.REPLACE_EXISTING);
                                 disabledMods.add(m);
-                                QLMZombieMod.LOGGER.info("[QLM Zombie] 冲突 mod 已禁用: {} → {}", m, disabledPath.getFileName());
+                                LOGGER.info("[QLM Zombie] 冲突 mod 已禁用: {} → {}", m, disabledPath.getFileName());
                             } catch (IOException e) {
-                                QLMZombieMod.LOGGER.warn("[QLM Zombie] 无法禁用 mod {}: {}", m, e.getMessage());
+                                LOGGER.warn("[QLM Zombie] 无法禁用 mod {}: {}", m, e.getMessage());
                             }
                         }
                     }
@@ -656,9 +660,9 @@ public class ModDependencyHandler {
                             try {
                                 Files.move(jarPath, disabledPath, StandardCopyOption.REPLACE_EXISTING);
                                 disabledMods.add(m);
-                                QLMZombieMod.LOGGER.info("[QLM Zombie] 加载器不兼容 mod 已禁用: {}", m);
+                                LOGGER.info("[QLM Zombie] 加载器不兼容 mod 已禁用: {}", m);
                             } catch (IOException e) {
-                                QLMZombieMod.LOGGER.warn("[QLM Zombie] 无法禁用 mod {}: {}", m, e.getMessage());
+                                LOGGER.warn("[QLM Zombie] 无法禁用 mod {}: {}", m, e.getMessage());
                             }
                         }
                     }
@@ -667,7 +671,7 @@ public class ModDependencyHandler {
         }
 
         if (!disabledMods.isEmpty()) {
-            QLMZombieMod.LOGGER.info("[QLM Zombie] 本次自动禁用 {} 个冲突 mod，需重启游戏生效", disabledMods.size());
+            LOGGER.info("[QLM Zombie] 本次自动禁用 {} 个冲突 mod，需重启游戏生效", disabledMods.size());
         }
     }
 
@@ -686,7 +690,7 @@ public class ModDependencyHandler {
             sb.append("disabled=").append(String.join("|", disabledMods)).append("\n");
             Files.writeString(markerFile, sb.toString(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            QLMZombieMod.LOGGER.warn("[QLM Zombie] 无法写入依赖标记: {}", e.getMessage());
+            LOGGER.warn("[QLM Zombie] 无法写入依赖标记: {}", e.getMessage());
         }
     }
 

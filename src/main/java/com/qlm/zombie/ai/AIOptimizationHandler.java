@@ -57,7 +57,7 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 import java.util.List;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class AIOptimizationHandler {
 
     private static final String AI_TAG = "qlmzombie.ai_applied";
@@ -940,48 +940,47 @@ public class AIOptimizationHandler {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void removeGoalsByType(Mob mob, Class<? extends net.minecraft.world.entity.ai.goal.Goal> goalClass) {
         try {
-            java.lang.reflect.Field field = net.minecraft.world.entity.ai.goal.GoalSelector.class.getDeclaredField("f_25339_");
+            java.lang.reflect.Field field = findGoalSelectorSetField(mob.goalSelector);
+            if (field == null) return;
             field.setAccessible(true);
             Object goals = field.get(mob.goalSelector);
             if (goals instanceof java.util.Collection<?> coll) {
                 java.util.Iterator<?> it = coll.iterator();
                 while (it.hasNext()) {
                     Object wrapped = it.next();
-                    try {
-                        java.lang.reflect.Field goalField = wrapped.getClass().getDeclaredField("f_25346_");
+                    java.lang.reflect.Field goalField = findGoalField(wrapped);
+                    if (goalField != null) {
                         goalField.setAccessible(true);
                         Object goalObj = goalField.get(wrapped);
                         if (goalClass.isInstance(goalObj)) {
                             it.remove();
                         }
-                    } catch (Exception ignored) {
                     }
                 }
             }
-        } catch (Exception e) {
-            tryRemoveByClassname(mob, goalClass);
+        } catch (Exception ignored) {
         }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void removeRangedAttackGoals(Mob mob) {
         try {
-            java.lang.reflect.Field field = net.minecraft.world.entity.ai.goal.GoalSelector.class.getDeclaredField("f_25339_");
+            java.lang.reflect.Field field = findGoalSelectorSetField(mob.goalSelector);
+            if (field == null) return;
             field.setAccessible(true);
             Object goals = field.get(mob.goalSelector);
             if (goals instanceof java.util.Collection<?> coll) {
                 java.util.Iterator<?> it = coll.iterator();
                 while (it.hasNext()) {
                     Object wrapped = it.next();
-                    try {
-                        java.lang.reflect.Field goalField = wrapped.getClass().getDeclaredField("f_25346_");
+                    java.lang.reflect.Field goalField = findGoalField(wrapped);
+                    if (goalField != null) {
                         goalField.setAccessible(true);
                         Object goalObj = goalField.get(wrapped);
                         String name = goalObj.getClass().getSimpleName().toLowerCase();
                         if (name.contains("ranged") || name.contains("bow")) {
                             it.remove();
                         }
-                    } catch (Exception ignored) {
                     }
                 }
             }
@@ -989,37 +988,22 @@ public class AIOptimizationHandler {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void tryRemoveByClassname(Mob mob, Class<? extends net.minecraft.world.entity.ai.goal.Goal> goalClass) {
-        try {
-            for (java.lang.reflect.Field f : net.minecraft.world.entity.ai.goal.GoalSelector.class.getDeclaredFields()) {
-                if (java.util.Set.class.isAssignableFrom(f.getType()) || java.util.Collection.class.isAssignableFrom(f.getType())) {
-                    f.setAccessible(true);
-                    Object goals = f.get(mob.goalSelector);
-                    if (goals instanceof java.util.Collection<?> coll) {
-                        java.util.Iterator<?> it = coll.iterator();
-                        while (it.hasNext()) {
-                            Object wrapped = it.next();
-                            for (java.lang.reflect.Field inner : wrapped.getClass().getDeclaredFields()) {
-                                if (net.minecraft.world.entity.ai.goal.Goal.class.isAssignableFrom(inner.getType())) {
-                                    inner.setAccessible(true);
-                                    Object goalObj;
-                                    try {
-                                        goalObj = inner.get(wrapped);
-                                    } catch (Exception ignored) { continue; }
-                                    if (goalClass.isInstance(goalObj)) {
-                                        it.remove();
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        return;
-                    }
-                }
+    private static java.lang.reflect.Field findGoalSelectorSetField(net.minecraft.world.entity.ai.goal.GoalSelector selector) {
+        for (java.lang.reflect.Field f : net.minecraft.world.entity.ai.goal.GoalSelector.class.getDeclaredFields()) {
+            if (java.util.Set.class.isAssignableFrom(f.getType()) || java.util.Collection.class.isAssignableFrom(f.getType())) {
+                return f;
             }
-        } catch (Exception ignored) {
         }
+        return null;
+    }
+
+    private static java.lang.reflect.Field findGoalField(Object wrappedGoal) {
+        for (java.lang.reflect.Field f : wrappedGoal.getClass().getDeclaredFields()) {
+            if (net.minecraft.world.entity.ai.goal.Goal.class.isAssignableFrom(f.getType())) {
+                return f;
+            }
+        }
+        return null;
     }
 
     public static class StrafeBowAttackGoal<T extends Mob & net.minecraft.world.entity.monster.RangedAttackMob>

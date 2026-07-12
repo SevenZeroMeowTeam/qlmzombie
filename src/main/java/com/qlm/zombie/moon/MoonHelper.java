@@ -86,7 +86,7 @@ public class MoonHelper {
     }
 
     public static String getCurrentMoonId(ServerLevel level) {
-        if (!EC_LOADED) return "none";
+        if (!EC_LOADED || level == null) return "none";
         dev.corgitaco.enhancedcelestials.lunarevent.EnhancedCelestialsLunarForecastWorldData data =
                 dev.corgitaco.enhancedcelestials.EnhancedCelestials.lunarForecastWorldData(level).orElse(null);
         if (data == null) return "none";
@@ -105,27 +105,27 @@ public class MoonHelper {
     }
 
     public static boolean isNight(ServerLevel level) {
-        return level.isNight();
+        return level != null && level.isNight();
     }
 
     public static long getDay(ServerLevel level) {
-        return level.getDayTime() / 24000L;
+        return level == null ? 0 : level.getDayTime() / 24000L;
     }
 
     public static long getDayTime(ServerLevel level) {
-        return level.getDayTime();
+        return level == null ? 0 : level.getDayTime();
     }
 
     public static boolean isHarvestMoon(ServerLevel level) {
-        return "enhancedcelestials:harvest_moon".equals(getCurrentMoonId(level));
+        return level != null && "enhancedcelestials:harvest_moon".equals(getCurrentMoonId(level));
     }
 
     public static boolean isLuckyMoon(ServerLevel level) {
-        return "enhancedcelestials:lucky_moon".equals(getCurrentMoonId(level));
+        return level != null && "enhancedcelestials:lucky_moon".equals(getCurrentMoonId(level));
     }
 
     public static boolean isBloodMoon(ServerLevel level) {
-        return "enhancedcelestials:blood_moon".equals(getCurrentMoonId(level));
+        return level != null && "enhancedcelestials:blood_moon".equals(getCurrentMoonId(level));
     }
 
     public static boolean forceGrowCrop(ServerLevel level, BlockPos pos) {

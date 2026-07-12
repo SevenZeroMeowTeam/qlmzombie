@@ -1,6 +1,6 @@
 package com.qlm.zombie.horde;
 
-import com.qlm.zombie.QLMZombieMod;
+import com.mojang.logging.LogUtils;
 import com.qlm.zombie.advancements.AdvancementManager;
 import com.qlm.zombie.item.QLMItems;
 import com.qlm.zombie.moon.MoonHelper;
@@ -27,8 +27,12 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.*;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+import org.slf4j.Logger;
+
+@Mod.EventBusSubscriber(modid = "qlmzombie")
 public class HordeManager {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final Map<UUID, Integer> playerHordeWave = new HashMap<>();
     private static final Map<UUID, Long> playerLastWaveTime = new HashMap<>();
@@ -71,7 +75,9 @@ public class HordeManager {
             currentServer = event.getServer();
         }
 
-        if (!MoonHelper.isBloodMoon(null)) {
+        // 必须获取主世界 ServerLevel 才能正确判断血月状态，传 null 会被 MoonHelper 视为无效而永远返回 false
+        ServerLevel overworld = currentServer == null ? null : currentServer.getLevel(net.minecraft.world.level.Level.OVERWORLD);
+        if (overworld == null || !MoonHelper.isBloodMoon(overworld)) {
             clearAllHordes();
             return;
         }
@@ -93,7 +99,7 @@ public class HordeManager {
         // 检查是否是 Boss 死亡
         if (event.getEntity() instanceof Zombie && event.getEntity().getPersistentData().getBoolean("qlm_horde_boss")) {
             BossMusicManager.onBossKilled((Zombie) event.getEntity());
-            QLMZombieMod.LOGGER.info("[QLM Zombie] 尸潮领主已被击败");
+            LOGGER.info("[QLM Zombie] 尸潮领主已被击败");
         }
 
         decrementMonsterCount();
@@ -105,7 +111,7 @@ public class HordeManager {
         playerLastWaveTime.put(playerId, 0L);
         playerRemainingMonsters.put(playerId, 0);
         playerHordeCompleted.put(playerId, false);
-        QLMZombieMod.LOGGER.info("[QLM Zombie] Starting horde for player {}", player.getName().getString());
+        LOGGER.info("[QLM Zombie] Starting horde for player {}", player.getName().getString());
         player.displayClientMessage(net.minecraft.network.chat.Component.literal("§c⚠️ 尸潮来袭！准备迎战！"), false);
     }
 
@@ -224,13 +230,31 @@ public class HordeManager {
         if (currentServer == null) return;
 
         long currentTime = System.currentTimeMillis();
-        
+
         for (UUID playerId : playerHordeWave.keySet()) {
             Long lastGlow = playerGlowTime.get(playerId);
             if (lastGlow == null || currentTime - lastGlow >= GLOW_INTERVAL) {
                 if (playerRemainingMonsters.getOrDefault(playerId, 0) > 0) {
                     makeHordeMonstersGlow();
                     playerGlowTime.put(playerId, currentTime);
+                }
+            }
+        }
+
+        expireGlowTags();
+    }
+
+    private static void expireGlowTags() {
+        if (currentServer == null) return;
+        for (ServerLevel level : currentServer.getAllLevels()) {
+            long gameTime = level.getGameTime();
+            // 遍历所有已加载实体并按类型筛选，避免使用 Double.MAX_VALUE 的 AABB 导致的数值溢出问题
+            for (net.minecraft.world.entity.Entity entity : level.getEntities().getAll()) {
+                long glowUntil = entity.getPersistentData().getLong("qlm_glow_until");
+                if (glowUntil <= 0 || gameTime < glowUntil) continue;
+                if (entity instanceof Zombie || entity instanceof Skeleton) {
+                    entity.setGlowingTag(false);
+                    entity.getPersistentData().remove("qlm_glow_until");
                 }
             }
         }
@@ -242,33 +266,21 @@ public class HordeManager {
         for (ServerPlayer player : currentServer.getPlayerList().getPlayers()) {
             if (playerHordeWave.containsKey(player.getUUID())) {
                 ServerLevel level = player.serverLevel();
-                Vec3 spawnPos = new Vec3(level.getSharedSpawnPos().getX(), level.getSharedSpawnPos().getY(), level.getSharedSpawnPos().getZ());
-                
-                level.getEntitiesOfClass(Zombie.class, net.minecraft.world.phys.AABB.ofSize(spawnPos, 100, 100, 100)).forEach(zombie -> {
+                // 以玩家位置为中心搜索，因为尸潮怪物生成在玩家附近而非世界出生点附近
+                Vec3 playerPos = player.position();
+                net.minecraft.world.phys.AABB searchBox = net.minecraft.world.phys.AABB.ofSize(playerPos, 200, 200, 200);
+
+                level.getEntitiesOfClass(Zombie.class, searchBox).forEach(zombie -> {
                     if (zombie.getPersistentData().getBoolean("qlm_horde_monster")) {
                         zombie.setGlowingTag(true);
-                        new java.util.Timer().schedule(new java.util.TimerTask() {
-                            @Override
-                            public void run() {
-                                if (!zombie.isRemoved()) {
-                                    zombie.setGlowingTag(false);
-                                }
-                            }
-                        }, 2000);
+                        zombie.getPersistentData().putLong("qlm_glow_until", level.getGameTime() + 40L);
                     }
                 });
 
-                level.getEntitiesOfClass(Skeleton.class, net.minecraft.world.phys.AABB.ofSize(spawnPos, 100, 100, 100)).forEach(skeleton -> {
+                level.getEntitiesOfClass(Skeleton.class, searchBox).forEach(skeleton -> {
                     if (skeleton.getPersistentData().getBoolean("qlm_horde_monster")) {
                         skeleton.setGlowingTag(true);
-                        new java.util.Timer().schedule(new java.util.TimerTask() {
-                            @Override
-                            public void run() {
-                                if (!skeleton.isRemoved()) {
-                                    skeleton.setGlowingTag(false);
-                                }
-                            }
-                        }, 2000);
+                        skeleton.getPersistentData().putLong("qlm_glow_until", level.getGameTime() + 40L);
                     }
                 });
             }
@@ -285,7 +297,7 @@ public class HordeManager {
         UUID playerId = player.getUUID();
         playerHordeCompleted.put(playerId, true);
         player.displayClientMessage(net.minecraft.network.chat.Component.literal("§a🎉 尸潮已全部击退！获得奖励！"), false);
-        QLMZombieMod.LOGGER.info("[QLM Zombie] Player {} completed all horde waves", player.getName().getString());
+        LOGGER.info("[QLM Zombie] Player {} completed all horde waves", player.getName().getString());
         
         AdvancementManager.awardAdvancement(player, "horde_waves", "complete_all_waves");
         AdvancementManager.awardAdvancement(player, "survive_horde", "survive_horde");
@@ -349,7 +361,7 @@ public class HordeManager {
                 player.displayClientMessage(net.minecraft.network.chat.Component.literal("§c⚠️ 未找到 TaCZ AKM，请确保 TaCZ 已安装"), false);
             }
         } catch (Exception e) {
-            QLMZombieMod.LOGGER.warn("[QLM Zombie] Failed to give TaCZ AKM: {}", e.getMessage());
+            LOGGER.warn("[QLM Zombie] Failed to give TaCZ AKM: {}", e.getMessage());
             player.displayClientMessage(net.minecraft.network.chat.Component.literal("§c⚠️ TaCZ AKM 发放失败"), false);
         }
     }
@@ -364,7 +376,7 @@ public class HordeManager {
                 player.displayClientMessage(net.minecraft.network.chat.Component.literal("§c⚠️ 未找到 替身地藏，请确保 车万女仆 已安装"), false);
             }
         } catch (Exception e) {
-            QLMZombieMod.LOGGER.warn("[QLM Zombie] Failed to give Touhou Maiden item {}: {}", itemId, e.getMessage());
+            LOGGER.warn("[QLM Zombie] Failed to give Touhou Maiden item {}: {}", itemId, e.getMessage());
             player.displayClientMessage(net.minecraft.network.chat.Component.literal("§c⚠️ 替身地藏 发放失败"), false);
         }
     }
@@ -400,7 +412,7 @@ public class HordeManager {
         }
         
         player.displayClientMessage(net.minecraft.network.chat.Component.literal(modItemMessage.toString()), false);
-        QLMZombieMod.LOGGER.info("[QLM Zombie] Player {} received random mod items: {}", player.getName().getString(), modItemMessage.toString());
+        LOGGER.info("[QLM Zombie] Player {} received random mod items: {}", player.getName().getString(), modItemMessage.toString());
     }
 
     private static void clearAllHordes() {
@@ -417,16 +429,16 @@ public class HordeManager {
             double radius = SPAWN_RADIUS + random.nextDouble() * 10;
             int x = (int) (center.getX() + Math.cos(angle) * radius);
             int z = (int) (center.getZ() + Math.sin(angle) * radius);
-            int y = level.getHeight();
-            
+            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z);
+
             BlockPos pos = new BlockPos(x, y, z);
-            while (y > 1 && !level.getBlockState(pos).isAir()) {
+            while (y > level.getMinBuildHeight() && !level.getBlockState(pos).isAir()) {
                 y--;
                 pos = new BlockPos(x, y, z);
             }
-            
+
             net.minecraft.world.level.block.state.BlockState belowState = level.getBlockState(pos.below());
-            if (y > 1 && !belowState.getCollisionShape(level, pos.below()).isEmpty() && level.getBlockState(pos).isAir()) {
+            if (y > level.getMinBuildHeight() && !belowState.getCollisionShape(level, pos.below()).isEmpty() && level.getBlockState(pos).isAir()) {
                 return pos;
             }
         }
@@ -439,7 +451,8 @@ public class HordeManager {
         zombie.addEffect(new MobEffectInstance(MobEffects.REGENERATION, Integer.MAX_VALUE, 0));
         zombie.setCustomName(net.minecraft.network.chat.Component.literal("§c精英僵尸"));
         zombie.setCustomNameVisible(true);
-        zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(60.0D);
+        net.minecraft.world.entity.ai.attributes.AttributeInstance maxHp = zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        if (maxHp != null) maxHp.setBaseValue(60.0D);
         zombie.setHealth(60.0F);
     }
 
@@ -450,9 +463,11 @@ public class HordeManager {
         zombie.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, Integer.MAX_VALUE, 0));
         zombie.setCustomName(net.minecraft.network.chat.Component.literal("§4尸潮领主"));
         zombie.setCustomNameVisible(true);
-        zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200.0D);
+        net.minecraft.world.entity.ai.attributes.AttributeInstance maxHp = zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        if (maxHp != null) maxHp.setBaseValue(200.0D);
         zombie.setHealth(200.0F);
-        zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).setBaseValue(15.0D);
+        net.minecraft.world.entity.ai.attributes.AttributeInstance atk = zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        if (atk != null) atk.setBaseValue(15.0D);
     }
 
     public static boolean isInHorde(ServerPlayer player) {

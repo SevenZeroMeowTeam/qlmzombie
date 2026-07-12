@@ -12,7 +12,7 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.*;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class AchievementTracker {
 
     private static final Map<UUID, Integer> zombieKillCount = new HashMap<>();

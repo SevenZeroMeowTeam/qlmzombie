@@ -12,7 +12,7 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.*;
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MODID)
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class AdvancementManager {
 
     private static final Map<String, String> NEXT_ADVANCEMENT = new HashMap<>();
@@ -57,7 +57,7 @@ public class AdvancementManager {
 
         String nextPath = NEXT_ADVANCEMENT.get(earnedPath);
         if (nextPath != null) {
-            ResourceLocation nextId = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MODID, nextPath);
+            ResourceLocation nextId = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MOD_ID, nextPath);
             Advancement nextAdvancement = player.server.getAdvancements().getAdvancement(nextId);
             if (nextAdvancement != null) {
                 player.displayClientMessage(
@@ -71,7 +71,7 @@ public class AdvancementManager {
     public static void initializeAdvancements(ServerPlayer player) {
         PlayerAdvancements playerAdvancements = player.getAdvancements();
 
-        ResourceLocation rootId = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MODID, "root");
+        ResourceLocation rootId = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MOD_ID, "root");
         Advancement root = player.server.getAdvancements().getAdvancement(rootId);
 
         if (root != null) {
@@ -84,7 +84,7 @@ public class AdvancementManager {
     }
 
     public static void awardAdvancement(ServerPlayer player, String advancementId, String criterion) {
-        ResourceLocation advancementLoc = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MODID, advancementId);
+        ResourceLocation advancementLoc = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MOD_ID, advancementId);
         Advancement advancement = player.server.getAdvancements().getAdvancement(advancementLoc);
 
         if (advancement != null) {
@@ -99,7 +99,7 @@ public class AdvancementManager {
     }
 
     public static boolean hasAdvancement(ServerPlayer player, String advancementId) {
-        ResourceLocation advancementLoc = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MODID, advancementId);
+        ResourceLocation advancementLoc = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MOD_ID, advancementId);
         Advancement advancement = player.server.getAdvancements().getAdvancement(advancementLoc);
 
         if (advancement != null) {

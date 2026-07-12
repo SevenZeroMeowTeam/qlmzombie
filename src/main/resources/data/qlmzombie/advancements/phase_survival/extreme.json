@@ -3,8 +3,8 @@
     "icon": {
       "item": "minecraft:beacon"
     },
-    "title": "advancements.qlmzombie.phase_survival.title",
-    "description": "advancements.qlmzombie.phase_survival.description",
+    "title": { "translate": "advancements.qlmzombie.phase_survival.title" },
+    "description": { "translate": "advancements.qlmzombie.phase_survival.description" },
     "frame": "challenge",
     "show_toast": true,
     "announce_to_chat": true,
