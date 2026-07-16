@@ -120,7 +120,7 @@ public class AIOptimizationHandler {
     }
 
     private static DayPhase getCurrentDayPhase(ServerLevel level) {
-        long currentDay = level.getDayTime() / 24000L;
+        long currentDay = level.getDayTime() / 57600L;
         return DayPhase.forDay(currentDay);
     }
 
@@ -1121,6 +1121,22 @@ public class AIOptimizationHandler {
                             this.zombie.getDeltaMovement().y() + 0.03D + dy * 0.01D,
                             this.zombie.getDeltaMovement().z() + (dz / dist) * 0.06D);
                 }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        if (event.getEntity() instanceof Villager villager && !villager.level().isClientSide) {
+            AttributeInstance healthAttr = villager.getAttribute(Attributes.MAX_HEALTH);
+            if (healthAttr != null && healthAttr.getBaseValue() != 50.0D) {
+                healthAttr.setBaseValue(50.0D);
+                villager.setHealth(50.0F);
+            }
+
+            AttributeInstance attackAttr = villager.getAttribute(Attributes.ATTACK_DAMAGE);
+            if (attackAttr != null && attackAttr.getBaseValue() != 15.0D) {
+                attackAttr.setBaseValue(15.0D);
             }
         }
     }

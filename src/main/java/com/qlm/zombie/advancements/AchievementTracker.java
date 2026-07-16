@@ -64,7 +64,7 @@ public class AchievementTracker {
 
     private static void checkSurvivalDays(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        long currentDay = player.serverLevel().getDayTime() / 24000L;
+        long currentDay = player.serverLevel().getDayTime() / 57600L;
         long lastAwarded = awardedDays.getOrDefault(playerId, 0L);
 
         for (int milestone : DAY_MILESTONES) {
@@ -82,7 +82,7 @@ public class AchievementTracker {
 
     private static void checkPhaseSurvival(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        long currentDay = player.serverLevel().getDayTime() / 24000L;
+        long currentDay = player.serverLevel().getDayTime() / 57600L;
         DayPhase phase = DayPhase.forDay(currentDay);
 
         String phaseName = phase.name().toLowerCase();

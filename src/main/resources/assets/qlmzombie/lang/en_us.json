@@ -30,5 +30,8 @@
   "advancements.qlmzombie.horde_waves.title": "Horde Waves",
   "advancements.qlmzombie.horde_waves.description": "Survive wave after wave of zombies",
   "advancements.qlmzombie.survive_horde.title": "Horde Conqueror",
-  "advancements.qlmzombie.survive_horde.description": "Successfully repel all 5 horde waves"
+  "advancements.qlmzombie.survive_horde.description": "Successfully repel all 5 horde waves",
+
+  "entity.qlmzombie.fake_player": "AI Player",
+  "item.qlmzombie.fake_player_spawn_egg": "AI Player Spawn Egg"
 }

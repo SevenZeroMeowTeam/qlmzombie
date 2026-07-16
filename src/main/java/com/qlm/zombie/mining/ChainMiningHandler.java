@@ -9,6 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.ToolActions;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -32,6 +33,20 @@ public class ChainMiningHandler {
             Blocks.MANGROVE_LEAVES, Blocks.CHERRY_LEAVES,
             Blocks.AZALEA_LEAVES, Blocks.FLOWERING_AZALEA_LEAVES
     ));
+
+    private static boolean isLogBlock(Block block) {
+        if (LOG_BLOCKS.contains(block)) return true;
+        String name = block.getDescriptionId().toLowerCase(Locale.ROOT);
+        return name.contains("_log") || name.contains("_stem") || name.contains("_wood")
+                || name.contains("_hyphae");
+    }
+
+    private static boolean isLeafBlock(Block block) {
+        if (LEAF_BLOCKS.contains(block)) return true;
+        String name = block.getDescriptionId().toLowerCase(Locale.ROOT);
+        return name.contains("_leaves") || name.contains("leaf") || name.contains("_fungus")
+                || name.contains("wart_block");
+    }
 
     private static final ThreadLocal<Boolean> CHAINING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
@@ -59,7 +74,7 @@ public class ChainMiningHandler {
         boolean creative = player.getAbilities().instabuild;
 
         // 连锁砍树：用斧头砍原木，将整棵树的原木一并挖掉（可选连带叶子）
-        if (treeChopEnabled && isAxe(held) && LOG_BLOCKS.contains(block)) {
+        if (treeChopEnabled && isAxe(held) && isLogBlock(block)) {
             CHAINING.set(Boolean.TRUE);
             try {
                 doTreeChop(level, pos, player, held, creative);
@@ -111,8 +126,8 @@ public class ChainMiningHandler {
 
                         BlockState nextState = level.getBlockState(next);
                         Block nextBlock = nextState.getBlock();
-                        if (LOG_BLOCKS.contains(nextBlock)
-                                || (includeLeaves && LEAF_BLOCKS.contains(nextBlock))) {
+                        if (isLogBlock(nextBlock)
+                                || (includeLeaves && isLeafBlock(nextBlock))) {
                             visited.add(next);
                             queue.add(next);
                         }
@@ -192,30 +207,37 @@ public class ChainMiningHandler {
     private static boolean isAxe(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         Item item = stack.getItem();
-        return item instanceof AxeItem || item.getDescriptionId().toLowerCase(Locale.ROOT).contains("axe");
+        return item instanceof AxeItem
+                || stack.canPerformAction(ToolActions.AXE_DIG)
+                || item.getDescriptionId().toLowerCase(Locale.ROOT).contains("axe");
     }
 
     private static boolean isPickaxe(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         Item item = stack.getItem();
-        return item instanceof PickaxeItem || item.getDescriptionId().toLowerCase(Locale.ROOT).contains("pickaxe");
+        return item instanceof PickaxeItem
+                || stack.canPerformAction(ToolActions.PICKAXE_DIG)
+                || item.getDescriptionId().toLowerCase(Locale.ROOT).contains("pickaxe");
     }
 
     private static boolean isShovel(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         Item item = stack.getItem();
-        return item instanceof ShovelItem || item.getDescriptionId().toLowerCase(Locale.ROOT).contains("shovel");
+        return item instanceof ShovelItem
+                || stack.canPerformAction(ToolActions.SHOVEL_DIG)
+                || item.getDescriptionId().toLowerCase(Locale.ROOT).contains("shovel");
     }
 
     private static boolean canChainMine(ItemStack held, Block block) {
         if (held == null || held.isEmpty()) return false;
 
-        // 按工具 + 方块类型判断：只有正确工具才能连锁，避免空手连锁破坏
         if (isPickaxe(held) && QLMConfig.CHAIN_MINING_PICKAXE_ENABLED.get()) {
-            return isStoneLike(block) || isOreLike(block);
+            return isStoneLike(block) || isOreLike(block)
+                    || held.isCorrectToolForDrops(block.defaultBlockState());
         }
         if (isShovel(held) && QLMConfig.CHAIN_MINING_SHOVEL_ENABLED.get()) {
-            return isDirtLike(block) || isSandLike(block) || isGravelLike(block);
+            return isDirtLike(block) || isSandLike(block) || isGravelLike(block)
+                    || held.isCorrectToolForDrops(block.defaultBlockState());
         }
         return false;
     }

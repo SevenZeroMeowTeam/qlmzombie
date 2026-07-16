@@ -5,9 +5,14 @@ license="${mod_license}"
 [[mods]]
 modId="${mod_id}"
 version="${mod_version}"
-displayName="${mod_name}"
-authors="${mod_authors}"
-description='''${mod_description}'''
+displayName="七零喵僵尸末日生存mod"
+authors="QLM Team"
+description='''
+七零喵僵尸末日生存mod - 按天数推进难度（1-25和平/26-50简单/51-100普通/101-150困难锁定/151+极限锁定）。
+血月每14天一次，随机幸运月/丰收月，僵尸随机进化，AI智能优化，
+尸潮系统，Boss三阶段战斗，建筑宝箱随机武器装备。
+经验条样式血量UI，计分板HUD，连锁挖矿/砍树。
+'''
 
 [[dependencies.${mod_id}]]
     modId="forge"

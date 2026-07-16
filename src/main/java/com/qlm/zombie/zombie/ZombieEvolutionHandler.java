@@ -70,7 +70,7 @@ public class ZombieEvolutionHandler {
         if (overworld == null)
             return;
 
-        long currentDay = overworld.getDayTime() / 24000L;
+        long currentDay = overworld.getDayTime() / 57600L;
         DayPhase phase = DayPhase.forDay(currentDay);
 
         if (event.getEntity() instanceof Zombie) {
@@ -109,7 +109,7 @@ public class ZombieEvolutionHandler {
                 applyBonusHealth(zombie, 1.0);
             }
             case EXTREME -> {
-                applyBuffs(zombie, pickRandom(HARD_POOL, 4, rng), 2, rng);
+                applyBuffs(zombie, pickRandom(EXTREME_POOL, 4, rng), 2, rng);
                 applyBonusHealth(zombie, 2.0);
             }
             default -> {
@@ -152,7 +152,7 @@ public class ZombieEvolutionHandler {
                 applyBonusHealth(skeleton, 0.8);
             }
             case EXTREME -> {
-                applyBuffs(skeleton, pickRandom(HARD_POOL, 4, rng), 2, rng);
+                applyBuffs(skeleton, pickRandom(EXTREME_POOL, 4, rng), 2, rng);
                 applyBonusHealth(skeleton, 1.5);
             }
             default -> {
@@ -183,7 +183,6 @@ public class ZombieEvolutionHandler {
     private static void applyBonusHealth(Zombie zombie, double multiplier) {
         if (zombie.getPersistentData().getBoolean(BONUS_HEALTH_TAG))
             return;
-        zombie.getPersistentData().putBoolean(BONUS_HEALTH_TAG, true);
         int bonus = QLMConfig.ZOMBIE_EVOLVE_BONUS_HEALTH.get();
         if (bonus <= 0)
             return;
@@ -193,12 +192,12 @@ public class ZombieEvolutionHandler {
             maxHealth.setBaseValue(originalBase + bonus * multiplier);
             zombie.setHealth(zombie.getMaxHealth());
         }
+        zombie.getPersistentData().putBoolean(BONUS_HEALTH_TAG, true);
     }
 
     private static void applyBonusHealth(Skeleton skeleton, double multiplier) {
         if (skeleton.getPersistentData().getBoolean(BONUS_HEALTH_TAG))
             return;
-        skeleton.getPersistentData().putBoolean(BONUS_HEALTH_TAG, true);
         int bonus = QLMConfig.ZOMBIE_EVOLVE_BONUS_HEALTH.get();
         if (bonus <= 0)
             return;
@@ -208,6 +207,7 @@ public class ZombieEvolutionHandler {
             maxHealth.setBaseValue(originalBase + bonus * multiplier);
             skeleton.setHealth(skeleton.getMaxHealth());
         }
+        skeleton.getPersistentData().putBoolean(BONUS_HEALTH_TAG, true);
     }
 
     private static <T> List<T> pickRandom(List<T> pool, int count, RandomSource rng) {

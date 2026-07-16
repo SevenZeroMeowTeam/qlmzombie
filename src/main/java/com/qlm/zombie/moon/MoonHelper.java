@@ -109,7 +109,7 @@ public class MoonHelper {
     }
 
     public static long getDay(ServerLevel level) {
-        return level == null ? 0 : level.getDayTime() / 24000L;
+        return level == null ? 0 : level.getDayTime() / 57600L;
     }
 
     public static long getDayTime(ServerLevel level) {

@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 public class DayPhaseManager {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final long DAY_LENGTH = 24000L;
+    private static final long DAY_LENGTH = 57600L;  // 2400 tick = 1 小时
     private static int tickCounter = 0;
     private static boolean firstDayInitialized = false;
 
