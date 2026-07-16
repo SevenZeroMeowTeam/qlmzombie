@@ -1,5 +1,8 @@
 package com.qlm.zombie.player;
 
+import com.imoonday.advskills_re.component.PlayerDataComponent;
+import com.imoonday.advskills_re.component.SkillLevelData;
+import com.imoonday.advskills_re.util.PlayerUtilsKt;
 import com.qlm.zombie.QLMZombieMod;
 import com.qlm.zombie.advancements.AdvancementManager;
 import com.qlm.zombie.dependency.ModDependencyHandler;
@@ -262,7 +265,25 @@ public class PlayerInitHandler {
         player.addItem(new ItemStack(Items.ENCHANTED_GOLDEN_APPLE, 48));
         player.addItem(new ItemStack(Items.BREAD, 64));
 
+        giveSkillPoints(player, 5);
+
         QLMZombieMod.LOGGER.info("[QLM Zombie] 玩家 {} 初始物资发放完成", player.getName().getString());
+    }
+
+    private static void giveSkillPoints(Player player, int amount) {
+        try {
+            PlayerDataComponent data = PlayerUtilsKt.getData(player);
+            if (data != null) {
+                SkillLevelData level = data.getLevel();
+                level.setExperience(level.getExperience() + amount);
+                data.setDirty(true);
+                data.sync();
+                player.displayClientMessage(Component.literal("§a[QLM Zombie] 已获得 §e" + amount + " §a点技能经验值（高级技能：重制版）！"), false);
+                QLMZombieMod.LOGGER.info("[QLM Zombie] 玩家 {} 获得 {} 点技能经验值", player.getName().getString(), amount);
+            }
+        } catch (Exception e) {
+            QLMZombieMod.LOGGER.warn("[QLM Zombie] 发放技能经验值失败（可能未加载高级技能mod）: {}", e.getMessage());
+        }
     }
 
     private static void giveArmorToSlot(Player player, net.minecraft.world.item.Item armorItem, EquipmentSlot slot) {

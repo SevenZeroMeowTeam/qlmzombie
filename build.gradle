@@ -99,6 +99,15 @@ dependencies {
     runtimeOnly files("libs/taczjs-forge-1.4.2+mc1.20.1.jar")
     compileOnly files("libs/tacz-1.20.1-1.1.8-hotfix.jar")
     runtimeOnly files("libs/tacz-1.20.1-1.1.8-hotfix.jar")
+    compileOnly files("libs/AdvancedSkillsRe-forge-1.0.0-beta.3.jar")
+    runtimeOnly files("libs/AdvancedSkillsRe-forge-1.0.0-beta.3.jar")
+    compileOnly files("libs/kotlinforforge-4.12.0-all.jar")
+    runtimeOnly files("libs/kotlinforforge-4.12.0-all.jar")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters']
 }
 
 tasks.withType(JavaCompile).configureEach {
