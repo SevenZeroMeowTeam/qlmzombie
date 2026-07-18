@@ -12,6 +12,7 @@ description='''
 血月每14天一次，随机幸运月/丰收月，僵尸随机进化，AI智能优化，
 尸潮系统，Boss三阶段战斗，建筑宝箱随机武器装备。
 经验条样式血量UI，计分板HUD，连锁挖矿/砍树。
+v1.8.0: 集成AdvancedSkillsRe开局5技能点，武器检测JSON配置化，代码重构优化，异常日志完善。
 '''
 
 [[dependencies.${mod_id}]]
@@ -51,6 +52,13 @@ description='''
 
 [[dependencies.${mod_id}]]
     modId="dataanchor"
+    mandatory=false
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="advskills_re"
     mandatory=false
     versionRange="[1.0,)"
     ordering="AFTER"

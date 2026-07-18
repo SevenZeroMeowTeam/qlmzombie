@@ -34,9 +34,15 @@ import net.minecraft.world.entity.monster.Drowned;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -71,12 +77,18 @@ public class AIOptimizationHandler {
     private static final String TYPE_SUICIDE = "qlmzombie.type_suicide";
     private static final String TYPE_BARREL = "qlmzombie.type_barrel";
     private static final String TYPE_GUARDIAN = "qlmzombie.type_guardian";
+    private static final String TYPE_TNT = "qlmzombie.type_tnt";
+    private static final String TYPE_POTION = "qlmzombie.type_potion";
+    private static final String TYPE_SUMMONER = "qlmzombie.type_summoner";
+    private static final String SUMMONER_SPAWN_CD = "qlmzombie.summoner_spawn_cd";
+    private static final String SUMMONER_SPAWN_COUNT = "qlmzombie.summoner_spawn_count";
     private static final String GUARDIAN_ATTACK_CD = "qlmzombie.guardian_cd";
     private static final String SUICIDE_FUSE = "qlmzombie.suicide_fuse";
     private static final String SUICIDE_TRIGGERED = "qlmzombie.suicide_triggered";
     private static final String BLOCK_BREAK_COOLDOWN = "qlmzombie.bk_cd";
     private static final String BLOCK_PLACE_COOLDOWN = "qlmzombie.bp_cd";
     private static final String TARGET_SEARCH_CD = "qlmzombie.ts_cd";
+    private static final String THROW_COOLDOWN = "qlmzombie.throw_cd";
 
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onEntityJoin(EntityJoinLevelEvent event) {
@@ -154,6 +166,8 @@ public class AIOptimizationHandler {
             double r = zombie.getRandom().nextDouble();
             double s = QLMConfig.SUICIDE_ZOMBIE_CHANCE.get();
             double b = QLMConfig.BARREL_ZOMBIE_CHANCE.get();
+            double t = QLMConfig.TNT_ZOMBIE_CHANCE.get();
+            double p = QLMConfig.POTION_ZOMBIE_CHANCE.get();
             if (r < s) {
                 zombie.getPersistentData().putBoolean(TYPE_SUICIDE, true);
                 zombie.setCustomName(net.minecraft.network.chat.Component.literal("§c自爆僵尸"));
@@ -172,6 +186,39 @@ public class AIOptimizationHandler {
                 try {
                     AttributeInstance maxHp = zombie.getAttribute(Attributes.MAX_HEALTH);
                     if (maxHp != null) maxHp.setBaseValue(maxHp.getBaseValue() * 1.5D);
+                    zombie.setHealth(zombie.getMaxHealth());
+                } catch (Exception ignored) {
+                }
+            } else if (r < s + b + t) {
+                zombie.getPersistentData().putBoolean(TYPE_TNT, true);
+                zombie.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.TNT));
+                zombie.setCustomName(net.minecraft.network.chat.Component.literal("§e💣 TNT僵尸"));
+                zombie.setCustomNameVisible(true);
+                try {
+                    AttributeInstance maxHp = zombie.getAttribute(Attributes.MAX_HEALTH);
+                    if (maxHp != null) maxHp.setBaseValue(maxHp.getBaseValue() * 1.2D);
+                    zombie.setHealth(zombie.getMaxHealth());
+                } catch (Exception ignored) {
+                }
+            } else if (r < s + b + t + p) {
+                zombie.getPersistentData().putBoolean(TYPE_POTION, true);
+                zombie.setCustomName(net.minecraft.network.chat.Component.literal("§d🧪 药水僵尸"));
+                zombie.setCustomNameVisible(true);
+                try {
+                    AttributeInstance maxHp = zombie.getAttribute(Attributes.MAX_HEALTH);
+                    if (maxHp != null) maxHp.setBaseValue(maxHp.getBaseValue() * 1.1D);
+                    zombie.setHealth(zombie.getMaxHealth());
+                } catch (Exception ignored) {
+                }
+            } else if (r < s + b + t + p + QLMConfig.SUMMONER_ZOMBIE_CHANCE.get()) {
+                zombie.getPersistentData().putBoolean(TYPE_SUMMONER, true);
+                zombie.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.SPAWNER));
+                zombie.setCustomName(net.minecraft.network.chat.Component.literal("§5🔮 僵尸召唤师"));
+                zombie.setCustomNameVisible(true);
+                zombie.getPersistentData().putInt(SUMMONER_SPAWN_COUNT, 0);
+                try {
+                    AttributeInstance maxHp = zombie.getAttribute(Attributes.MAX_HEALTH);
+                    if (maxHp != null) maxHp.setBaseValue(maxHp.getBaseValue() * 1.4D);
                     zombie.setHealth(zombie.getMaxHealth());
                 } catch (Exception ignored) {
                 }
@@ -233,9 +280,65 @@ public class AIOptimizationHandler {
                 }
             } catch (Exception ignored) {
             }
+
+            if ((phase == DayPhase.NORMAL || phase == DayPhase.HARD || phase == DayPhase.EXTREME)) {
+                double modChance = QLMConfig.SKELETON_MOD_WEAPON_CHANCE.get();
+                if (modChance > 0 && skeleton.getRandom().nextDouble() < modChance) {
+                    equipSkeletonModWeapon(skeleton);
+                }
+            }
         }
 
         QLMZombieMod.LOGGER.debug("[QLM Zombie] 骷髅AI优化已应用 @ {}", skeleton.blockPosition());
+    }
+
+    private static void equipSkeletonModWeapon(AbstractSkeleton skeleton) {
+        ItemStack modWeapon;
+        int variant = skeleton.getRandom().nextInt(4);
+        if (variant == 0) {
+            modWeapon = new ItemStack(Items.BOW);
+            try {
+                java.util.Map<net.minecraft.world.item.enchantment.Enchantment, Integer> emap = new java.util.HashMap<>();
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.POWER_ARROWS, 5);
+                    emap.put(net.minecraft.world.item.enchantment.Enchantments.INFINITY_ARROWS, 1);
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING, 3);
+                net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, modWeapon);
+                modWeapon.setHoverName(net.minecraft.network.chat.Component.literal("§d✦ 亡灵之弓 ✦"));
+            } catch (Exception ignored) {}
+        } else if (variant == 1) {
+            modWeapon = new ItemStack(Items.CROSSBOW);
+            try {
+                java.util.Map<net.minecraft.world.item.enchantment.Enchantment, Integer> emap = new java.util.HashMap<>();
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.PIERCING, 4);
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.MULTISHOT, 1);
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING, 3);
+                net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, modWeapon);
+                modWeapon.setHoverName(net.minecraft.network.chat.Component.literal("§d✦ 亡灵弩 ✦"));
+            } catch (Exception ignored) {}
+        } else if (variant == 2) {
+            modWeapon = new ItemStack(Items.STONE_SWORD);
+            try {
+                java.util.Map<net.minecraft.world.item.enchantment.Enchantment, Integer> emap = new java.util.HashMap<>();
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS, 5);
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.FIRE_ASPECT, 2);
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING, 3);
+                net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, modWeapon);
+                modWeapon.setHoverName(net.minecraft.network.chat.Component.literal("§c✦ 骷髅之刃 ✦"));
+            } catch (Exception ignored) {}
+        } else {
+            modWeapon = new ItemStack(Items.IRON_SWORD);
+            try {
+                java.util.Map<net.minecraft.world.item.enchantment.Enchantment, Integer> emap = new java.util.HashMap<>();
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS, 4);
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.KNOCKBACK, 2);
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING, 3);
+                net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, modWeapon);
+                modWeapon.setHoverName(net.minecraft.network.chat.Component.literal("§c✦ 亡灵之剑 ✦"));
+            } catch (Exception ignored) {}
+        }
+        skeleton.setItemSlot(EquipmentSlot.MAINHAND, modWeapon);
+        skeleton.setCustomName(net.minecraft.network.chat.Component.literal("§d⚔ 强化骷髅"));
+        skeleton.setCustomNameVisible(true);
     }
 
     private static void optimizeVillager(Villager villager) {
@@ -269,7 +372,9 @@ public class AIOptimizationHandler {
             if (follow != null) follow.setBaseValue(24.0D);
             AttributeInstance move = villager.getAttribute(Attributes.MOVEMENT_SPEED);
             if (move != null) move.setBaseValue(0.35D);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            QLMZombieMod.LOGGER.debug("[QLM Zombie] Failed to set guardian attributes: {}", e.getMessage());
+        }
 
         villager.setHealth(villager.getMaxHealth());
 
@@ -286,7 +391,9 @@ public class AIOptimizationHandler {
         try { net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(
                 new java.util.HashMap<net.minecraft.world.item.enchantment.Enchantment, Integer>(){{
                     put(net.minecraft.world.item.enchantment.Enchantments.ALL_DAMAGE_PROTECTION, 2);
-                }}, chest); } catch (Exception ignored) {}
+                }}, chest); } catch (Exception e) {
+            QLMZombieMod.LOGGER.debug("[QLM Zombie] Failed to enchant guardian chestplate: {}", e.getMessage());
+        }
         villager.setItemSlot(EquipmentSlot.CHEST, chest);
 
         ItemStack helmet = new ItemStack(Items.IRON_HELMET);
@@ -303,7 +410,9 @@ public class AIOptimizationHandler {
             java.util.Map<net.minecraft.world.item.enchantment.Enchantment, Integer> emap = new java.util.HashMap<>();
             emap.put(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS, 1 + rnd.nextInt(2));
             net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, stack);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            QLMZombieMod.LOGGER.debug("[QLM Zombie] Failed to enchant normal weapon: {}", e.getMessage());
+        }
         return stack;
     }
 
@@ -319,7 +428,9 @@ public class AIOptimizationHandler {
             else emap.put(net.minecraft.world.item.enchantment.Enchantments.KNOCKBACK, 2);
             net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, stack);
             stack.setHoverName(net.minecraft.network.chat.Component.literal("§d✦ 村庄守护者之剑 ✦"));
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            QLMZombieMod.LOGGER.debug("[QLM Zombie] Failed to enchant mod weapon: {}", e.getMessage());
+        }
         return stack;
     }
 
@@ -335,11 +446,21 @@ public class AIOptimizationHandler {
             if (zombie.getPersistentData().getBoolean(TYPE_SUICIDE)) {
                 tickSuicideZombie(zombie, level);
             }
+            if (zombie.getPersistentData().getBoolean(TYPE_TNT)) {
+                tickTNTZombie(zombie, level);
+            }
+            if (zombie.getPersistentData().getBoolean(TYPE_POTION)) {
+                tickPotionZombie(zombie, level);
+            }
+            if (zombie.getPersistentData().getBoolean(TYPE_SUMMONER)) {
+                tickSummonerZombie(zombie, level);
+            }
             tickBlockBreakAndPlace(zombie, level);
             if (QLMConfig.AGGRESSIVE_TARGETING.get()) {
                 tickAggressiveTargeting(zombie, level);
             }
         } else if (entity instanceof AbstractSkeleton skeleton) {
+            tickSkeletonInfiniteArrows(skeleton);
             if (QLMConfig.AGGRESSIVE_TARGETING.get()) {
                 tickAggressiveTargeting(skeleton, level);
             }
@@ -377,6 +498,133 @@ public class AIOptimizationHandler {
                 level.explode(zombie, zombie.getX(), zombie.getY(), zombie.getZ(), radius, Level.ExplosionInteraction.MOB);
                 zombie.discard();
             }
+        }
+    }
+
+    private static void tickTNTZombie(Zombie zombie, ServerLevel level) {
+        LivingEntity target = zombie.getTarget();
+        if (target == null) return;
+
+        double dist = zombie.distanceToSqr(target);
+        if (dist < 4.0D || dist > 64.0D) return;
+
+        int throwCd = zombie.getPersistentData().getInt(THROW_COOLDOWN);
+        if (throwCd > 0) {
+            zombie.getPersistentData().putInt(THROW_COOLDOWN, throwCd - 1);
+            return;
+        }
+
+        float yaw = (float) Math.toDegrees(Math.atan2(target.getX() - zombie.getX(), target.getZ() - zombie.getZ()));
+        zombie.yBodyRot = yaw;
+
+        PrimedTnt tnt = new PrimedTnt(level, zombie.getX(), zombie.getY() + 1.0D, zombie.getZ(), zombie);
+        tnt.setFuse(80);
+
+        Vec3 dir = target.position().subtract(zombie.position()).normalize();
+        tnt.setDeltaMovement(dir.x * 0.8D, 0.5D + (zombie.getRandom().nextDouble() * 0.3D), dir.z * 0.8D);
+
+        level.addFreshEntity(tnt);
+        level.playSound(null, zombie.blockPosition(), SoundEvents.TNT_PRIMED, SoundSource.HOSTILE, 1.0F, 1.0F);
+
+        zombie.getPersistentData().putInt(THROW_COOLDOWN, 60 + zombie.getRandom().nextInt(40));
+    }
+
+    private static void tickPotionZombie(Zombie zombie, ServerLevel level) {
+        LivingEntity target = zombie.getTarget();
+        if (target == null) return;
+
+        double dist = zombie.distanceToSqr(target);
+        if (dist < 4.0D || dist > 49.0D) return;
+
+        int throwCd = zombie.getPersistentData().getInt(THROW_COOLDOWN);
+        if (throwCd > 0) {
+            zombie.getPersistentData().putInt(THROW_COOLDOWN, throwCd - 1);
+            return;
+        }
+
+        float yaw = (float) Math.toDegrees(Math.atan2(target.getX() - zombie.getX(), target.getZ() - zombie.getZ()));
+        zombie.yBodyRot = yaw;
+
+        ItemStack potionStack = createNegativePotion(zombie.getRandom());
+
+        ThrownPotion projectile = new ThrownPotion(zombie.level(), zombie);
+        projectile.setItem(potionStack);
+        Vec3 dir = target.position().subtract(zombie.position()).normalize();
+        projectile.shoot(dir.x * 0.6D, 0.3D + (zombie.getRandom().nextDouble() * 0.2D), dir.z * 0.6D, 1.2F, 8.0F);
+
+        level.addFreshEntity(projectile);
+        level.playSound(null, zombie.blockPosition(), SoundEvents.SPLASH_POTION_THROW, SoundSource.HOSTILE, 1.0F, 1.0F);
+
+        zombie.getPersistentData().putInt(THROW_COOLDOWN, 80 + zombie.getRandom().nextInt(40));
+    }
+
+    private static ItemStack createNegativePotion(net.minecraft.util.RandomSource rnd) {
+        Potion[] negativePotions = {
+                Potions.HARMING,
+                Potions.SLOWNESS,
+                Potions.POISON,
+                Potions.WEAKNESS
+        };
+        Potion type = negativePotions[rnd.nextInt(negativePotions.length)];
+        return PotionUtils.setPotion(new ItemStack(Items.SPLASH_POTION), type);
+    }
+
+    private static void tickSummonerZombie(Zombie zombie, ServerLevel level) {
+        LivingEntity target = zombie.getTarget();
+        if (target == null) return;
+
+        double dist = zombie.distanceToSqr(target);
+        if (dist > 100.0D) return;
+
+        int spawnCount = zombie.getPersistentData().getInt(SUMMONER_SPAWN_COUNT);
+        int maxSpawns = QLMConfig.SUMMONER_ZOMBIE_MAX_SUMMONS.get();
+        if (spawnCount >= maxSpawns) return;
+
+        int spawnCd = zombie.getPersistentData().getInt(SUMMONER_SPAWN_CD);
+        if (spawnCd > 0) {
+            zombie.getPersistentData().putInt(SUMMONER_SPAWN_CD, spawnCd - 1);
+            return;
+        }
+
+        float yaw = (float) Math.toDegrees(Math.atan2(target.getX() - zombie.getX(), target.getZ() - zombie.getZ()));
+        zombie.yBodyRot = yaw;
+
+        net.minecraft.world.effect.MobEffect[] buffs = {
+                net.minecraft.world.effect.MobEffects.MOVEMENT_SPEED,
+                net.minecraft.world.effect.MobEffects.DAMAGE_BOOST,
+                net.minecraft.world.effect.MobEffects.REGENERATION,
+                net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE,
+                net.minecraft.world.effect.MobEffects.INVISIBILITY
+        };
+        net.minecraft.world.effect.MobEffect buff = buffs[zombie.getRandom().nextInt(buffs.length)];
+
+        Zombie summoned = new Zombie(net.minecraft.world.entity.EntityType.ZOMBIE, level);
+        summoned.moveTo(zombie.getX() + (zombie.getRandom().nextDouble() - 0.5) * 4.0D, zombie.getY(), zombie.getZ() + (zombie.getRandom().nextDouble() - 0.5) * 4.0D, zombie.getYRot(), zombie.getXRot());
+        summoned.addEffect(new net.minecraft.world.effect.MobEffectInstance(buff, 1200, 1));
+        summoned.setCustomName(net.minecraft.network.chat.Component.literal("§5🔮 召唤僵尸"));
+        summoned.setCustomNameVisible(true);
+        summoned.setTarget(target);
+
+        level.addFreshEntity(summoned);
+        level.playSound(null, zombie.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.HOSTILE, 1.0F, 1.0F);
+
+        zombie.getPersistentData().putInt(SUMMONER_SPAWN_COUNT, spawnCount + 1);
+        zombie.getPersistentData().putInt(SUMMONER_SPAWN_CD, QLMConfig.SUMMONER_ZOMBIE_SPAWN_INTERVAL.get());
+    }
+
+    private static void tickSkeletonInfiniteArrows(AbstractSkeleton skeleton) {
+        if (!QLMConfig.SKELETON_INFINITE_ARROWS.get()) return;
+        ItemStack handStack = skeleton.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (handStack.is(Items.BOW)) {
+            try {
+                java.util.Map<net.minecraft.world.item.enchantment.Enchantment, Integer> emap = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantments(handStack);
+                emap.put(net.minecraft.world.item.enchantment.Enchantments.INFINITY_ARROWS, 1);
+                net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, handStack);
+            } catch (Exception ignored) {}
+        }
+        ItemStack offhand = skeleton.getItemBySlot(EquipmentSlot.OFFHAND);
+        if (offhand.isEmpty()) {
+            skeleton.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(Items.ARROW));
         }
     }
 
@@ -462,7 +710,9 @@ public class AIOptimizationHandler {
         float hardness = -1.0F;
         try { hardness = state.getDestroySpeed(null, null); }
         catch (Exception e) {
-            try { hardness = b.defaultDestroyTime(); } catch (Exception ignored) {}
+            try { hardness = b.defaultDestroyTime(); } catch (Exception e2) {
+            QLMZombieMod.LOGGER.debug("[QLM Zombie] Failed to get block hardness: {}", e2.getMessage());
+        }
         }
         if (hardness < 0) return false;
         return hardness < 5.0F;
@@ -765,12 +1015,16 @@ public class AIOptimizationHandler {
                     try {
                         AttributeInstance atkAttr = guardian.getAttribute(Attributes.ATTACK_DAMAGE);
                         if (atkAttr != null) atk = atkAttr.getValue();
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        QLMZombieMod.LOGGER.debug("[QLM Zombie] Failed to get guardian attack damage: {}", e.getMessage());
+                    }
                     ItemStack weapon = guardian.getMainHandItem();
                     float bonusDmg = 0.0F;
                     try {
                         bonusDmg = net.minecraft.world.item.enchantment.EnchantmentHelper.getDamageBonus(weapon, target.getMobType());
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        QLMZombieMod.LOGGER.debug("[QLM Zombie] Failed to get damage bonus: {}", e.getMessage());
+                    }
                     float totalDmg = (float) atk + bonusDmg;
                     boolean success = target.hurt(level.damageSources().mobAttack(guardian), totalDmg);
                     if (success) {
@@ -780,7 +1034,9 @@ public class AIOptimizationHandler {
                         guardian.setDeltaMovement(guardian.getDeltaMovement().multiply(0.5D, 1.0D, 0.5D));
                         try {
                             weapon.hurtAndBreak(1, guardian, (p_213394_) -> p_213394_.broadcastBreakEvent(EquipmentSlot.MAINHAND));
-                        } catch (Exception ignored) {}
+                        } catch (Exception e) {
+                            QLMZombieMod.LOGGER.debug("[QLM Zombie] Failed to damage guardian weapon: {}", e.getMessage());
+                        }
                         level.playSound(null, guardian.blockPosition(), SoundEvents.VINDICATOR_CELEBRATE,
                                 net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F);
                     }

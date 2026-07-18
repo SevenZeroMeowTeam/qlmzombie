@@ -1,8 +1,5 @@
 package com.qlm.zombie.player;
 
-import com.imoonday.advskills_re.component.PlayerDataComponent;
-import com.imoonday.advskills_re.component.SkillLevelData;
-import com.imoonday.advskills_re.util.PlayerUtilsKt;
 import com.qlm.zombie.QLMZombieMod;
 import com.qlm.zombie.advancements.AdvancementManager;
 import com.qlm.zombie.dependency.ModDependencyHandler;
@@ -33,23 +30,23 @@ public class PlayerInitHandler {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         Player player = event.getEntity();
         CompoundTag persistentData = player.getPersistentData();
-        
+
         // 发送mod说明（每次登录都显示）
         sendModIntroduction(player);
-        
+
         if (!persistentData.getBoolean(INIT_TAG)) {
             QLMZombieMod.LOGGER.info("[QLM Zombie] 玩家 {} 首次登录，发放初始物资...", player.getName().getString());
             giveStarterGear(player);
             persistentData.putBoolean(INIT_TAG, true);
             player.displayClientMessage(net.minecraft.network.chat.Component.literal("§a[QLM Zombie] 初始物资已发放！"), false);
-            
+
             // 初始化成就系统
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                 AdvancementManager.initializeAdvancements(serverPlayer);
             }
         }
     }
-    
+
     private static void sendModIntroduction(Player player) {
         int peacefulDays = com.qlm.zombie.config.QLMConfig.PEACEFUL_DAYS.get();
         int normalDays = com.qlm.zombie.config.QLMConfig.NORMAL_DAYS.get();
@@ -71,38 +68,31 @@ public class PlayerInitHandler {
 
         if (total > 0) {
             player.displayClientMessage(Component.literal(
-                "§a✅ 已扫描 " + total + " 个内部 mod，释放 " + released + " 个"
-            ), false);
+                    "§a✅ 已扫描 " + total + " 个内部 mod，释放 " + released + " 个"), false);
         }
         if (hasConflicts) {
             player.displayClientMessage(Component.literal(
-                "§6⚠ 检测到 " + conflicts.size() + " 组冲突，已自动禁用 " + disabled.size() + " 个 mod"
-            ), false);
+                    "§6⚠ 检测到 " + conflicts.size() + " 组冲突，已自动禁用 " + disabled.size() + " 个 mod"), false);
             for (String c : conflicts) {
                 player.displayClientMessage(Component.literal(
-                    "  §7- " + c
-                ), false);
+                        "  §7- " + c), false);
             }
             if (!disabled.isEmpty()) {
                 player.displayClientMessage(Component.literal(
-                    "  §7已禁用的文件位于 mods 目录中，后缀为 .jar.disabled"
-                ), false);
+                        "  §7已禁用的文件位于 mods 目录中，后缀为 .jar.disabled"), false);
             }
         }
         if (hasDups) {
             player.displayClientMessage(Component.literal(
-                "§6⚠ 检测到 " + deleted.size() + " 个重复 mod，已自动删除（仅保留版本最完整的一个）"
-            ), false);
+                    "§6⚠ 检测到 " + deleted.size() + " 个重复 mod，已自动删除（仅保留版本最完整的一个）"), false);
             for (String d : deleted) {
                 player.displayClientMessage(Component.literal(
-                    "  §7- 已删除: " + d
-                ), false);
+                        "  §7- 已删除: " + d), false);
             }
         }
         if (needsRestart) {
             player.displayClientMessage(Component.literal(
-                "§c⚠ 请重启游戏以加载新安装/禁用的 mod！"
-            ), false);
+                    "§c⚠ 请重启游戏以加载新安装/禁用的 mod！"), false);
         }
 
         player.displayClientMessage(Component.literal("§e🌙 月相系统:"), false);
@@ -111,10 +101,14 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- 丰收之月: 7%概率，作物加速生长"), false);
         player.displayClientMessage(Component.literal("§e⚔️ 难度阶段:"), false);
         player.displayClientMessage(Component.literal("  §a安全日(1-" + peacefulDays + "天): §f和平模式，无敌对生物"), false);
-        player.displayClientMessage(Component.literal("  §a简单(" + (peacefulDays + 1) + "-" + normalDays + "天): §fEasy难度，僵尸低概率进化"), false);
-        player.displayClientMessage(Component.literal("  §a普通(" + (normalDays + 1) + "-" + hardDays + "天): §fNormal难度，僵尸进化概率提升"), false);
-        player.displayClientMessage(Component.literal("  §c困难(" + (hardDays + 1) + "-" + extremeDays + "天): §fHard难度锁定，僵尸高概率进化"), false);
-        player.displayClientMessage(Component.literal("  §4极限(" + (extremeDays + 1) + "天+): §fHard难度锁定，僵尸极高概率进化"), false);
+        player.displayClientMessage(
+                Component.literal("  §a简单(" + (peacefulDays + 1) + "-" + normalDays + "天): §fEasy难度，僵尸低概率进化"), false);
+        player.displayClientMessage(
+                Component.literal("  §a普通(" + (normalDays + 1) + "-" + hardDays + "天): §fNormal难度，僵尸进化概率提升"), false);
+        player.displayClientMessage(
+                Component.literal("  §c困难(" + (hardDays + 1) + "-" + extremeDays + "天): §fHard难度锁定，僵尸高概率进化"), false);
+        player.displayClientMessage(Component.literal("  §4极限(" + (extremeDays + 1) + "天+): §fHard难度锁定，僵尸极高概率进化"),
+                false);
         player.displayClientMessage(Component.literal("§e👹 尸潮系统:"), false);
         player.displayClientMessage(Component.literal("  §f- 血月期间触发5波尸潮，难度递增"), false);
         player.displayClientMessage(Component.literal("  §f- 第3波起出现精英僵尸和骷髅"), false);
@@ -126,12 +120,17 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- 阶段3(≤33%HP): 狂怒，速度+4，伤害+5，再生+抗性，名称变红"), false);
         player.displayClientMessage(Component.literal("§e🧟 AI 智能优化:"), false);
         player.displayClientMessage(Component.literal("  §f- 僵尸破门 (NORMAL阶段+)，破坏挡路方块，后期自动搭方块追击"), false);
-        player.displayClientMessage(Component.literal("  §f- HARD阶段起: 自爆僵尸 (爆炸追击)、木桶僵尸 (击杀生成小型僵尸群)"), false);
+        player.displayClientMessage(Component.literal("  §f- HARD阶段起: 自爆僵尸、木桶僵尸、§e💣TNT僵尸 §f(投掷点燃TNT)"), false);
+        player.displayClientMessage(Component.literal("  §f- HARD阶段起: §d🧪药水僵尸 §f(投掷负面buff药水)、§5🔮僵尸召唤师 §f(召唤带buff僵尸)"),
+                false);
         player.displayClientMessage(Component.literal("  §f- 僵尸/骷髅主动搜索最近玩家 (80格半径)"), false);
         player.displayClientMessage(Component.literal("  §f- 骷髅有几率射出必中箭 (带破甲+伤害增幅)"), false);
+        player.displayClientMessage(Component.literal("  §f- NORMAL+阶段: §d⚔强化骷髅 §f(亡灵之弓/亡灵弩/骷髅之刃/亡灵之剑)"), false);
+        player.displayClientMessage(Component.literal("  §f- 骷髅默认无限箭矢"), false);
         player.displayClientMessage(Component.literal("  §f- 村民 1% 概率成为 §2🛡 村庄守卫者 §f(攻击附近怪物保护村庄)"), false);
-        player.displayClientMessage(Component.literal("  §f- 守卫者有 1% 概率获得 §d✦ 强化守护者之剑 ✦ §f(锋利III+火焰附加II+耐久III)"), false);
-        player.displayClientMessage(Component.literal("§e🤖 AI 玩家 §7- v1.7.0"), false);
+        player.displayClientMessage(Component.literal("  §f- 守卫者有 1% 概率获得 §d✦ 强化守护者之剑 ✦ §f(锋利III+火焰附加II+耐久III)"),
+                false);
+        player.displayClientMessage(Component.literal("§e🤖 AI 玩家 §7- v1.9.1"), false);
         player.displayClientMessage(Component.literal("  §f- /qlm aiplayer spawn [名字] [皮肤URL] 生成AI玩家"), false);
         player.displayClientMessage(Component.literal("  §f- 主世界随机生成AI玩家(默认每3分钟检测, 15%概率)"), false);
         player.displayClientMessage(Component.literal("  §f- 25%概率手持mod武器 + TACZ子弹无限"), false);
@@ -148,12 +147,19 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- AI玩家属性: 100HP / 25攻击伤害"), false);
         player.displayClientMessage(Component.literal("  §f- 村民属性强化: 50HP / 15攻击伤害"), false);
         player.displayClientMessage(Component.literal("  §f- /qlm aiplayer list/tp/tame/skin/kill 管理命令"), false);
-        player.displayClientMessage(Component.literal("  §f- 可在 qlmzombie-common.toml 的 [ai_player_spawn] 中调整生成参数"), false);
+        player.displayClientMessage(Component.literal("  §f- 可在 qlmzombie-common.toml 的 [ai_player_spawn] 中调整生成参数"),
+                false);
+        player.displayClientMessage(Component.literal("§e⭐ 进阶技能: 重制版 §7- v1.9.1"), false);
+        player.displayClientMessage(Component.literal("  §f- 开局赠送5点技能点，按K键打开技能树面板"), false);
+        player.displayClientMessage(
+                Component.literal("  §f- 武器检测支持JSON配置: assets/qlmzombie/data/weapon_detection.json"), false);
+        player.displayClientMessage(Component.literal("  §f- 编辑JSON即可添加新mod武器，无需重新编译"), false);
         player.displayClientMessage(Component.literal("§e📦 mod 管理:"), false);
         player.displayClientMessage(Component.literal("  §f- 启动时自动从内部 libs 释放所有依赖mod"), false);
         player.displayClientMessage(Component.literal("  §f- 自动检测重复mod并删除多余副本（仅保留一个版本）"), false);
         player.displayClientMessage(Component.literal("  §f- 自动检测冲突mod（如JEI/REI、WTHIT/Jade），默认保留REI/WTHIT"), false);
-        player.displayClientMessage(Component.literal("  §a- 白名单保护: FTB团队/任务/区块、Architectury、Cloth Config、Bookshelf等必要mod不受影响"), false);
+        player.displayClientMessage(
+                Component.literal("  §a- 白名单保护: FTB团队/任务/区块、Architectury、Cloth Config、Bookshelf等必要mod不受影响"), false);
         player.displayClientMessage(Component.literal("  §f- 如需重新启用被禁用的mod，请删除 .jar.disabled 后缀"), false);
         player.displayClientMessage(Component.literal("§e🎵 音乐系统:"), false);
         player.displayClientMessage(Component.literal("  §f- 登录时播放史诗开场主题"), false);
@@ -170,7 +176,13 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- 注入物品：TaCZ 现代枪械、弹药、配件及投掷物(若TaCZ已加载)"), false);
         player.displayClientMessage(Component.literal("  §f- 注入物品：Spartan Weaponry/Shields 中世纪武器/盾牌(若已加载)"), false);
         player.displayClientMessage(Component.literal("  §f- 注入物品：原版铁/钻石装备与附魔弓(即使无其他mod也正常)"), false);
-        player.displayClientMessage(Component.literal("  §f- 可在 qlmzombie-common.toml 的 [building_loot] 中总开关/调整注入概率"), false);
+        player.displayClientMessage(Component.literal("  §f- 可在 qlmzombie-common.toml 的 [building_loot] 中总开关/调整注入概率"),
+                false);
+        player.displayClientMessage(Component.literal("§e🏪 废弃商店:"), false);
+        player.displayClientMessage(Component.literal("  §f- 主世界随机生成废弃商店结构(2%概率)，包含圆石建筑和橡木货架"), false);
+        player.displayClientMessage(Component.literal("  §f- 奖励箱放置在货架顶部(1-2个)，30%概率在地面额外生成宝箱"), false);
+        player.displayClientMessage(Component.literal("  §f- 宝箱有概率生成 TaCZ 枪械/弹药、Spartan 武器/盾牌等 mod 物品"), false);
+        player.displayClientMessage(Component.literal("  §f- 包含原版物资、QLM 自制物资及全局战利品注入的 mod 物品"), false);
         player.displayClientMessage(Component.literal("§e📊 计分板 HUD:"), false);
         player.displayClientMessage(Component.literal("  §f- 游戏内左侧显示彩色计分板，每秒刷新一次"), false);
         player.displayClientMessage(Component.literal("  §f- 显示：当前天数、游戏时间（12/24小时制 + 时间段）"), false);
@@ -178,7 +190,8 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- 血月时月相文字显示为红色"), false);
         player.displayClientMessage(Component.literal("§e💚 血量UI(经验条样式血量条):"), false);
         player.displayClientMessage(Component.literal("  §f- 屏幕底部中央显示彩色 HP 条 + 数字，位于盔甲/饱食度图标上方"), false);
-        player.displayClientMessage(Component.literal("  §f- 已隐藏原版心形血量阵列，可在 qlmzombie-common.toml 的 [health_ui] 中切换"), false);
+        player.displayClientMessage(Component.literal("  §f- 已隐藏原版心形血量阵列，可在 qlmzombie-common.toml 的 [health_ui] 中切换"),
+                false);
         player.displayClientMessage(Component.literal("  §f- 血条动态变色：>66%亮红 → 50-66%橙红 → 25-50%深红 → <25%警告闪烁红"), false);
         player.displayClientMessage(Component.literal("  §f- 金苹果/信标金色吸收HP: 血条末端叠加金色段"), false);
         player.displayClientMessage(Component.literal("§e⏱ 时间系统:"), false);
@@ -206,7 +219,8 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- 持斧头砍原木 → 整棵树的原木一并掉落"), false);
         player.displayClientMessage(Component.literal("  §f- 支持所有mod工具（斯巴达武器/简单矿石等），自动识别工具类型"), false);
         player.displayClientMessage(Component.literal("  §f- 支持mod树木/矿石（如mod添加的原木/矿石均可连锁）"), false);
-        player.displayClientMessage(Component.literal("  §f- 可在配置文件 qlmzombie-common.toml 的 [chain_mining] 中调整开关与上限"), false);
+        player.displayClientMessage(Component.literal("  §f- 可在配置文件 qlmzombie-common.toml 的 [chain_mining] 中调整开关与上限"),
+                false);
         player.displayClientMessage(Component.literal("§e📋 命令:"), false);
         player.displayClientMessage(Component.literal("  §f- /qlm info §7查看当前状态"), false);
         player.displayClientMessage(Component.literal("  §f- /qlm day §7查看当前天数"), false);
@@ -228,7 +242,8 @@ public class PlayerInitHandler {
     }
 
     private static void giveStarterGear(Player player) {
-        player.getAttributes().getInstance(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200.0D);
+        player.getAttributes().getInstance(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
+                .setBaseValue(200.0D);
         player.setHealth(200.0F);
 
         giveArmorToSlot(player, Items.IRON_HELMET, EquipmentSlot.HEAD);
@@ -272,17 +287,34 @@ public class PlayerInitHandler {
 
     private static void giveSkillPoints(Player player, int amount) {
         try {
-            PlayerDataComponent data = PlayerUtilsKt.getData(player);
+            Class<?> playerUtilsKtClass = Class.forName("com.imoonday.advskills_re.util.PlayerUtilsKt");
+            java.lang.reflect.Method getDataMethod = playerUtilsKtClass.getMethod("getData", Player.class);
+            Object data = getDataMethod.invoke(null, player);
+
             if (data != null) {
-                SkillLevelData level = data.getLevel();
-                level.setExperience(level.getExperience() + amount);
-                data.setDirty(true);
-                data.sync();
-                player.displayClientMessage(Component.literal("§a[QLM Zombie] 已获得 §e" + amount + " §a点技能经验值（高级技能：重制版）！"), false);
+                java.lang.reflect.Method getLevelMethod = data.getClass().getMethod("getLevel");
+                Object level = getLevelMethod.invoke(data);
+
+                java.lang.reflect.Method getExperienceMethod = level.getClass().getMethod("getExperience");
+                int currentExp = (int) getExperienceMethod.invoke(level);
+
+                java.lang.reflect.Method setExperienceMethod = level.getClass().getMethod("setExperience", int.class);
+                setExperienceMethod.invoke(level, currentExp + amount);
+
+                java.lang.reflect.Method setDirtyMethod = data.getClass().getMethod("setDirty", boolean.class);
+                setDirtyMethod.invoke(data, true);
+
+                java.lang.reflect.Method syncMethod = data.getClass().getMethod("sync");
+                syncMethod.invoke(data);
+
+                player.displayClientMessage(
+                        Component.literal("§a[QLM Zombie] 已获得 §e" + amount + " §a点技能经验值（高级技能：重制版）！"), false);
                 QLMZombieMod.LOGGER.info("[QLM Zombie] 玩家 {} 获得 {} 点技能经验值", player.getName().getString(), amount);
             }
+        } catch (ClassNotFoundException e) {
+            QLMZombieMod.LOGGER.debug("[QLM Zombie] 高级技能mod未加载，跳过技能经验值发放");
         } catch (Exception e) {
-            QLMZombieMod.LOGGER.warn("[QLM Zombie] 发放技能经验值失败（可能未加载高级技能mod）: {}", e.getMessage());
+            QLMZombieMod.LOGGER.warn("[QLM Zombie] 发放技能经验值失败: {}", e.getMessage());
         }
     }
 
@@ -300,111 +332,113 @@ public class PlayerInitHandler {
     }
 
     private static Enchantment[] getSwordEnchantments() {
-        return new Enchantment[]{
-            Enchantments.SHARPNESS,
-            Enchantments.SMITE,
-            Enchantments.BANE_OF_ARTHROPODS,
-            Enchantments.KNOCKBACK,
-            Enchantments.FIRE_ASPECT,
-            Enchantments.MOB_LOOTING,
-            Enchantments.SWEEPING_EDGE,
-            Enchantments.UNBREAKING,
-            Enchantments.MENDING
+        return new Enchantment[] {
+                Enchantments.SHARPNESS,
+                Enchantments.SMITE,
+                Enchantments.BANE_OF_ARTHROPODS,
+                Enchantments.KNOCKBACK,
+                Enchantments.FIRE_ASPECT,
+                Enchantments.MOB_LOOTING,
+                Enchantments.SWEEPING_EDGE,
+                Enchantments.UNBREAKING,
+                Enchantments.MENDING
         };
     }
 
     private static Enchantment[] getAxeEnchantments() {
-        return new Enchantment[]{
-            Enchantments.SHARPNESS,
-            Enchantments.SMITE,
-            Enchantments.BANE_OF_ARTHROPODS,
-            Enchantments.KNOCKBACK,
-            Enchantments.FIRE_ASPECT,
-            Enchantments.BLOCK_EFFICIENCY,
-            Enchantments.BLOCK_FORTUNE,
-            Enchantments.UNBREAKING,
-            Enchantments.MENDING
+        return new Enchantment[] {
+                Enchantments.SHARPNESS,
+                Enchantments.SMITE,
+                Enchantments.BANE_OF_ARTHROPODS,
+                Enchantments.KNOCKBACK,
+                Enchantments.FIRE_ASPECT,
+                Enchantments.BLOCK_EFFICIENCY,
+                Enchantments.BLOCK_FORTUNE,
+                Enchantments.UNBREAKING,
+                Enchantments.MENDING
         };
     }
 
     private static Enchantment[] getPickaxeEnchantments() {
-        return new Enchantment[]{
-            Enchantments.BLOCK_EFFICIENCY,
-            Enchantments.SILK_TOUCH,
-            Enchantments.BLOCK_FORTUNE,
-            Enchantments.UNBREAKING,
-            Enchantments.MENDING
+        return new Enchantment[] {
+                Enchantments.BLOCK_EFFICIENCY,
+                Enchantments.SILK_TOUCH,
+                Enchantments.BLOCK_FORTUNE,
+                Enchantments.UNBREAKING,
+                Enchantments.MENDING
         };
     }
 
     private static Enchantment[] getShovelEnchantments() {
-        return new Enchantment[]{
-            Enchantments.BLOCK_EFFICIENCY,
-            Enchantments.SILK_TOUCH,
-            Enchantments.BLOCK_FORTUNE,
-            Enchantments.UNBREAKING,
-            Enchantments.MENDING
+        return new Enchantment[] {
+                Enchantments.BLOCK_EFFICIENCY,
+                Enchantments.SILK_TOUCH,
+                Enchantments.BLOCK_FORTUNE,
+                Enchantments.UNBREAKING,
+                Enchantments.MENDING
         };
     }
 
     private static Enchantment[] getBowEnchantments() {
-        return new Enchantment[]{
-            Enchantments.POWER_ARROWS,
-            Enchantments.PUNCH_ARROWS,
-            Enchantments.FLAMING_ARROWS,
-            Enchantments.INFINITY_ARROWS,
-            Enchantments.UNBREAKING,
-            Enchantments.MENDING
+        return new Enchantment[] {
+                Enchantments.POWER_ARROWS,
+                Enchantments.PUNCH_ARROWS,
+                Enchantments.FLAMING_ARROWS,
+                Enchantments.INFINITY_ARROWS,
+                Enchantments.UNBREAKING,
+                Enchantments.MENDING
         };
     }
 
     private static Enchantment[] getArmorEnchantments() {
-        return new Enchantment[]{
-            Enchantments.ALL_DAMAGE_PROTECTION,
-            Enchantments.FIRE_PROTECTION,
-            Enchantments.FALL_PROTECTION,
-            Enchantments.BLAST_PROTECTION,
-            Enchantments.PROJECTILE_PROTECTION,
-            Enchantments.RESPIRATION,
-            Enchantments.AQUA_AFFINITY,
-            Enchantments.THORNS,
-            Enchantments.DEPTH_STRIDER,
-            Enchantments.FROST_WALKER,
-            Enchantments.SOUL_SPEED,
-            Enchantments.UNBREAKING,
-            Enchantments.MENDING
+        return new Enchantment[] {
+                Enchantments.ALL_DAMAGE_PROTECTION,
+                Enchantments.FIRE_PROTECTION,
+                Enchantments.FALL_PROTECTION,
+                Enchantments.BLAST_PROTECTION,
+                Enchantments.PROJECTILE_PROTECTION,
+                Enchantments.RESPIRATION,
+                Enchantments.AQUA_AFFINITY,
+                Enchantments.THORNS,
+                Enchantments.DEPTH_STRIDER,
+                Enchantments.FROST_WALKER,
+                Enchantments.SOUL_SPEED,
+                Enchantments.UNBREAKING,
+                Enchantments.MENDING
         };
     }
 
     private static void addMultipleRandomEnchantments(ItemStack stack, Enchantment[] enchantments, int maxCount) {
-        if (enchantments.length == 0) return;
-        
+        if (enchantments.length == 0)
+            return;
+
         Map<Enchantment, Integer> existingEnchants = EnchantmentHelper.getEnchantments(stack);
         List<Enchantment> availableEnchants = new ArrayList<>();
-        
+
         for (Enchantment ench : enchantments) {
             if (!existingEnchants.containsKey(ench)) {
                 availableEnchants.add(ench);
             }
         }
-        
+
         int count = Math.min(maxCount, availableEnchants.size());
         for (int i = 0; i < count; i++) {
-            if (availableEnchants.isEmpty()) break;
-            
+            if (availableEnchants.isEmpty())
+                break;
+
             int index = RANDOM.nextInt(availableEnchants.size());
             Enchantment enchantment = availableEnchants.remove(index);
-            
+
             int maxLevel = enchantment.getMaxLevel();
             int level = maxLevel;
-            
+
             if (maxLevel > 1) {
                 level = RANDOM.nextInt(maxLevel) + 1;
             }
-            
+
             existingEnchants.put(enchantment, level);
         }
-        
+
         EnchantmentHelper.setEnchantments(existingEnchants, stack);
     }
 
@@ -412,7 +446,7 @@ public class PlayerInitHandler {
     public static void onPlayerClone(PlayerEvent.Clone event) {
         Player original = event.getOriginal();
         Player newPlayer = event.getEntity();
-        
+
         if (original.getPersistentData().getBoolean(INIT_TAG)) {
             newPlayer.getPersistentData().putBoolean(INIT_TAG, true);
         }

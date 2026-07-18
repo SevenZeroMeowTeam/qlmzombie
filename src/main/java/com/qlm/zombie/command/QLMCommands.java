@@ -8,30 +8,19 @@ import com.qlm.zombie.config.QLMConfig;
 import com.qlm.zombie.dayphase.DayPhase;
 import com.qlm.zombie.dayphase.DayPhaseManager;
 import com.qlm.zombie.dependency.ModDependencyHandler;
-import com.qlm.zombie.entity.FakePlayerEntity;
-import com.qlm.zombie.entity.QLMEntities;
 import com.qlm.zombie.moon.MoonHelper;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class QLMCommands {
@@ -53,7 +42,7 @@ public class QLMCommands {
                         int targetDay = IntegerArgumentType.getInteger(ctx, "day");
                         ServerLevel overworld = ctx.getSource().getServer().getLevel(Level.OVERWORLD);
                         if (overworld != null) {
-                            overworld.setDayTime(targetDay * 57600L);
+                            overworld.setDayTime((targetDay - 1) * 57600L);
                             ctx.getSource().sendSuccess(() -> Component.literal("§a天数已设置为: 第 " + targetDay + " 天"), true);
                         }
                         return 1;
@@ -271,11 +260,11 @@ public class QLMCommands {
             )
             .then(Commands.literal("aiplayer")
                 .then(Commands.literal("spawn")
-                    .executes(ctx -> spawnAIPlayer(ctx.getSource(), "AI_Player", ""))
+                    .executes(ctx -> QLMAIPlayerCommands.spawnAIPlayer(ctx.getSource(), "AI_Player", ""))
                     .then(Commands.argument("name", StringArgumentType.word())
-                        .executes(ctx -> spawnAIPlayer(ctx.getSource(), StringArgumentType.getString(ctx, "name"), ""))
+                        .executes(ctx -> QLMAIPlayerCommands.spawnAIPlayer(ctx.getSource(), StringArgumentType.getString(ctx, "name"), ""))
                         .then(Commands.argument("skinUrl", StringArgumentType.greedyString())
-                            .executes(ctx -> spawnAIPlayer(ctx.getSource(),
+                            .executes(ctx -> QLMAIPlayerCommands.spawnAIPlayer(ctx.getSource(),
                                     StringArgumentType.getString(ctx, "name"),
                                     StringArgumentType.getString(ctx, "skinUrl")))
                         )
@@ -283,180 +272,26 @@ public class QLMCommands {
                 )
                 .then(Commands.literal("skin")
                     .then(Commands.argument("url", StringArgumentType.greedyString())
-                        .executes(ctx -> setAIPlayerSkin(ctx.getSource(), StringArgumentType.getString(ctx, "url")))
+                        .executes(ctx -> QLMAIPlayerCommands.setAIPlayerSkin(ctx.getSource(), StringArgumentType.getString(ctx, "url")))
                     )
                 )
                 .then(Commands.literal("tame")
                     .then(Commands.argument("player", EntityArgument.player())
-                        .executes(ctx -> tameAIPlayer(ctx.getSource(), EntityArgument.getPlayer(ctx, "player")))
+                        .executes(ctx -> QLMAIPlayerCommands.tameAIPlayer(ctx.getSource(), EntityArgument.getPlayer(ctx, "player")))
                     )
                 )
                 .then(Commands.literal("list")
-                    .executes(ctx -> listAIPlayers(ctx.getSource()))
+                    .executes(ctx -> QLMAIPlayerCommands.listAIPlayers(ctx.getSource()))
                 )
                 .then(Commands.literal("tp")
                     .then(Commands.argument("name", StringArgumentType.word())
-                        .executes(ctx -> tpToAIPlayer(ctx.getSource(), StringArgumentType.getString(ctx, "name")))
+                        .executes(ctx -> QLMAIPlayerCommands.tpToAIPlayer(ctx.getSource(), StringArgumentType.getString(ctx, "name")))
                     )
                 )
                 .then(Commands.literal("kill")
-                    .executes(ctx -> killAIPlayer(ctx.getSource()))
+                    .executes(ctx -> QLMAIPlayerCommands.killAIPlayer(ctx.getSource()))
                 )
             )
         );
-    }
-
-    private static int spawnAIPlayer(CommandSourceStack source, String name, String skinUrl) {
-        ServerLevel level = source.getLevel();
-        Vec3 pos = source.getPosition();
-
-        FakePlayerEntity ai = QLMEntities.FAKE_PLAYER.get().create(level);
-        if (ai == null) return 0;
-
-        ai.setPos(pos.x, pos.y, pos.z);
-        ai.setCustomNameStr(name);
-        ai.setPlayerUUID(UUID.randomUUID());
-
-        if (!skinUrl.isEmpty()) {
-            ai.setSkinURL(skinUrl);
-        }
-
-        if (ai.getRandom().nextFloat() < 0.25F) {
-            ai.giveRandomWeapon();
-        }
-
-        level.addFreshEntity(ai);
-        source.sendSuccess(() -> Component.literal("§a已生成 AI 玩家: §e" + name), true);
-        return 1;
-    }
-
-    private static int setAIPlayerSkin(CommandSourceStack source, String url) {
-        ServerLevel level = source.getLevel();
-        Vec3 pos = source.getPosition();
-        FakePlayerEntity nearest = null;
-        double nearestDist = Double.MAX_VALUE;
-
-        for (Entity entity : level.getAllEntities()) {
-            if (entity instanceof FakePlayerEntity ai) {
-                double dist = entity.distanceToSqr(pos);
-                if (dist < nearestDist) {
-                    nearestDist = dist;
-                    nearest = ai;
-                }
-            }
-        }
-
-        if (nearest == null) {
-            source.sendFailure(Component.literal("§c附近没有找到 AI 玩家"));
-            return 0;
-        }
-
-        final FakePlayerEntity target = nearest;
-        target.setSkinURL(url);
-        source.sendSuccess(() -> Component.literal("§a已设置 " + target.getCustomNameStr() + " 的皮肤"), true);
-        return 1;
-    }
-
-    private static int tameAIPlayer(CommandSourceStack source, ServerPlayer player) {
-        ServerLevel level = source.getLevel();
-        Vec3 pos = source.getPosition();
-        FakePlayerEntity nearest = null;
-        double nearestDist = Double.MAX_VALUE;
-
-        for (Entity entity : level.getAllEntities()) {
-            if (entity instanceof FakePlayerEntity ai) {
-                double dist = entity.distanceToSqr(pos);
-                if (dist < nearestDist) {
-                    nearestDist = dist;
-                    nearest = ai;
-                }
-            }
-        }
-
-        if (nearest == null) {
-            source.sendFailure(Component.literal("§c附近没有找到 AI 玩家"));
-            return 0;
-        }
-
-        final FakePlayerEntity target2 = nearest;
-        target2.tame(player);
-        source.sendSuccess(() -> Component.literal("§a已将 " + target2.getCustomNameStr() + " 驯服，主人: §e" + player.getName().getString()), true);
-        return 1;
-    }
-
-    private static int listAIPlayers(CommandSourceStack source) {
-        ServerLevel level = source.getLevel();
-        int count = 0;
-        source.sendSuccess(() -> Component.literal("§6===== AI 玩家列表 ====="), false);
-
-        for (Entity entity : level.getAllEntities()) {
-            if (entity instanceof FakePlayerEntity ai) {
-                count++;
-                String owner = ai.getOwnerUUID().map(uuid -> {
-                    Entity e = level.getEntity(uuid);
-                    return e != null ? e.getName().getString() : "未知";
-                }).orElse("无");
-                String status = ai.isSitting() ? "§7[蹲坐]" : "§a[活动]";
-                String tamed = ai.isTamed() ? "§a已驯服" : "§e未驯服";
-                source.sendSuccess(() -> Component.literal(
-                        "  §b" + ai.getCustomNameStr() + " §7| " + tamed +
-                                " §7| 主人: §f" + owner + " §7| " + status +
-                                " §7| 食物: §f" + ai.getFoodLevel() + "/20 §7| HP: §f" + (int)ai.getHealth() + "/" + (int)ai.getMaxHealth()
-                ), false);
-            }
-        }
-
-        if (count == 0) {
-            source.sendSuccess(() -> Component.literal("  §7没有 AI 玩家"), false);
-        }
-        final int total = count;
-        source.sendSuccess(() -> Component.literal("§6共 " + total + " 个 AI 玩家"), false);
-        return count;
-    }
-
-    private static int tpToAIPlayer(CommandSourceStack source, String name) {
-        ServerLevel level = source.getLevel();
-        Entity exec = source.getEntity();
-        if (!(exec instanceof ServerPlayer player)) return 0;
-
-        for (Entity entity : level.getAllEntities()) {
-            if (entity instanceof FakePlayerEntity ai) {
-                if (ai.getCustomNameStr().toLowerCase().contains(name.toLowerCase())) {
-                    player.teleportTo(ai.getX(), ai.getY(), ai.getZ());
-                    source.sendSuccess(() -> Component.literal("§a已传送到 AI 玩家: §e" + ai.getCustomNameStr()), true);
-                    return 1;
-                }
-            }
-        }
-
-        source.sendFailure(Component.literal("§c找不到名为 '" + name + "' 的 AI 玩家"));
-        return 0;
-    }
-
-    private static int killAIPlayer(CommandSourceStack source) {
-        ServerLevel level = source.getLevel();
-        Vec3 pos = source.getPosition();
-        FakePlayerEntity nearest = null;
-        double nearestDist = Double.MAX_VALUE;
-
-        for (Entity entity : level.getAllEntities()) {
-            if (entity instanceof FakePlayerEntity ai) {
-                double dist = entity.distanceToSqr(pos);
-                if (dist < nearestDist) {
-                    nearestDist = dist;
-                    nearest = ai;
-                }
-            }
-        }
-
-        if (nearest == null) {
-            source.sendFailure(Component.literal("§c附近没有找到 AI 玩家"));
-            return 0;
-        }
-
-        String name = nearest.getCustomNameStr();
-        nearest.discard();
-        source.sendSuccess(() -> Component.literal("§a已移除 AI 玩家: §e" + name), true);
-        return 1;
     }
 }

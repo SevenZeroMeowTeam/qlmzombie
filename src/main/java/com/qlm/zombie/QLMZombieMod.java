@@ -50,6 +50,7 @@ public class QLMZombieMod {
         // 此处显式注册作为双保险，确保事件监听器正常工作
         MinecraftForge.EVENT_BUS.register(DayPhaseManager.class);
         MinecraftForge.EVENT_BUS.register(ZombieEvolutionHandler.class);
+        MinecraftForge.EVENT_BUS.register(com.qlm.zombie.structure.AbandonedShopGenerator.class);
         MinecraftForge.EVENT_BUS.addListener(this::onAddReloadListener);
         MinecraftForge.EVENT_BUS.addListener(this::onPlayerLogin);
 
@@ -62,8 +63,9 @@ public class QLMZombieMod {
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             LOGGER.info("[QLM Zombie] 七零喵僵尸末日生存mod 已加载");
-            LOGGER.info("[QLM Zombie] 功能: 难度渐进 + 血月/幸运之月/丰收之月 + 僵尸进化 + 尸潮系统 + 怪物封禁 + 初始物资发放 + 成就系统 + 连锁挖矿/连锁砍树(支持mod工具/树木/矿石) + 建筑物宝箱随机武器装备");
+            LOGGER.info("[QLM Zombie] 功能: 难度渐进 + 血月/幸运之月/丰收之月 + 僵尸进化 + 尸潮系统 + 怪物封禁 + 初始物资发放 + 成就系统 + 连锁挖矿/连锁砍树(支持mod工具/树木/矿石) + 建筑物宝箱随机武器装备 + 废弃商店生成");
             LOGGER.info("[QLM Zombie] 建筑物宝箱已注入战利品（TaCZ 火器 / Spartan 装备 / 原版工具/防具 / QLM 自制物资），包括各种枪械、弹药、配件、近战武器与防具。");
+            LOGGER.info("[QLM Zombie] 废弃商店已启用：主世界随机生成废弃商店结构，奖励箱放置在货架上，有概率生成mod物品。");
             if (needsRestart) {
                 LOGGER.warn("[QLM Zombie] ================================================");
                 LOGGER.warn("[QLM Zombie] 依赖mod已释放到 mods 目录，请重启游戏！");

@@ -18,6 +18,7 @@ public class DayPhaseManager {
     private static final long DAY_LENGTH = 57600L;  // 2400 tick = 1 小时
     private static int tickCounter = 0;
     private static boolean firstDayInitialized = false;
+    private static MinecraftServer lastServer = null;
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
@@ -53,6 +54,11 @@ public class DayPhaseManager {
 
         if (++tickCounter < 200) return;
         tickCounter = 0;
+
+        if (lastServer != server) {
+            lastServer = server;
+            firstDayInitialized = false;
+        }
 
         long dayTime = overworld.getDayTime();
         long currentDay = dayTime / DAY_LENGTH;
@@ -113,11 +119,11 @@ public class DayPhaseManager {
 
     public static long getCurrentDay() {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) return 0;
+        if (server == null) return 1;
 
         ServerLevel overworld = server.getLevel(Level.OVERWORLD);
-        if (overworld == null) return 0;
+        if (overworld == null) return 1;
 
-        return overworld.getDayTime() / DAY_LENGTH;
+        return overworld.getDayTime() / DAY_LENGTH + 1;
     }
 }

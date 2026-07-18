@@ -28,11 +28,15 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FakePlayerEntityRenderer extends HumanoidMobRenderer<FakePlayerEntity, PlayerModel<FakePlayerEntity>> {
 
     private final PlayerModel<FakePlayerEntity> defaultModel;
     private final PlayerModel<FakePlayerEntity> slimModel;
+    private static final Map<String, ResourceLocation> SKIN_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, Long> RATE_LIMIT = new ConcurrentHashMap<>();
+    private static final long RATE_LIMIT_MS = 5000;
 
     public FakePlayerEntityRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false), 0.5F);
@@ -76,11 +80,16 @@ public class FakePlayerEntityRenderer extends HumanoidMobRenderer<FakePlayerEnti
     }
 
     private ResourceLocation resolveCustomSkinTexture(String skinURL, FakePlayerEntity entity) {
+        ResourceLocation cached = SKIN_CACHE.get(skinURL);
+        if (cached != null) return cached;
+
         if (skinURL.startsWith("data:image/png;base64,")) {
             try {
                 String base64Data = skinURL.substring("data:image/png;base64,".length());
                 byte[] imageBytes = Base64.getDecoder().decode(base64Data);
-                return loadSkinFromBytes(imageBytes, entity);
+                ResourceLocation skin = loadSkinFromBytes(imageBytes, entity);
+                SKIN_CACHE.put(skinURL, skin);
+                return skin;
             } catch (Exception e) {
                 return DefaultPlayerSkin.getDefaultSkin();
             }
@@ -116,6 +125,13 @@ public class FakePlayerEntityRenderer extends HumanoidMobRenderer<FakePlayerEnti
     }
 
     private void fetchSkinFromURLAsync(String url, FakePlayerEntity entity) {
+        long now = System.currentTimeMillis();
+        Long lastFetch = RATE_LIMIT.get(url);
+        if (lastFetch != null && now - lastFetch < RATE_LIMIT_MS) {
+            return;
+        }
+        RATE_LIMIT.put(url, now);
+
         CompletableFuture.runAsync(() -> {
             try {
                 HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
@@ -131,13 +147,14 @@ public class FakePlayerEntityRenderer extends HumanoidMobRenderer<FakePlayerEnti
                         baos.write(buffer, 0, len);
                     }
                     byte[] imageBytes = baos.toByteArray();
+                    String base64URL = "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
 
                     Minecraft.getInstance().execute(() -> {
-                        entity.setSkinURL("data:image/png;base64," +
-                                Base64.getEncoder().encodeToString(imageBytes));
+                        entity.setSkinURL(base64URL);
                     });
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                com.qlm.zombie.QLMZombieMod.LOGGER.debug("Failed to fetch skin from URL {}: {}", url, e.getMessage());
             }
         });
     }

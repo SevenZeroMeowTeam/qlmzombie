@@ -56,7 +56,7 @@ public class ZombieEvolutionHandler {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie) && !(event.getEntity() instanceof Skeleton skeleton))
+        if (!(event.getEntity() instanceof Zombie) && !(event.getEntity() instanceof Skeleton))
             return;
         if (!(event.getLevel() instanceof ServerLevel serverLevel))
             return;

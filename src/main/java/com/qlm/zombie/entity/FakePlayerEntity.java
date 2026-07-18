@@ -1,9 +1,13 @@
 package com.qlm.zombie.entity;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.mojang.authlib.GameProfile;
+import com.qlm.zombie.QLMZombieMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
@@ -19,6 +23,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -43,29 +48,21 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CraftingTableBlock;
-import net.minecraft.world.level.block.FurnaceBlock;
-import net.minecraft.world.level.block.BlastFurnaceBlock;
-import net.minecraft.world.level.block.SmokerBlock;
-import net.minecraft.world.level.block.SmithingTableBlock;
-import net.minecraft.world.level.block.FletchingTableBlock;
-import net.minecraft.world.level.block.GrindstoneBlock;
-import net.minecraft.world.level.block.AnvilBlock;
-import net.minecraft.world.level.block.BrewingStandBlock;
-import net.minecraft.world.level.block.StonecutterBlock;
-import net.minecraft.world.level.block.CartographyTableBlock;
-import net.minecraft.world.level.block.LoomBlock;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ToolActions;
+import net.minecraftforge.common.TierSortingRegistry;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.*;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FakePlayerEntity extends PathfinderMob {
+public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
 
     private static final EntityDataAccessor<Optional<UUID>> DATA_PLAYER_UUID =
             SynchedEntityData.defineId(FakePlayerEntity.class, EntityDataSerializers.OPTIONAL_UUID);
@@ -148,10 +145,11 @@ public class FakePlayerEntity extends PathfinderMob {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType,
                               @Nullable SpawnGroupData groupData, @Nullable CompoundTag tag) {
         SpawnGroupData result = super.finalizeSpawn(level, difficulty, spawnType, groupData, tag);
-        if (this.random.nextFloat() < 0.25F) {
+        if (this.random.nextFloat() < 0.50F) {
             this.giveRandomWeapon();
         }
         return result;
@@ -172,8 +170,8 @@ public class FakePlayerEntity extends PathfinderMob {
 
     public static ItemStack getRandomModWeapon(net.minecraft.util.RandomSource rnd) {
         List<Item> modWeapons = new ArrayList<>();
-        for (Item item : BuiltInRegistries.ITEM) {
-            ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+        for (Item item : ForgeRegistries.ITEMS) {
+            ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
             String namespace = id.getNamespace();
             if (namespace.equals("minecraft")) continue;
             String path = id.getPath();
@@ -187,29 +185,63 @@ public class FakePlayerEntity extends PathfinderMob {
         return new ItemStack(chosen);
     }
 
-    private static final java.util.Set<String> WEAPON_NAMESPACES = java.util.Set.of(
-            "tacz", "taczjs", "slashblade", "flammpfeil.slashblade", "spartanweaponry",
-            "spartanshields", "spartantoolkit", "spartansimpleores", "superbwarfare",
-            "tetra", "artifacts", "bloodmagic", "botania", "pneumaticcraft",
-            "mekanism", "immersiveengineering", "create", "bettercombat", "footwork"
-    );
+    private static final Gson GSON = new Gson();
+    private static WeaponDetectionConfig weaponConfig = null;
 
-    private static boolean isWeaponNamespace(String namespace) {
-        return WEAPON_NAMESPACES.contains(namespace);
+    private static final class WeaponDetectionConfig {
+        Set<String> weaponNamespaces = new HashSet<>();
+        Set<String> weaponKeywords = new HashSet<>();
     }
 
-    private static boolean isWeaponItem(Item item, String path) {
-        if (item instanceof SwordItem || item instanceof ProjectileWeaponItem) return true;
-        String lower = path.toLowerCase();
-        String[] weaponKeys = {
+    private static WeaponDetectionConfig getWeaponConfig() {
+        if (weaponConfig != null) return weaponConfig;
+        weaponConfig = loadWeaponConfigOrDefault();
+        return weaponConfig;
+    }
+
+    private static WeaponDetectionConfig loadWeaponConfigOrDefault() {
+        WeaponDetectionConfig config = new WeaponDetectionConfig();
+        try (InputStream is = FakePlayerEntity.class.getClassLoader()
+                .getResourceAsStream("assets/qlmzombie/data/weapon_detection.json")) {
+            if (is != null) {
+                try (Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+                    Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
+                    Map<String, List<String>> data = GSON.fromJson(reader, type);
+                    if (data != null) {
+                        if (data.get("weaponNamespaces") != null) {
+                            config.weaponNamespaces.addAll(data.get("weaponNamespaces"));
+                        }
+                        if (data.get("weaponKeywords") != null) {
+                            config.weaponKeywords.addAll(data.get("weaponKeywords"));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            QLMZombieMod.LOGGER.warn("[QLM Zombie] Failed to load weapon_detection.json, using defaults: {}", e.getMessage());
+        }
+        if (config.weaponNamespaces.isEmpty() && config.weaponKeywords.isEmpty()) {
+            loadDefaultWeaponConfig(config);
+        }
+        return config;
+    }
+
+    private static void loadDefaultWeaponConfig(WeaponDetectionConfig config) {
+        config.weaponNamespaces.addAll(java.util.Set.of(
+                "tacz", "taczjs", "slashblade", "flammpfeil.slashblade", "spartanweaponry",
+                "spartanshields", "spartantoolkit", "spartansimpleores", "superbwarfare",
+                "tetra", "artifacts", "bloodmagic", "botania", "pneumaticcraft",
+                "mekanism", "immersiveengineering", "create", "bettercombat", "footwork"
+        ));
+        config.weaponKeywords.addAll(java.util.List.of(
                 "sword", "gun", "rifle", "pistol", "shotgun", "sniper", "smg", "machine_gun",
                 "blade", "katana", "spear", "halberd", "dagger", "mace", "axe", "hammer",
-                "greatsword", "longsword", "saber", "rapier", "katana", "battleaxe", "warhammer",
+                "greatsword", "longsword", "saber", "rapier", "battleaxe", "warhammer",
                 "pike", "lance", "glaive", "scythe", "claymore", "cutlass", "broadsword",
                 "flail", "morningstar", "trident", "javelin", "throwing", "bow", "crossbow",
                 "bazooka", "launcher", "grenade", "cannon", "minigun", "flamethrower",
                 "sickle", "sai", "nunchaku", "staff", "wand", "tachi", "ninjato", "wakizashi",
-                "nodachi", "shuriken", "kunai", "tanto", "tk", "knife", "sabre", "bo_staff",
+                "nodachi", "shuriken", "kunai", "tanto", "knife", "bo_staff",
                 "quarterstaff", "club", "tomahawk", "kukri", "scimitar", "falchion", "estoc",
                 "zweihander", "frying_pan", "crowbar", "baseball_bat", "fireaxe", "chainsaw",
                 "cleaver", "machete", "hook", "whip", "chain", "battle", "combat", "tactical",
@@ -218,17 +250,12 @@ public class FakePlayerEntity extends PathfinderMob {
                 "vector", "rpg", "m32", "grenade_launcher", "double_barrel", "pump", "lever_action",
                 "slashblade", "spartan", "tetra", "artifacts", "bloodmagic", "botania",
                 "pneumaticcraft", "mekanism", "immersive", "superbwarfare", "footwork",
-                "tool", "pickaxe", "shovel", "hoe", "waraxe", "battleaxe",
-                "rapier", "saber", "greatsword", "longsword", "dagger", "katana",
-                "parrying_dagger", "throwing_knife", "javelin", "boomerang",
-                "quarterstaff", "glaive", "halberd", "pike", "lance", "scythe",
-                "tomahawk", "mace", "warhammer", "flanged_mace", "morning_star",
-                "claymore", "zweihander", "estoc", "cutlass", "broadsword",
-                "scimitar", "sabre", "falchion", "kukri", "kama", "nunchaku",
-                "sai", "tonfa", "bo", "jo", "kanabo", "tetsubo", "naginata",
-                "yari", "kusarigama", "kyoketsu_shoge", "shuriken", "kunai",
-                "wakizashi", "nodachi", "tachi", "ninjato", "uchigatana",
-                "odachi", "kodachi", "tanto", "yoroi_doshi", "kaiken",
+                "tool", "pickaxe", "shovel", "hoe", "waraxe",
+                "parrying_dagger", "throwing_knife", "boomerang",
+                "flanged_mace", "morning_star",
+                "kama", "tonfa", "bo", "jo", "kanabo", "tetsubo", "naginata",
+                "yari", "kusarigama", "kyoketsu_shoge", "uchigatana",
+                "odachi", "kodachi", "yoroi_doshi", "kaiken",
                 "firearm", "bullet", "magazine", "ammo_crate", "scope",
                 "suppressor", "grip", "stock", "barrel", "receiver",
                 "marksman", "dmr", "battle_rifle", "pdw", "lmg", "rocket",
@@ -237,27 +264,26 @@ public class FakePlayerEntity extends PathfinderMob {
                 "thompson", "garand", "kar98k", "mosin", "lee_enfield", "springfield",
                 "fg42", "stg44", "mg42", "mg34", "ppsh", "pps", "dp28", "svt",
                 "sks", "dragunov", "svd", "vss", "as_val", "groza", "an94",
-                "aeK", "rpk", "pkp", "pecheneg", "saiga", "vepr", "vityaz",
+                "rpk", "pkp", "pecheneg", "saiga", "vepr", "vityaz",
                 "pp19", "bizon", "ots", "sr3m", "vsk94", "9a91", "sr2",
                 "famas", "hk416", "hk417", "g36", "g3", "mp7", "ump45",
-                "fn_fal", "fnc", "l85", "sa80", "f2000", "p90", "five_seven",
+                "fn_fal", "fnc", "l85", "sa80", "f2000", "five_seven",
                 "mpx", "mcx", "sg550", "sg552", "sg553", "sg556", "aug_a3",
                 "tavor", "x95", "galil", "negev", "uzi_pro", "jericho",
                 "tar21", "micro_tavor", "daniel", "colt", "sig", "beretta",
                 "walther", "hk", "cz", "ruger", "smith_wesson", "taurus",
                 "fn_herstal", "imi", "steyr", "sako", "remington", "winchester",
-                "mossberg", "benelli", "franchi", "beretta", "browning",
+                "mossberg", "benelli", "franchi", "browning",
                 "sauer", "blaser", "merkel", "krieghoff", "perazzi", "caesar",
-                "mcmillan", "accuracy", "sako", "tikka", "blaser", "sauer",
-                "heym", "rigby", "holland", "westley", "purdey", "boss",
-                "greener", "cogswell", "harrison", "churchill", "webley",
+                "mcmillan", "accuracy", "tikka", "heym", "rigby", "holland", "westley",
+                "purdey", "boss", "greener", "cogswell", "harrison", "churchill", "webley",
                 "enfield", "armalite", "bushmaster", "dpms", "larue", "noveske",
                 "bcm", "aero", "psa", "anderson", "stag", "cmmg", "wilson",
                 "nighthawk", "ed_brown", "les_baer", "cabot", "infinity",
                 "staccato", "atlas", "limcat", "svi", "cz_custom", "tanfoglio",
                 "phoenix", "redback", "alien", "laugo", "fk_brno", "psd",
                 "archon", "strike_one", "arsenal", "plum", "zenitco", "magpul",
-                "b5", "bcm", "geissele", "larue", "kac", "lmt", "dd", "sionics",
+                "b5", "geissele", "larue", "kac", "lmt", "dd", "sionics",
                 "centurion", "fcd", "slr", "midwest", "samson", "troy", "yhm",
                 "silencerco", "dead_air", "rugged", "gemtech", "aac", "surefire",
                 "oss", "cgs", "tbac", "area419", "form1", "solvent_trap",
@@ -282,28 +308,37 @@ public class FakePlayerEntity extends PathfinderMob {
                 "sabaton", "gauntlet", "pauldron", "rerebrace", "vambrace", "couter",
                 "gorget", "bevor", "sallet", "barbute", "armet", "close_helm",
                 "great_helm", "bucket_helm", "kettle_hat", "morion", "cabasset",
-                "burgonet", "morion", "pickelhaube", "stahlhelm", "brodie",
+                "burgonet", "pickelhaube", "stahlhelm", "brodie",
                 "adrian", "m1", "pasgt", "ach", "fast", "airframe", "crye",
                 "ops_core", "team_wendy", "galvion", "gentex", "msa", "3m",
-                "avon", "scott", "drager", "msa", "survivair", "north", "honeywell",
+                "avon", "scott", "drager", "survivair", "north", "honeywell",
                 "bullard", "fibre_metal", "jackson", "sellstrom", "uvex", "bolle",
                 "ess", "oakley", "wiley", "smith", "rudy", "revision", "gatorz",
-                "randolph", "american_optical", "ao", "ray_ban", "persol", "maui_jim",
-        };
-        for (String key : weaponKeys) {
+                "randolph", "american_optical", "ao", "ray_ban", "persol", "maui_jim"
+        ));
+    }
+
+    private static boolean isWeaponNamespace(String namespace) {
+        return getWeaponConfig().weaponNamespaces.contains(namespace);
+    }
+
+    private static boolean isWeaponItem(Item item, String path) {
+        if (item instanceof SwordItem || item instanceof ProjectileWeaponItem) return true;
+        String lower = path.toLowerCase();
+        for (String key : getWeaponConfig().weaponKeywords) {
             if (lower.contains(key)) return true;
         }
         return false;
     }
 
     private static boolean isTaczWeapon(ItemStack stack) {
-        ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
         return id.getNamespace().equals("tacz");
     }
 
     private void giveTaczAmmo(ItemStack weapon) {
-        for (Item item : BuiltInRegistries.ITEM) {
-            ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+        for (Item item : ForgeRegistries.ITEMS) {
+            ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
             if (id.getNamespace().equals("tacz") && id.getPath().contains("ammo")) {
                 ItemStack ammo = new ItemStack(item, 64);
                 for (int i = 0; i < inventory.getContainerSize(); i++) {
@@ -329,7 +364,9 @@ public class FakePlayerEntity extends PathfinderMob {
             else if (variant == 1) emap.put(Enchantments.BANE_OF_ARTHROPODS, 4 + rnd.nextInt(2));
             else emap.put(Enchantments.KNOCKBACK, 2);
             net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, stack);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            com.qlm.zombie.QLMZombieMod.LOGGER.debug("Failed to enchant default weapon: {}", ignored.getMessage());
+        }
         return stack;
     }
 
@@ -520,7 +557,9 @@ public class FakePlayerEntity extends PathfinderMob {
             if (candidateArmor.getToughness() > currentArmor.getToughness()) return true;
         }
         if (current.getItem() instanceof TieredItem currentTier && candidate.getItem() instanceof TieredItem candidateTier) {
-            if (candidateTier.getTier().getLevel() > currentTier.getTier().getLevel()) return true;
+            @SuppressWarnings("deprecation")
+            boolean result = candidateTier.getTier().getLevel() > currentTier.getTier().getLevel();
+            if (result) return true;
         }
         return false;
     }
@@ -591,11 +630,13 @@ public class FakePlayerEntity extends PathfinderMob {
 
     public void openInventory(Player player) {
         if (!this.level().isClientSide) {
-            player.openMenu(new SimpleMenuProvider(
-                    (id, inv, p) -> ChestMenu.threeRows(id, inv, this.inventory),
-                    this.getDisplayName()
-            ));
+            player.openMenu(this);
         }
+    }
+
+    @Override
+    public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int windowId, net.minecraft.world.entity.player.Inventory playerInventory, net.minecraft.world.entity.player.Player player) {
+        return ChestMenu.threeRows(windowId, playerInventory, this.inventory);
     }
 
     private boolean isFood(ItemStack stack) {
@@ -1033,7 +1074,9 @@ public class FakePlayerEntity extends PathfinderMob {
                 if (candidateArmor.getToughness() > currentArmor.getToughness()) return true;
             }
             if (current.getItem() instanceof TieredItem currentTier && candidate.getItem() instanceof TieredItem candidateTier) {
-                if (candidateTier.getTier().getLevel() > currentTier.getTier().getLevel()) return true;
+                @SuppressWarnings("deprecation")
+                boolean result = candidateTier.getTier().getLevel() > currentTier.getTier().getLevel();
+                if (result) return true;
             }
             return false;
         }
@@ -1608,7 +1651,7 @@ public class FakePlayerEntity extends PathfinderMob {
         }
 
         private ItemStack findItemStack(String itemId, int count) {
-            for (Item item : BuiltInRegistries.ITEM) {
+            for (Item item : ForgeRegistries.ITEMS) {
                 if (item.toString().equals(itemId)) {
                     return new ItemStack(item, count);
                 }
@@ -1637,12 +1680,11 @@ public class FakePlayerEntity extends PathfinderMob {
         @Override
         public boolean canUse() {
             if (entity.isSitting()) return false;
-            if (entity.myKillPositions.isEmpty()) return false;
 
             List<ItemEntity> items = entity.level().getEntitiesOfClass(
                     ItemEntity.class,
                     entity.getBoundingBox().inflate(12.0, 4.0, 12.0),
-                    item -> entity.isNearMyKill(item.blockPosition())
+                    item -> item.isAlive() && !item.getItem().isEmpty()
             );
 
             if (items.isEmpty()) return false;
@@ -1661,8 +1703,7 @@ public class FakePlayerEntity extends PathfinderMob {
         @Override
         public boolean canContinueToUse() {
             return targetItem != null && targetItem.isAlive()
-                    && !entity.isSitting()
-                    && entity.isNearMyKill(targetItem.blockPosition());
+                    && !entity.isSitting();
         }
 
         @Override

@@ -1,8 +1,15 @@
 package com.qlm.zombie.advancements;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.WeakHashMap;
+
 import com.qlm.zombie.QLMZombieMod;
 import com.qlm.zombie.dayphase.DayPhase;
 import com.qlm.zombie.moon.MoonHelper;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraftforge.event.TickEvent;
@@ -10,16 +17,14 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.*;
-
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class AchievementTracker {
 
-    private static final Map<UUID, Integer> zombieKillCount = new HashMap<>();
-    private static final Map<UUID, Integer> bloodMoonSurvived = new HashMap<>();
-    private static final Map<UUID, Long> awardedDays = new HashMap<>();
-    private static final Map<UUID, String> awardedPhase = new HashMap<>();
-    private static final Set<UUID> wasInBloodMoon = new HashSet<>();
+    private static final Map<UUID, Integer> zombieKillCount = new WeakHashMap<>();
+    private static final Map<UUID, Integer> bloodMoonSurvived = new WeakHashMap<>();
+    private static final Map<UUID, Long> awardedDays = new WeakHashMap<>();
+    private static final Map<UUID, String> awardedPhase = new WeakHashMap<>();
+    private static final Set<UUID> wasInBloodMoon = Collections.newSetFromMap(new WeakHashMap<>());
 
     private static final int[] DAY_MILESTONES = {7, 14, 30, 60, 100, 150, 365};
     private static final int[] KILL_MILESTONES = {10, 50, 100, 500, 1000};
@@ -64,7 +69,7 @@ public class AchievementTracker {
 
     private static void checkSurvivalDays(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        long currentDay = player.serverLevel().getDayTime() / 57600L;
+        long currentDay = player.serverLevel().getDayTime() / 57600L + 1;
         long lastAwarded = awardedDays.getOrDefault(playerId, 0L);
 
         for (int milestone : DAY_MILESTONES) {

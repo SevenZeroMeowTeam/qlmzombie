@@ -107,7 +107,7 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.compilerArgs += ['-parameters']
+    options.compilerArgs += ['-parameters', '-Xlint:deprecation']
 }
 
 tasks.withType(JavaCompile).configureEach {

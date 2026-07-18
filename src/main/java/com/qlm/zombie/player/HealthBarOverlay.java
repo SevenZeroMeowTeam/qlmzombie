@@ -30,8 +30,7 @@ public class HealthBarOverlay {
     public static void onHideVanillaHealth(RenderGuiOverlayEvent.Pre event) {
         if (!QLMConfig.HIDE_VANILLA_HEALTH.get()) return;
 
-        ResourceLocation overlayId = getIdFromOverlay(event.getOverlay());
-        if (overlayId == null || !overlayId.equals(PLAYER_HEALTH_OVERLAY)) return;
+        if (!event.getOverlay().id().equals(PLAYER_HEALTH_OVERLAY)) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.options.hideGui) return;
@@ -46,10 +45,7 @@ public class HealthBarOverlay {
     public static void onRenderHealthBar(RenderGuiOverlayEvent.Post event) {
         if (!QLMConfig.ENABLE_HEALTH_BAR.get()) return;
 
-        // 监听 hotbar（物品栏）overlay：它每帧都绘制，确保血条稳定不闪烁
-        // （之前用 vignette 暗角 overlay，不是每帧都触发，导致血条闪烁）
-        ResourceLocation overlayId = getIdFromOverlay(event.getOverlay());
-        if (overlayId == null || !overlayId.equals(HOTBAR_OVERLAY)) return;
+        if (!event.getOverlay().id().equals(HOTBAR_OVERLAY)) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.options.hideGui) return;
@@ -131,47 +127,6 @@ public class HealthBarOverlay {
     }
 
     // ---------- 辅助方法 ----------
-
-    /**
-     * 从 Forge overlay 对象中获取 ResourceLocation 标识符。
-     * 使用反射避免编译期对具体内部类路径的硬依赖（兼容不同 Forge 构建）。
-     */
-    private static ResourceLocation getIdFromOverlay(Object overlay) {
-        if (overlay == null) return null;
-        try {
-            // 尝试调用 id() 或 getId() 方法
-            java.lang.reflect.Method idMethod = null;
-            try {
-                idMethod = overlay.getClass().getMethod("id");
-            } catch (NoSuchMethodException ignored) {
-                try {
-                    idMethod = overlay.getClass().getMethod("getId");
-                } catch (NoSuchMethodException ignored2) {
-                }
-            }
-            if (idMethod != null) {
-                Object result = idMethod.invoke(overlay);
-                if (result instanceof ResourceLocation) {
-                    return (ResourceLocation) result;
-                }
-                String str = String.valueOf(result);
-                if (str.contains(":")) {
-                    String[] parts = str.split(":", 2);
-                    return ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
-                }
-                return ResourceLocation.fromNamespaceAndPath("minecraft", str);
-            }
-            // 回退：toString() 通常包含 id 信息
-            String s = overlay.toString();
-            if (s.contains(":")) {
-                String[] parts = s.split(":", 2);
-                return ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
-            }
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     private static void drawSolidRect(GuiGraphics gui, int x, int y, int w, int h, int color) {
         if (w <= 0 || h <= 0) return;

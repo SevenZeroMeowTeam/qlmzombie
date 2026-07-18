@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -16,13 +17,12 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class AIPlayerSpawnHandler {
 
-    private static final Random RANDOM = new Random();
+    private static final RandomSource RANDOM = RandomSource.create();
     private static long lastCheckTick = 0;
     private static final String[] AI_NAMES = {
             "Alex", "Steve", "Him", "Noor", "Sunny", "Ari", "Zuri", "Makena",
