@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:iron_sword"
+    },
+    "title": { "translate": "advancements.qlmzombie.zombie_kills.title" },
+    "description": { "translate": "advancements.qlmzombie.zombie_kills.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:zombie_kills/kill_50",
+  "criteria": {
+    "kill_100": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["kill_100"]
+  ]
+}

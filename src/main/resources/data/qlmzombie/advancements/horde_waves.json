@@ -1,0 +1,26 @@
+{
+  "parent": "qlmzombie:root",
+  "display": {
+    "icon": {
+      "item": "minecraft:zombie_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.qlmzombie.horde_waves.title"
+    },
+    "description": {
+      "translate": "advancements.qlmzombie.horde_waves.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "complete_all_waves": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["complete_all_waves"]
+  ]
+}
