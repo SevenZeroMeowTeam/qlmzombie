@@ -1,0 +1,72 @@
+{
+  "id": "qlmzombie:gathering_resources",
+  "title": {
+    "zh_cn": "资源收集",
+    "en_us": "Gathering Resources"
+  },
+  "description": {
+    "zh_cn": "没有物资就无法生存。收集基础资源来制作装备和建造庇护所。挖矿砍树，让世界为你所用。",
+    "en_us": "No resources, no survival. Gather basic materials to craft equipment and build shelter. Mine and chop, make the world serve you."
+  },
+  "icon": {
+    "item": "minecraft:iron_pickaxe"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "mine_stone",
+      "title": {
+        "zh_cn": "挖掘圆石",
+        "en_us": "Mine Cobblestone"
+      },
+      "item": "minecraft:cobblestone",
+      "count": 32
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "chop_wood",
+      "title": {
+        "zh_cn": "砍伐原木",
+        "en_us": "Chop Logs"
+      },
+      "item": "#minecraft:logs",
+      "count": 16
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "craft_workbench",
+      "title": {
+        "zh_cn": "制作工作台",
+        "en_us": "Craft Workbench"
+      },
+      "item": "minecraft:crafting_table",
+      "count": 1
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "qlmzombie:survival_kit",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "qlmzombie:reinforced_parts",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "minecraft:iron_ingot",
+      "count": 5
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:first_blood",
+    "children": [
+      "qlmzombie:ai_companion"
+    ]
+  }
+}

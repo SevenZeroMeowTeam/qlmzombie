@@ -130,7 +130,6 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- 村民 1% 概率成为 §2🛡 村庄守卫者 §f(攻击附近怪物保护村庄)"), false);
         player.displayClientMessage(Component.literal("  §f- 守卫者有 1% 概率获得 §d✦ 强化守护者之剑 ✦ §f(锋利III+火焰附加II+耐久III)"),
                 false);
-        player.displayClientMessage(Component.literal("§e🤖 AI 玩家 §7- v2.0.0"), false);
         player.displayClientMessage(Component.literal("  §f- /qlm aiplayer spawn [名字] [皮肤URL] 生成AI玩家"), false);
         player.displayClientMessage(Component.literal("  §f- 主世界随机生成AI玩家(默认每3分钟检测, 15%概率)"), false);
         player.displayClientMessage(Component.literal("  §f- 25%概率手持mod武器 + TACZ子弹无限"), false);
@@ -139,9 +138,6 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- 覆盖: 植物魔法/气动工艺/通用机械/沉浸工程/机械动力"), false);
         player.displayClientMessage(Component.literal("  §f- 驯服: 手持骨头/腐肉/熟肉/面包/苹果/金苹果右键, 33%概率"), false);
         player.displayClientMessage(Component.literal("  §f- 空手右键驯服AI: 打开真实背包GUI(27格+4护甲槽)"), false);
-        player.displayClientMessage(Component.literal("  §f- §a🌲自动砍树: §f搜索16格半径内所有树木, 自动寻找并砍伐"), false);
-        player.displayClientMessage(Component.literal("  §f- §a⛏自动挖矿: §f支持数百种方块(矿石/石头/下界方块/建筑方块/红石组件等)"), false);
-        player.displayClientMessage(Component.literal("  §f- §a🔨自动工作台: §f制作工作台及数百种常用工具/装备/建筑方块"), false);
         player.displayClientMessage(Component.literal("  §f- 自动拾取: 仅拾取自己击杀生物掉落的物品(不抢玩家战利品)"), false);
         player.displayClientMessage(Component.literal("  §f- 自动工作站: 工作台/熔炉/高炉/烟熏炉/锻造台/制箭台/切石机"), false);
         player.displayClientMessage(Component.literal("  §f- 探测: 砂轮/铁砧/酿造台/织布机/制图台"), false);
@@ -152,11 +148,6 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- /qlm aiplayer list/tp/tame/skin/kill 管理命令"), false);
         player.displayClientMessage(Component.literal("  §f- 可在 qlmzombie-common.toml 的 [ai_player_spawn] 中调整生成参数"),
                 false);
-        player.displayClientMessage(Component.literal("  §f- §a💬聊天交互: §f直接在聊天栏输入 AI名字 指令, AI会执行你的命令"), false);
-        player.displayClientMessage(Component.literal("  §f-   支持: 跟随/等待/过来/收集/制作/给我/攻击/挖矿/砍树/停止"), false);
-        player.displayClientMessage(Component.literal("  §f-   示例: §6[AI名字] 给我10个木头"), false);
-        player.displayClientMessage(Component.literal("  §f- §a🧠Player2 API: §f自动连接Player2服务实现智能交互(需安装Player2)"), false);
-        player.displayClientMessage(Component.literal("§e⭐ 进阶技能: 重制版 §7- v2.0.0"), false);
         player.displayClientMessage(Component.literal("  §f- 开局赠送5点技能点，按K键打开技能树面板"), false);
         player.displayClientMessage(
                 Component.literal("  §f- 武器检测支持JSON配置: assets/qlmzombie/data/weapon_detection.json"), false);
@@ -165,10 +156,6 @@ public class PlayerInitHandler {
         player.displayClientMessage(Component.literal("  §f- 启动时自动从内部 libs 释放所有依赖mod"), false);
         player.displayClientMessage(Component.literal("  §f- 自动检测重复mod并删除多余副本（仅保留一个版本）"), false);
         player.displayClientMessage(Component.literal("  §f- 自动检测冲突mod（如JEI/REI、WTHIT/Jade），默认保留REI/WTHIT"), false);
-        player.displayClientMessage(
-                Component.literal("  §a- 白名单保护: FTB团队/任务/区块/Library、Architectury、Cloth Config、Bookshelf、PlayerEngine/NPC等必要mod不受影响"), false);
-        player.displayClientMessage(Component.literal("  §f- §aFTB Library (NeoForge): §fFTB套餐必要前置，已配置为必要依赖"), false);
-        player.displayClientMessage(Component.literal("  §f- §aPlayer2 NPC: §fAI NPC mod支持，可协助玩家砍树/挖矿/制作"), false);
         player.displayClientMessage(Component.literal("  §f- 如需重新启用被禁用的mod，请删除 .jar.disabled 后缀"), false);
         player.displayClientMessage(Component.literal("§e🎵 音乐系统:"), false);
         player.displayClientMessage(Component.literal("  §f- 登录时播放史诗开场主题"), false);

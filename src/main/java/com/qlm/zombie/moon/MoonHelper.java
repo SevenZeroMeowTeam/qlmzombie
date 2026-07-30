@@ -5,12 +5,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fml.ModList;
-
-import java.lang.reflect.Method;
 
 public class MoonHelper {
 
@@ -75,33 +74,22 @@ public class MoonHelper {
             QLMZombieMod.LOGGER.warn("[QLM Zombie] EnhancedCelestials 未加载，无法设置蓝月");
             return false;
         }
-        try {
-            Class<?> defaultEvents = Class.forName("dev.corgitaco.enhancedcelestials.api.lunarevent.DefaultLunarEvents");
-            java.lang.reflect.Field blueMoonField = defaultEvents.getField("BLUE_MOON");
-            Object blueMoon = blueMoonField.get(null);
-            return setLunarEvent(level, blueMoon);
-        } catch (Exception e) {
-            QLMZombieMod.LOGGER.error("[QLM Zombie] forceBlueMoon failed", e);
-            return false;
-        }
+        return false;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static boolean setLunarEvent(ServerLevel level, Object key) {
+    private static boolean setLunarEvent(ServerLevel level, Object lunarEvent) {
         if (!EC_LOADED) return false;
         try {
-            Class<?> enhancedCelestials = Class.forName("dev.corgitaco.enhancedcelestials.EnhancedCelestials");
-            Method lunarForecastMethod = enhancedCelestials.getMethod("lunarForecastWorldData", ServerLevel.class);
-            Object opt = lunarForecastMethod.invoke(null, level);
-            Method orElseMethod = opt.getClass().getMethod("orElse", Object.class);
-            Object data = orElseMethod.invoke(opt, new Object[]{null});
-            if (data == null) {
-                QLMZombieMod.LOGGER.warn("[QLM Zombie] EnhancedCelestials lunar forecast data not available");
-                return false;
-            }
-            Method setLunarEventMethod = data.getClass().getMethod("setLunarEvent", ResourceKey.class);
-            setLunarEventMethod.invoke(data, key);
-            QLMZombieMod.LOGGER.info("[QLM Zombie] Forced lunar event");
+            Class<?> lunarUtil = Class.forName("dev.corgitaco.enhancedcelestials.core.EnhancedCelestialsContext");
+            java.lang.reflect.Method getContext = lunarUtil.getMethod("get", Level.class);
+            Object context = getContext.invoke(null, level);
+            if (context == null) return false;
+            java.lang.reflect.Method getData = context.getClass().getMethod("getLunarData");
+            Object data = getData.invoke(context);
+            if (data == null) return false;
+            java.lang.reflect.Method setEvent = data.getClass().getMethod("setLunarEvent", ResourceKey.class);
+            setEvent.invoke(data, lunarEvent);
             return true;
         } catch (Exception e) {
             QLMZombieMod.LOGGER.error("[QLM Zombie] setLunarEvent failed", e);
@@ -112,22 +100,19 @@ public class MoonHelper {
     public static String getCurrentMoonId(ServerLevel level) {
         if (!EC_LOADED || level == null) return "none";
         try {
-            Class<?> enhancedCelestials = Class.forName("dev.corgitaco.enhancedcelestials.EnhancedCelestials");
-            Method lunarForecastMethod = enhancedCelestials.getMethod("lunarForecastWorldData", ServerLevel.class);
-            Object opt = lunarForecastMethod.invoke(null, level);
-            Method orElseMethod = opt.getClass().getMethod("orElse", Object.class);
-            Object data = orElseMethod.invoke(opt, new Object[]{null});
+            Class<?> lunarUtil = Class.forName("dev.corgitaco.enhancedcelestials.core.EnhancedCelestialsContext");
+            java.lang.reflect.Method getContext = lunarUtil.getMethod("get", Level.class);
+            Object context = getContext.invoke(null, level);
+            if (context == null) return "none";
+            java.lang.reflect.Method getData = context.getClass().getMethod("getLunarData");
+            Object data = getData.invoke(context);
             if (data == null) return "none";
-            if (level.isDay()) {
-                return "enhancedcelestials:default";
-            }
-            Method currentEventMethod = data.getClass().getMethod("currentLunarEventHolder");
-            Object holder = currentEventMethod.invoke(data);
-            Method unwrapKeyMethod = holder.getClass().getMethod("unwrapKey");
-            Object keyOpt = unwrapKeyMethod.invoke(holder);
-            Method mapMethod = keyOpt.getClass().getMethod("map", java.util.function.Function.class);
-            Object result = mapMethod.invoke(keyOpt, new Object[]{(java.util.function.Function<ResourceKey, String>) k -> k.location().toString()});
-            return "enhancedcelestials:default";
+            java.lang.reflect.Method getCurrentEvent = data.getClass().getMethod("getCurrentLunarEvent");
+            Object event = getCurrentEvent.invoke(data);
+            if (event == null) return "none";
+            java.lang.reflect.Method getKey = event.getClass().getMethod("getKey");
+            Object key = getKey.invoke(event);
+            return key != null ? key.toString() : "none";
         } catch (Exception e) {
             QLMZombieMod.LOGGER.warn("[QLM Zombie] getCurrentMoonId failed: {}", e.getMessage());
             return "none";

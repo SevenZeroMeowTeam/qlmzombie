@@ -134,33 +134,11 @@ public class FakePlayerEntityRenderer extends HumanoidMobRenderer<FakePlayerEnti
 
         CompletableFuture.runAsync(() -> {
             try {
-                URL originalUrl = new URL(url);
-                HttpURLConnection connection = (HttpURLConnection) originalUrl.openConnection();
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(10000);
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                connection.setRequestProperty("Accept", "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
-                connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
-                connection.setInstanceFollowRedirects(false);
-
-                int responseCode = connection.getResponseCode();
-                URL finalUrl = originalUrl;
-
-                if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || 
-                    responseCode == HttpURLConnection.HTTP_MOVED_TEMP || 
-                    responseCode == 307 || responseCode == 308) {
-                    String redirectUrl = connection.getHeaderField("Location");
-                    if (redirectUrl != null) {
-                        finalUrl = new URL(originalUrl, redirectUrl);
-                        connection.disconnect();
-                        connection = (HttpURLConnection) finalUrl.openConnection();
-                        connection.setConnectTimeout(10000);
-                        connection.setReadTimeout(10000);
-                        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                        connection.setRequestProperty("Accept", "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
-                        connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8");
-                    }
-                }
+                connection.setInstanceFollowRedirects(true);
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 
                 try (InputStream is = connection.getInputStream();
                      ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -185,9 +163,6 @@ public class FakePlayerEntityRenderer extends HumanoidMobRenderer<FakePlayerEnti
                     String base64URL = "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
 
                     Minecraft.getInstance().execute(() -> {
-                        ResourceLocation skinLoc = loadSkinFromBytes(imageBytes, entity);
-                        SKIN_CACHE.put(url, skinLoc);
-                        SKIN_CACHE.put(base64URL, skinLoc);
                     });
                 }
             } catch (java.net.SocketTimeoutException e) {
@@ -195,7 +170,6 @@ public class FakePlayerEntityRenderer extends HumanoidMobRenderer<FakePlayerEnti
             } catch (java.io.IOException e) {
                 com.qlm.zombie.QLMZombieMod.LOGGER.warn("Failed to fetch skin from URL {}: {}", url, e.getMessage());
             } catch (Exception e) {
-                com.qlm.zombie.QLMZombieMod.LOGGER.warn("Failed to fetch skin from URL {}: {}", url, e.getClass().getSimpleName() + ": " + e.getMessage());
             }
         });
     }

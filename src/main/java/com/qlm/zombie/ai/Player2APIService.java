@@ -85,7 +85,13 @@ public class Player2APIService {
                 }
                 return null;
             } catch (Exception e) {
-                QLMZombieMod.LOGGER.warn("Failed to send task to Player2: {}", e.getMessage());
+                String errorMsg = e.getMessage();
+                QLMZombieMod.LOGGER.warn("Failed to send task to Player2: {}", errorMsg);
+
+                if (errorMsg != null && errorMsg.contains("HTTP 400")) {
+                    QLMZombieMod.LOGGER.warn("Player2 API returned 400 - falling back to local parsing for: {}", task);
+                    return task;
+                }
                 return null;
             }
         });
@@ -200,6 +206,9 @@ public class Player2APIService {
             String item = extractItemName(response);
             return new AIResponse("chop", item, 1, response);
         }
+        if (lower.contains("build") || lower.contains("house") || lower.contains("建造") || lower.contains("搭房子") || lower.contains("建房")) {
+            return new AIResponse("build", null, 1, response);
+        }
         if (lower.contains("stop") || lower.contains("停止") || lower.contains("休息")) {
             return new AIResponse("stop", null, 1, response);
         }
@@ -311,22 +320,46 @@ public class Player2APIService {
             }
         }
 
-        try (InputStream is = connection.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
+        int responseCode = connection.getResponseCode();
+        InputStream is = null;
+        try {
+            if (responseCode >= 200 && responseCode < 300) {
+                is = connection.getInputStream();
+            } else {
+                is = connection.getErrorStream();
+                String errorBody = readStream(is);
+                QLMZombieMod.LOGGER.warn("Player2 API error {}: {}", responseCode, errorBody);
+                throw new RuntimeException("HTTP " + responseCode + ": " + errorBody);
             }
 
-            JsonObject json = GSON.fromJson(sb.toString(), JsonObject.class);
+            String responseBody = readStream(is);
+            if (responseBody.isEmpty()) {
+                return new HashMap<>();
+            }
+
+            JsonObject json = GSON.fromJson(responseBody, JsonObject.class);
             Map<String, String> result = new HashMap<>();
             for (String key : json.keySet()) {
                 result.put(key, json.get(key).getAsString());
             }
             return result;
         } finally {
+            if (is != null) {
+                is.close();
+            }
             connection.disconnect();
+        }
+    }
+
+    private static String readStream(InputStream is) throws IOException {
+        if (is == null) return "";
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            return sb.toString();
         }
     }
 
@@ -351,15 +384,27 @@ public class Player2APIService {
             }
         }
 
-        try (InputStream is = connection.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
+        int responseCode = connection.getResponseCode();
+        InputStream is = null;
+        try {
+            if (responseCode >= 200 && responseCode < 300) {
+                is = connection.getInputStream();
+            } else {
+                is = connection.getErrorStream();
+                String errorBody = readStream(is);
+                QLMZombieMod.LOGGER.warn("Player2 API error {}: {}", responseCode, errorBody);
+                throw new RuntimeException("HTTP " + responseCode + ": " + errorBody);
             }
-            return GSON.fromJson(sb.toString(), Map.class);
+
+            String responseBody = readStream(is);
+            if (responseBody.isEmpty()) {
+                return new HashMap<>();
+            }
+            return GSON.fromJson(responseBody, Map.class);
         } finally {
+            if (is != null) {
+                is.close();
+            }
             connection.disconnect();
         }
     }

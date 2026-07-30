@@ -1,0 +1,68 @@
+{
+  "id": "qlmzombie:building_shelter",
+  "title": {
+    "zh_cn": "建造庇护所",
+    "en_us": "Building Shelter"
+  },
+  "description": {
+    "zh_cn": "夜晚是危险的，你需要一个安全的庇护所。让你的AI伙伴为你建造一座房子，或者自己收集材料建造。",
+    "en_us": "Nights are dangerous, you need a safe shelter. Let your AI companion build a house for you, or gather materials to build one yourself."
+  },
+  "icon": {
+    "item": "minecraft:oak_planks"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_planks",
+      "title": {
+        "zh_cn": "收集木板",
+        "en_us": "Collect Planks"
+      },
+      "item": "#minecraft:planks",
+      "count": 32
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_stone",
+      "title": {
+        "zh_cn": "收集石头",
+        "en_us": "Collect Stone"
+      },
+      "item": "minecraft:stone",
+      "count": 16
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "qlmzombie:zombie_core",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "qlmzombie:reinforced_parts",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "minecraft:iron_leg_greaves",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "minecraft:iron_boots",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:ai_companion",
+    "children": [
+      "qlmzombie:blood_moon_survivor"
+    ]
+  }
+}

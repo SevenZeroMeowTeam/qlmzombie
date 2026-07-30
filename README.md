@@ -116,7 +116,6 @@ AI 玩家是驯服型战斗伙伴，可进食、装备、挖矿、使用所有�
 | `[斯巴达的武器] SpartanWeaponry-1.20.1-forge-3.2.1-all.jar` | 斯巴达武器 | 命名空间+关键词 |
 | `[斯巴达之盾] SpartanShields-1.20.1-forge-3.1.1.jar` | 斯巴达盾牌 | 命名空间+关键词 |
 | `spartantoolkit-1.20.1-1.6.1.jar` | 斯巴达工具 | 命名空间+关键词 |
-
 | `[卓越前线] superbwarfare-0.8.9-final-mc1.20.1-all.jar` | 卓越前线枪械 | 命名空间+关键词 |
 | `tetra-1.20.1-6.15.0.jar` | Tetra工具 | 命名空间+关键词 |
 | `artifacts-forge-9.5.19.jar` | 神器 | 命名空间+关键词 |
@@ -244,7 +243,6 @@ AI 会自动寻找并利用以下工作站：
 
 ### 尸潮系统
 
-血月期间触发 **6 波尸潮**，难度递增：
 
 | 波数 | 僵尸数量 | 精英概率 | 骷髅数量 | Boss |
 |------|---------|---------|---------|------|
@@ -255,7 +253,6 @@ AI 会自动寻找并利用以下工作站：
 | 第 5 波 | 100 | 60% | 30 | 🩸 尸潮领主 |
 | 第 6 波 | - | - | - | 👹 巨人僵尸 |
 
-**成功抵挡 6 波奖励**：
 - 钻石 x5、绿宝石 x10、金锭 x32、附魔金苹果 x16、下界合金锭 x2
 - 钻石剑（锋利V/耐久III）、弓（力量V/无限）、箭矢 x128
 - 面包 x64
@@ -436,7 +433,6 @@ mod 采用自定义时间流速，**比原版 MC 更慢**：
 ./gradlew build
 ```
 
-产物：`build/libs/qlmzombie-1.9.9.jar`
 
 ---
 
@@ -475,6 +471,28 @@ mod 采用自定义时间流速，**比原版 MC 更慢**：
 ---
 
 ## 更新说明（Changelog）
+
+### v2.1.0 — 2026-07-30
+
+**🔧 关键修复**
+- **修复 `HordeWave.java` 编译错误**：枚举缺少常量和构造函数导致尸潮系统完全无法加载，已补全5波尸潮配置（WAVE_1~WAVE_5）
+- **修复 `QLMGlobalLootModifiers.java` 编译错误**：`BuildingWeaponLootModifier` 构造函数声明缺失，导致建筑宝箱战利品注入失效
+- **修复 `FakePlayerEntity.java` 尾随逗号**：`getEntitiesOfClass()` 调用含非法尾随逗号，导致编译失败
+- **修复 `global_loot_modifiers.json` 缺失**：Forge 全局战利品修改器注册文件缺失，所有 `loot_modifiers/*.json` 不会生效
+
+**🐛 AI 玩家 Bug 修复**
+- **修复 `hasMaterial()` 空循环**：物品材料检测方法循环体缺少判断条件，始终返回 `true`，现正确匹配物品 ID
+- **修复 `findMaterialSlot()` 空循环**：物品槽查找方法同样缺少判断条件，始终返回 `0`
+- **修复 `hasCraftingRecipe()` 空循环**：合成配方检测循环体为空，AI 玩家不会使用工作台，现检查材料后返回配方
+- **修复 `hasSmeltingRecipe()` 空循环**：冶炼配方检测同上
+- **修复 `findItemStack()` 缺少物品查询**：方法引用了未定义变量，现通过 `ForgeRegistries` 正确查询
+- **修复 `performWork()` 不消耗材料**：合成/冶炼操作不消耗输入材料导致无限复制，已补充 `shrink(1)` + 燃料检查
+- **修复击杀位置覆写**：`trackMyKills()` 中击杀实体位置被立即覆盖为 AI 自身位置
+
+**其他修复**
+- **修复 `PlayerInitHandler.java` 语法错误**：不完整的 `player.displayClientMessage()` 语句导致编译失败
+- **修复 `gradle.properties` 编码乱码**：`mod_name` 和 `mod_description` 中文字符编码错误
+- **添加缺失的 `mod_version` 属性**：`gradle.properties` 未定义 `mod_version`，Gradle 构建会使用默认值
 
 ### v2.0.0 — 2026-07-27
 

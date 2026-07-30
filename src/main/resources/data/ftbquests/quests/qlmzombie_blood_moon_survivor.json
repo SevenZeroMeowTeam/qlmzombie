@@ -1,0 +1,77 @@
+{
+  "id": "qlmzombie:blood_moon_survivor",
+  "title": {
+    "zh_cn": "血月幸存者",
+    "en_us": "Blood Moon Survivor"
+  },
+  "description": {
+    "zh_cn": "血月是末日中最可怕的现象。在血月中存活下来，证明你是真正的幸存者。收集血月中僵尸掉落的珍贵材料。",
+    "en_us": "Blood Moons are the deadliest phenomenon of the apocalypse. Survive a Blood Moon to prove you're a true survivor. Collect rare materials dropped by Blood Moon zombies."
+  },
+  "icon": {
+    "item": "qlmzombie:biohazard_sample"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_moon_zombies",
+      "title": {
+        "zh_cn": "消灭血月僵尸",
+        "en_us": "Kill Blood Moon Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 50
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_samples",
+      "title": {
+        "zh_cn": "收集生物样本",
+        "en_us": "Collect Biohazard Samples"
+      },
+      "item": "qlmzombie:biohazard_sample",
+      "count": 2
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "qlmzombie:biohazard_sample",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "qlmzombie:tactical_ammo",
+      "count": 16
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "qlmzombie:infected_essence",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "minecraft:diamond_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "minecraft:diamond_helmet",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parents": [
+      "qlmzombie:building_shelter",
+      "qlmzombie:zombie_hunter"
+    ],
+    "children": [
+      "qlmzombie:master_survivor"
+    ]
+  }
+}

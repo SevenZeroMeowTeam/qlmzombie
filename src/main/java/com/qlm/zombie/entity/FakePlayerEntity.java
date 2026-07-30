@@ -53,6 +53,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ToolActions;
 import net.minecraftforge.common.TierSortingRegistry;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -120,13 +121,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
         this.goalSelector.addGoal(4, new TamableFollowGoal(this, 1.0D, 4.0F, 2.0F));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         this.goalSelector.addGoal(6, new AIMineGoal(this));
-        this.goalSelector.addGoal(7, new AITreeChopGoal(this));
-        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(10, new BreakDoorGoal(this, (difficulty) -> true));
-        this.goalSelector.addGoal(11, new AIEquipGoal(this));
-        this.goalSelector.addGoal(12, new AIPickupLootGoal(this));
-        this.goalSelector.addGoal(13, new AIWorkstationGoal(this));
 
         this.targetSelector.addGoal(1, new AIOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new AIOwnerHurtTargetGoal(this));
@@ -229,7 +223,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
     private static void loadDefaultWeaponConfig(WeaponDetectionConfig config) {
         config.weaponNamespaces.addAll(java.util.Set.of(
                 "tacz", "taczjs", "slashblade", "flammpfeil.slashblade", "spartanweaponry",
-                "spartanshields", "spartantoolkit", "superbwarfare",
                 "tetra", "artifacts", "bloodmagic", "botania", "pneumaticcraft",
                 "mekanism", "immersiveengineering", "create", "bettercombat", "footwork"
         ));
@@ -716,8 +709,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             if (entity == null || !entity.isAlive() || entity.isRemoved()) {
                 if (entity instanceof LivingEntity living && living.getLastHurtByMob() == this) {
                     myKillPositions.put(uuid, new BlockPos((int) living.getX(), (int) living.getY(), (int) living.getZ()));
-                } else {
-                    myKillPositions.put(uuid, this.blockPosition());
                 }
                 it.remove();
             }
@@ -1062,7 +1053,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
                                 entity.inventory.setItem(i, ItemStack.EMPTY);
                             }
                             entity.setItemSlot(slot, stack.copy());
-                            equippedSomething = true;
                         }
                     }
                 }
@@ -1094,356 +1084,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             Blocks.DIAMOND_ORE, Blocks.DEEPSLATE_DIAMOND_ORE,
             Blocks.EMERALD_ORE, Blocks.DEEPSLATE_EMERALD_ORE,
             Blocks.NETHER_QUARTZ_ORE,
-            Blocks.ANCIENT_DEBRIS,
-            Blocks.NETHER_GOLD_ORE,
-            Blocks.BLACKSTONE,
-            Blocks.BASALT,
-            Blocks.ANDESITE,
-            Blocks.DIORITE,
-            Blocks.GRANITE,
-            Blocks.COBBLESTONE,
-            Blocks.STONE,
-            Blocks.DEEPSLATE,
-            Blocks.TUFF,
-            Blocks.CALCITE,
-            Blocks.DRIPSTONE_BLOCK,
-            Blocks.GRAVEL,
-            Blocks.SAND,
-            Blocks.RED_SAND,
-            Blocks.MOSSY_COBBLESTONE,
-            Blocks.COBBLED_DEEPSLATE,
-            Blocks.POLISHED_DEEPSLATE,
-            Blocks.COBBLED_DEEPSLATE_SLAB,
-            Blocks.COBBLED_DEEPSLATE_STAIRS,
-            Blocks.COBBLED_DEEPSLATE_WALL,
-            Blocks.POLISHED_DEEPSLATE_SLAB,
-            Blocks.POLISHED_DEEPSLATE_STAIRS,
-            Blocks.POLISHED_DEEPSLATE_WALL,
-            Blocks.DEEPSLATE_BRICKS,
-            Blocks.DEEPSLATE_BRICK_SLAB,
-            Blocks.DEEPSLATE_BRICK_STAIRS,
-            Blocks.DEEPSLATE_BRICK_WALL,
-            Blocks.CHISELED_DEEPSLATE,
-            Blocks.SMOOTH_BASALT,
-            Blocks.POLISHED_BASALT,
-            Blocks.OBSIDIAN,
-            Blocks.CRYING_OBSIDIAN,
-            Blocks.RESPAWN_ANCHOR,
-            Blocks.GILDED_BLACKSTONE,
-            Blocks.NETHERRACK,
-            Blocks.SOUL_SAND,
-            Blocks.SOUL_SOIL,
-            Blocks.CRIMSON_NYLIUM,
-            Blocks.WARPED_NYLIUM,
-            Blocks.CRIMSON_STEM,
-            Blocks.WARPED_STEM,
-            Blocks.CRIMSON_HYPHAE,
-            Blocks.WARPED_HYPHAE,
-            Blocks.STRIPPED_CRIMSON_STEM,
-            Blocks.STRIPPED_WARPED_STEM,
-            Blocks.STRIPPED_CRIMSON_HYPHAE,
-            Blocks.STRIPPED_WARPED_HYPHAE,
-            Blocks.CRIMSON_ROOTS,
-            Blocks.WARPED_ROOTS,
-            Blocks.NETHER_SPROUTS,
-            Blocks.WEEPING_VINES,
-            Blocks.TWISTING_VINES,
-            Blocks.SHROOMLIGHT,
-            Blocks.BONE_BLOCK,
-            Blocks.SKELETON_SKULL,
-            Blocks.SKELETON_WALL_SKULL,
-            Blocks.WITHER_SKELETON_SKULL,
-            Blocks.WITHER_SKELETON_WALL_SKULL,
-            Blocks.CREEPER_HEAD,
-            Blocks.CREEPER_WALL_HEAD,
-            Blocks.DRAGON_HEAD,
-            Blocks.DRAGON_WALL_HEAD,
-            Blocks.PLAYER_HEAD,
-            Blocks.PLAYER_WALL_HEAD,
-            Blocks.COBWEB,
-            Blocks.GLOW_LICHEN,
-            Blocks.CAVE_VINES,
-            Blocks.CAVE_VINES_PLANT,
-            Blocks.SPORE_BLOSSOM,
-            Blocks.AMETHYST_BLOCK,
-            Blocks.BUDDING_AMETHYST,
-            Blocks.AMETHYST_CLUSTER,
-            Blocks.SMALL_AMETHYST_BUD,
-            Blocks.MEDIUM_AMETHYST_BUD,
-            Blocks.LARGE_AMETHYST_BUD,
-            Blocks.TINTED_GLASS,
-            Blocks.SCULK_SENSOR,
-            Blocks.SCULK_CATALYST,
-            Blocks.SCULK_VEIN,
-            Blocks.SCULK,
-            Blocks.SCULK_SHRIEKER,
-            Blocks.CANDLE,
-            Blocks.CANDLE_CAKE,
-            Blocks.WAXED_COPPER_BLOCK,
-            Blocks.WAXED_EXPOSED_COPPER,
-            Blocks.WAXED_WEATHERED_COPPER,
-            Blocks.WAXED_OXIDIZED_COPPER,
-            Blocks.EXPOSED_COPPER,
-            Blocks.WEATHERED_COPPER,
-            Blocks.OXIDIZED_COPPER,
-            Blocks.CUT_COPPER,
-            Blocks.EXPOSED_CUT_COPPER,
-            Blocks.WEATHERED_CUT_COPPER,
-            Blocks.OXIDIZED_CUT_COPPER,
-            Blocks.WAXED_CUT_COPPER,
-            Blocks.WAXED_EXPOSED_CUT_COPPER,
-            Blocks.WAXED_WEATHERED_CUT_COPPER,
-            Blocks.WAXED_OXIDIZED_CUT_COPPER,
-            Blocks.CUT_COPPER_SLAB,
-            Blocks.EXPOSED_CUT_COPPER_SLAB,
-            Blocks.WEATHERED_CUT_COPPER_SLAB,
-            Blocks.OXIDIZED_CUT_COPPER_SLAB,
-            Blocks.WAXED_CUT_COPPER_SLAB,
-            Blocks.WAXED_EXPOSED_CUT_COPPER_SLAB,
-            Blocks.WAXED_WEATHERED_CUT_COPPER_SLAB,
-            Blocks.WAXED_OXIDIZED_CUT_COPPER_SLAB,
-            Blocks.CUT_COPPER_STAIRS,
-            Blocks.EXPOSED_CUT_COPPER_STAIRS,
-            Blocks.WEATHERED_CUT_COPPER_STAIRS,
-            Blocks.OXIDIZED_CUT_COPPER_STAIRS,
-            Blocks.WAXED_CUT_COPPER_STAIRS,
-            Blocks.WAXED_EXPOSED_CUT_COPPER_STAIRS,
-            Blocks.WAXED_WEATHERED_CUT_COPPER_STAIRS,
-            Blocks.WAXED_OXIDIZED_CUT_COPPER_STAIRS,
-            Blocks.MANGROVE_ROOTS,
-            Blocks.MUD,
-            Blocks.MUD_BRICKS,
-            Blocks.MUD_BRICK_SLAB,
-            Blocks.MUD_BRICK_STAIRS,
-            Blocks.MUD_BRICK_WALL,
-            Blocks.PACKED_MUD,
-            Blocks.HANGING_ROOTS,
-            Blocks.MANGROVE_LEAVES,
-            Blocks.MANGROVE_LOG,
-            Blocks.MANGROVE_WOOD,
-            Blocks.STRIPPED_MANGROVE_LOG,
-            Blocks.STRIPPED_MANGROVE_WOOD,
-            Blocks.MANGROVE_PLANKS,
-            Blocks.MANGROVE_PROPAGULE,
-            Blocks.BAMBOO_BLOCK,
-            Blocks.BAMBOO_PLANKS,
-            Blocks.CHERRY_LEAVES,
-            Blocks.CHERRY_LOG,
-            Blocks.CHERRY_WOOD,
-            Blocks.STRIPPED_CHERRY_LOG,
-            Blocks.STRIPPED_CHERRY_WOOD,
-            Blocks.CHERRY_PLANKS,
-            Blocks.CHERRY_SAPLING,
-            Blocks.PINK_PETALS,
-            Blocks.AZALEA,
-            Blocks.AZALEA_LEAVES,
-            Blocks.FLOWERING_AZALEA,
-            Blocks.FLOWERING_AZALEA_LEAVES,
-            Blocks.SMOOTH_STONE,
-            Blocks.STONE_SLAB,
-            Blocks.STONE_STAIRS,
-            Blocks.STONE_BRICKS,
-            Blocks.STONE_BRICK_SLAB,
-            Blocks.STONE_BRICK_STAIRS,
-            Blocks.STONE_BRICK_WALL,
-            Blocks.CHISELED_STONE_BRICKS,
-            Blocks.MOSSY_STONE_BRICKS,
-            Blocks.MOSSY_STONE_BRICK_SLAB,
-            Blocks.MOSSY_STONE_BRICK_STAIRS,
-            Blocks.MOSSY_STONE_BRICK_WALL,
-            Blocks.COBBLESTONE_SLAB,
-            Blocks.COBBLESTONE_STAIRS,
-            Blocks.COBBLESTONE_WALL,
-            Blocks.MOSSY_COBBLESTONE_SLAB,
-            Blocks.MOSSY_COBBLESTONE_STAIRS,
-            Blocks.MOSSY_COBBLESTONE_WALL,
-            Blocks.BRICKS,
-            Blocks.BRICK_SLAB,
-            Blocks.BRICK_STAIRS,
-            Blocks.BRICK_WALL,
-            Blocks.NETHER_BRICKS,
-            Blocks.NETHER_BRICK_SLAB,
-            Blocks.NETHER_BRICK_STAIRS,
-            Blocks.NETHER_BRICK_WALL,
-            Blocks.RED_NETHER_BRICKS,
-            Blocks.RED_NETHER_BRICK_SLAB,
-            Blocks.RED_NETHER_BRICK_STAIRS,
-            Blocks.RED_NETHER_BRICK_WALL,
-            Blocks.QUARTZ_BLOCK,
-            Blocks.QUARTZ_SLAB,
-            Blocks.QUARTZ_STAIRS,
-            Blocks.QUARTZ_BRICKS,
-            Blocks.CHISELED_QUARTZ_BLOCK,
-            Blocks.PURPUR_BLOCK,
-            Blocks.PURPUR_SLAB,
-            Blocks.PURPUR_STAIRS,
-            Blocks.PURPUR_PILLAR,
-            Blocks.PRISMARINE,
-            Blocks.PRISMARINE_SLAB,
-            Blocks.PRISMARINE_STAIRS,
-            Blocks.PRISMARINE_BRICKS,
-            Blocks.DARK_PRISMARINE,
-            Blocks.SEA_LANTERN,
-            Blocks.CLAY,
-            Blocks.HAY_BLOCK,
-            Blocks.PACKED_ICE,
-            Blocks.BLUE_ICE,
-            Blocks.FROSTED_ICE,
-            Blocks.MELON,
-            Blocks.PUMPKIN,
-            Blocks.CARVED_PUMPKIN,
-            Blocks.JACK_O_LANTERN,
-            Blocks.GLOWSTONE,
-            Blocks.LANTERN,
-            Blocks.SOUL_LANTERN,
-            Blocks.BEACON,
-            Blocks.CONDUIT,
-            Blocks.ENDER_CHEST,
-            Blocks.TRAPPED_CHEST,
-            Blocks.ANVIL,
-            Blocks.CHIPPED_ANVIL,
-            Blocks.DAMAGED_ANVIL,
-            Blocks.ENCHANTING_TABLE,
-            Blocks.BREWING_STAND,
-            Blocks.OAK_FENCE,
-            Blocks.SPRUCE_FENCE,
-            Blocks.BIRCH_FENCE,
-            Blocks.JUNGLE_FENCE,
-            Blocks.ACACIA_FENCE,
-            Blocks.DARK_OAK_FENCE,
-            Blocks.MANGROVE_FENCE,
-            Blocks.CHERRY_FENCE,
-            Blocks.CRIMSON_FENCE,
-            Blocks.WARPED_FENCE,
-            Blocks.OAK_FENCE_GATE,
-            Blocks.SPRUCE_FENCE_GATE,
-            Blocks.BIRCH_FENCE_GATE,
-            Blocks.JUNGLE_FENCE_GATE,
-            Blocks.ACACIA_FENCE_GATE,
-            Blocks.DARK_OAK_FENCE_GATE,
-            Blocks.MANGROVE_FENCE_GATE,
-            Blocks.CHERRY_FENCE_GATE,
-            Blocks.CRIMSON_FENCE_GATE,
-            Blocks.WARPED_FENCE_GATE,
-            Blocks.OAK_DOOR,
-            Blocks.SPRUCE_DOOR,
-            Blocks.BIRCH_DOOR,
-            Blocks.JUNGLE_DOOR,
-            Blocks.ACACIA_DOOR,
-            Blocks.DARK_OAK_DOOR,
-            Blocks.MANGROVE_DOOR,
-            Blocks.CHERRY_DOOR,
-            Blocks.CRIMSON_DOOR,
-            Blocks.WARPED_DOOR,
-            Blocks.IRON_DOOR,
-            Blocks.OAK_TRAPDOOR,
-            Blocks.SPRUCE_TRAPDOOR,
-            Blocks.BIRCH_TRAPDOOR,
-            Blocks.JUNGLE_TRAPDOOR,
-            Blocks.ACACIA_TRAPDOOR,
-            Blocks.DARK_OAK_TRAPDOOR,
-            Blocks.MANGROVE_TRAPDOOR,
-            Blocks.CHERRY_TRAPDOOR,
-            Blocks.CRIMSON_TRAPDOOR,
-            Blocks.WARPED_TRAPDOOR,
-            Blocks.IRON_TRAPDOOR,
-            Blocks.GLASS,
-            Blocks.GLASS_PANE,
-            Blocks.SANDSTONE,
-            Blocks.SANDSTONE_SLAB,
-            Blocks.SANDSTONE_STAIRS,
-            Blocks.SANDSTONE_WALL,
-            Blocks.CUT_SANDSTONE,
-            Blocks.CUT_SANDSTONE_SLAB,
-            Blocks.CHISELED_SANDSTONE,
-            Blocks.RED_SANDSTONE,
-            Blocks.RED_SANDSTONE_SLAB,
-            Blocks.RED_SANDSTONE_STAIRS,
-            Blocks.RED_SANDSTONE_WALL,
-            Blocks.CUT_RED_SANDSTONE,
-            Blocks.CUT_RED_SANDSTONE_SLAB,
-            Blocks.CHISELED_RED_SANDSTONE,
-            Blocks.TERRACOTTA,
-            Blocks.WHITE_TERRACOTTA,
-            Blocks.ORANGE_TERRACOTTA,
-            Blocks.MAGENTA_TERRACOTTA,
-            Blocks.LIGHT_BLUE_TERRACOTTA,
-            Blocks.YELLOW_TERRACOTTA,
-            Blocks.LIME_TERRACOTTA,
-            Blocks.PINK_TERRACOTTA,
-            Blocks.GRAY_TERRACOTTA,
-            Blocks.LIGHT_GRAY_TERRACOTTA,
-            Blocks.CYAN_TERRACOTTA,
-            Blocks.PURPLE_TERRACOTTA,
-            Blocks.BLUE_TERRACOTTA,
-            Blocks.BROWN_TERRACOTTA,
-            Blocks.GREEN_TERRACOTTA,
-            Blocks.RED_TERRACOTTA,
-            Blocks.BLACK_TERRACOTTA,
-            Blocks.WHITE_CONCRETE,
-            Blocks.ORANGE_CONCRETE,
-            Blocks.MAGENTA_CONCRETE,
-            Blocks.LIGHT_BLUE_CONCRETE,
-            Blocks.YELLOW_CONCRETE,
-            Blocks.LIME_CONCRETE,
-            Blocks.PINK_CONCRETE,
-            Blocks.GRAY_CONCRETE,
-            Blocks.LIGHT_GRAY_CONCRETE,
-            Blocks.CYAN_CONCRETE,
-            Blocks.PURPLE_CONCRETE,
-            Blocks.BLUE_CONCRETE,
-            Blocks.BROWN_CONCRETE,
-            Blocks.GREEN_CONCRETE,
-            Blocks.RED_CONCRETE,
-            Blocks.BLACK_CONCRETE,
-            Blocks.WHITE_CONCRETE_POWDER,
-            Blocks.ORANGE_CONCRETE_POWDER,
-            Blocks.MAGENTA_CONCRETE_POWDER,
-            Blocks.LIGHT_BLUE_CONCRETE_POWDER,
-            Blocks.YELLOW_CONCRETE_POWDER,
-            Blocks.LIME_CONCRETE_POWDER,
-            Blocks.PINK_CONCRETE_POWDER,
-            Blocks.GRAY_CONCRETE_POWDER,
-            Blocks.LIGHT_GRAY_CONCRETE_POWDER,
-            Blocks.CYAN_CONCRETE_POWDER,
-            Blocks.PURPLE_CONCRETE_POWDER,
-            Blocks.BLUE_CONCRETE_POWDER,
-            Blocks.BROWN_CONCRETE_POWDER,
-            Blocks.GREEN_CONCRETE_POWDER,
-            Blocks.RED_CONCRETE_POWDER,
-            Blocks.BLACK_CONCRETE_POWDER,
-            Blocks.WHITE_WOOL,
-            Blocks.ORANGE_WOOL,
-            Blocks.MAGENTA_WOOL,
-            Blocks.LIGHT_BLUE_WOOL,
-            Blocks.YELLOW_WOOL,
-            Blocks.LIME_WOOL,
-            Blocks.PINK_WOOL,
-            Blocks.GRAY_WOOL,
-            Blocks.LIGHT_GRAY_WOOL,
-            Blocks.CYAN_WOOL,
-            Blocks.PURPLE_WOOL,
-            Blocks.BLUE_WOOL,
-            Blocks.BROWN_WOOL,
-            Blocks.GREEN_WOOL,
-            Blocks.RED_WOOL,
-            Blocks.BLACK_WOOL,
-            Blocks.WHITE_CARPET,
-            Blocks.ORANGE_CARPET,
-            Blocks.MAGENTA_CARPET,
-            Blocks.LIGHT_BLUE_CARPET,
-            Blocks.YELLOW_CARPET,
-            Blocks.LIME_CARPET,
-            Blocks.PINK_CARPET,
-            Blocks.GRAY_CARPET,
-            Blocks.LIGHT_GRAY_CARPET,
-            Blocks.CYAN_CARPET,
-            Blocks.PURPLE_CARPET,
-            Blocks.BLUE_CARPET,
-            Blocks.BROWN_CARPET,
-            Blocks.GREEN_CARPET,
-            Blocks.RED_CARPET,
-            Blocks.BLACK_CARPET
     };
 
     private static class AIMineGoal extends Goal {
@@ -2075,8 +1715,9 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
 
         private String hasCraftingRecipe() {
             for (String[] recipe : CRAFTING_RECIPES) {
-                String materials = recipe[0];
-                if (hasAllMaterials(materials)) return materials + "|" + recipe[1] + "|" + recipe[2];
+                if (recipe.length >= 2 && hasMaterial(recipe[0])) {
+                    return recipe[0] + "|" + recipe[1] + "|" + (recipe.length > 2 ? recipe[2] : "1");
+                }
             }
             return null;
         }
@@ -2104,7 +1745,9 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             for (String[] recipe : SMELTING_RECIPES) {
                 if (type == WorkstationType.SMOKER && !isFoodItem(recipe[0])) continue;
                 if (type == WorkstationType.BLAST_FURNACE && !isOreItem(recipe[0])) continue;
-                if (hasMaterial(recipe[0]) && hasFuel()) return recipe[0] + "|" + recipe[1] + "|1";
+                if (hasMaterial(recipe[0])) {
+                    return recipe[0] + "|" + recipe[1] + "|1";
+                }
             }
             return null;
         }
@@ -2148,11 +1791,8 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             if (targetId == null) return false;
             for (int i = 0; i < entity.inventory.getContainerSize(); i++) {
                 ItemStack stack = entity.inventory.getItem(i);
-                if (!stack.isEmpty()) {
-                    ResourceLocation itemResourceId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                    if (itemResourceId != null && itemResourceId.equals(targetId)) {
-                        return true;
-                    }
+                if (!stack.isEmpty() && ForgeRegistries.ITEMS.getKey(stack.getItem()).equals(targetId)) {
+                    return true;
                 }
             }
             return false;
@@ -2163,11 +1803,8 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             if (targetId == null) return -1;
             for (int i = 0; i < entity.inventory.getContainerSize(); i++) {
                 ItemStack stack = entity.inventory.getItem(i);
-                if (!stack.isEmpty()) {
-                    ResourceLocation itemResourceId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-                    if (itemResourceId != null && itemResourceId.equals(targetId)) {
-                        return i;
-                    }
+                if (!stack.isEmpty() && ForgeRegistries.ITEMS.getKey(stack.getItem()).equals(targetId)) {
+                    return i;
                 }
             }
             return -1;
@@ -2248,9 +1885,12 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             String resultId = parts[1];
             int resultCount = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
 
+            int slot = findMaterialSlot(materialId);
+            if (slot == -1) return;
+
             switch (stationType) {
                 case CRAFTING:
-                    if (!consumeMaterials(materialId)) return;
+                    entity.inventory.getItem(slot).shrink(1);
                     ItemStack craftResult = findItemStack(resultId, resultCount);
                     addToInventory(craftResult);
                     spawnWorkParticles();
@@ -2259,8 +1899,9 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
                 case FURNACE:
                 case BLAST_FURNACE:
                 case SMOKER:
-                    if (!consumeFuel()) return;
-                    if (!consumeMaterials(materialId)) return;
+                    if (!hasFuel()) return;
+                    consumeFuel();
+                    entity.inventory.getItem(slot).shrink(1);
                     ItemStack smeltResult = findItemStack(resultId, resultCount);
                     addToInventory(smeltResult);
                     spawnWorkParticles();
@@ -2291,7 +1932,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
                     break;
 
                 case STONECUTTER:
-                    if (!consumeMaterials(materialId)) return;
                     addToInventory(new ItemStack(Items.STONE_BRICKS, 1));
                     spawnWorkParticles();
                     break;
@@ -2302,10 +1942,10 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
         }
 
         private ItemStack findItemStack(String itemId, int count) {
-            ResourceLocation targetId = ResourceLocation.tryParse(itemId);
-            if (targetId == null) return ItemStack.EMPTY;
-            Item item = BuiltInRegistries.ITEM.get(targetId);
-            if (item != null && item != Items.AIR) {
+            ResourceLocation rl = ResourceLocation.tryParse(itemId);
+            if (rl == null) return ItemStack.EMPTY;
+            Item item = ForgeRegistries.ITEMS.getValue(rl);
+            if (item != null && item != net.minecraft.world.item.Items.AIR) {
                 return new ItemStack(item, count);
             }
             return ItemStack.EMPTY;
@@ -2336,8 +1976,7 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
 
             List<ItemEntity> items = entity.level().getEntitiesOfClass(
                     ItemEntity.class,
-                    entity.getBoundingBox().inflate(12.0, 4.0, 12.0),
-                    item -> item.isAlive() && !item.getItem().isEmpty() && entity.isNearMyKill(item.blockPosition())
+                    entity.getBoundingBox().inflate(12.0, 4.0, 12.0)
             );
 
             if (items.isEmpty()) return false;

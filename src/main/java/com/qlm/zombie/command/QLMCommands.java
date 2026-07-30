@@ -42,7 +42,7 @@ public class QLMCommands {
                         int targetDay = IntegerArgumentType.getInteger(ctx, "day");
                         ServerLevel overworld = ctx.getSource().getServer().getLevel(Level.OVERWORLD);
                         if (overworld != null) {
-                            overworld.setDayTime((targetDay - 1) * 57600L);
+                            overworld.setDayTime((targetDay - 1) * 24000L);
                             ctx.getSource().sendSuccess(() -> Component.literal("§a天数已设置为: 第 " + targetDay + " 天"), true);
                         }
                         return 1;

@@ -34,7 +34,7 @@ public class QLMZombieMod {
 
     public static final String MOD_ID = "qlmzombie";
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final String MOD_VERSION = "2.0.0";
+    public static final String MOD_VERSION = "2.1.0";
 
     public static boolean needsRestart = false;
 
@@ -66,15 +66,12 @@ public class QLMZombieMod {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            LOGGER.info("[QLM Zombie] 七零喵僵尸末日生存mod 已加载");
-            LOGGER.info("[QLM Zombie] 功能: 难度渐进 + 血月/幸运之月/丰收之月 + 僵尸进化 + 尸潮系统 + 怪物封禁 + 初始物资发放 + 成就系统 + 连锁挖矿/连锁砍树(支持mod工具/树木/矿石) + 建筑物宝箱随机武器装备 + 废弃商店生成 + 巨人僵尸");
-            LOGGER.info("[QLM Zombie] AI玩家系统已启用：支持自动挖矿、砍树、制作工作台及常用工具、使用合成台等");
-            LOGGER.info("[QLM Zombie] FTB Library (NeoForge)已配置为必要依赖，确保FTB套餐正常运行");
-            LOGGER.info("[QLM Zombie] Player2 NPC mod支持：AI NPC可协助玩家进行砍树、挖矿、制作等操作");
+            LOGGER.info("[QLM Zombie] 七零喵僵尸末日生存mod v{} 已加载", MOD_VERSION);
             LOGGER.info("[QLM Zombie] 建筑物宝箱已注入战利品（TaCZ 火器 / Spartan 装备 / 原版工具/防具 / QLM 自制物资），包括各种枪械、弹药、配件、近战武器与防具。");
             LOGGER.info("[QLM Zombie] 废弃商店已启用：主世界随机生成废弃商店结构，奖励箱放置在货架上，有概率生成mod物品。");
             LOGGER.info("[QLM Zombie] 巨人僵尸已加入尸潮最终波次！当巨人僵尸血量低于50%时，会投掷小鬼僵尸！");
             LOGGER.info("[QLM Zombie] AI玩家聊天交互系统已启用：可通过聊天指令与AI玩家交流，支持Player2 API");
+            LOGGER.info("[QLM Zombie] v2.1.0 修复: HordeWave枚举、AI工作站配方检测、材料消耗、全局战利品注册等关键Bug");
 
             if (Player2APIService.isPlayer2Available()) {
                 LOGGER.info("[QLM Zombie] Player2 API 服务已连接，AI玩家可通过Player2进行智能交互");
@@ -110,8 +107,9 @@ public class QLMZombieMod {
             event.getEntity().sendSystemMessage(Component.literal(msg));
         }
 
-        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §e巨人僵尸已加入尸潮！§c当巨人僵尸血量低于50%时，会投掷小鬼僵尸！"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §e巨人僵尸已加入尸潮！§c当巨人僵尸血量低于50%时，会投掷小鬼僵尸！"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §eAI玩家系统已启用！§a支持自动挖矿、砍树、制作工作台及常用工具"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a本次更新修复多项Bug：AI工作站材料消耗、尸潮波次加载、全局战利品注册等"));
     }
 
     private void onAddReloadListener(AddReloadListenerEvent event) {

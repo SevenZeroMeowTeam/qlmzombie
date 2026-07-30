@@ -60,18 +60,4 @@
   "advancements.qlmzombie.zombie_kills.title": "Zombie Hunter",
   "advancements.qlmzombie.zombie_kills.description": "Hunt down zombies",
   "advancements.qlmzombie.phase_survival.title": "Phase Survivor",
-  "advancements.qlmzombie.phase_survival.description": "Survive into a new difficulty phase",
-
-  "entity.qlmzombie.fake_player": "AI Player",
-  "entity.qlmzombie.giant_zombie": "Giant Zombie",
-  "item.qlmzombie.fake_player_spawn_egg": "AI Player Spawn Egg",
-  "item.qlmzombie.giant_zombie_spawn_egg": "Giant Zombie Spawn Egg",
-  "item.qlmzombie.zombie_core": "Zombie Core",
-  "item.qlmzombie.infected_essence": "Infected Essence",
-  "item.qlmzombie.survival_kit": "Survival Kit",
-  "item.qlmzombie.emergency_ration": "Emergency Ration",
-  "item.qlmzombie.medical_supply": "Medical Supply",
-  "item.qlmzombie.reinforced_parts": "Reinforced Parts",
-  "item.qlmzombie.biohazard_sample": "Biohazard Sample",
-  "item.qlmzombie.tactical_ammo": "Tactical Ammo"
 }

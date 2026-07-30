@@ -52,10 +52,7 @@ public class ModDependencyHandler {
         "ftb-chunks",     // FTB 区块（功能 mod）
         "ftb-library",    // FTB Library（FTB 前置库）
         "architectury",   // Architectury（几乎所有 Fabric/Forge 兼容 mod 依赖）
-        "cloth-config",   // Cloth Config（配置前置）
-        "bookshelf",      // Bookshelf（前置库）
-        "playerengine",   // PlayerEngine（AI NPC 核心依赖）
-        "player2npc"      // Player2NPC（AI NPC mod）
+        "cloth-config"   // Cloth Config（配置前置）
     );
 
     // 前缀提取白名单：如果文件名包含这些关键字，直接将它们作为前缀
@@ -327,7 +324,11 @@ public class ModDependencyHandler {
             "[3D 皮肤层] skinlayers3d-forge-1.11.2-mc1.20.1.jar",
             "[斯巴达的武器] SpartanWeaponry-1.20.1-forge-3.2.1-all.jar",
             "bettercombat-forge-1.9.0+1.20.1.jar",
+            "[简单矿石] SimpleOres2-1.20.1-6.0.0.3.jar",
             "spartantoolkit-1.20.1-1.6.1.jar",
+            "[简单前置] SimpleCoreLib-1.20.1-6.0.1.2.jar",
+            "[斯巴达的武器：简单矿石] spartansimpleores-1.20.1-2.2.0.jar",
+            "bucketlib-1.20.1-2.3.8.0.jar",
             "[斯巴达之盾] SpartanShields-1.20.1-forge-3.1.1.jar",
             "footwork-4.3.9.jar",
             "[旅人标题] TravelersTitles-1.20-Forge-4.0.2.jar",
@@ -356,16 +357,6 @@ public class ModDependencyHandler {
             "[车万女仆：真正的力量] True_POWER_of_Maid-1.20.1-1.2.2.jar",
             "[真正的力量] True_POWER-1.20.1-1.1.8.jar",
             "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
-            "[拔刀剑：重锋] SlashBladeResharped-1.20.1-1.9.65.jar",
-            "mrqxs_Slashblade_Core-1.20.1-1.4.1.jar",
-            "[车万女仆] touhoulittlemaid-1.5.3-forge+mc1.20.1.jar",
-            "AdvancedSkillsRe-forge-1.1.0-beta.1.jar",
-            "[旅行地图] journeymap-1.20.1-5.10.3-forge.jar",
-            "[夸克-奇思妙想] QuarkOddities-1.20.1.jar",
-            "dyairdrop-1.1.0-1.20.1-beta.jar",
-            "bettercombat-forge-1.9.0+1.20.1.jar",
-            "spartantoolkit-1.20.1-1.6.1.jar",
-            "[车万女仆：真正的力量] True_POWER_of_Maid-1.20.1-1.2.2.jar",
             "[拔刀剑：重锋] SlashBladeResharped-1.20.1-1.9.65.jar",
             "mrqxs_Slashblade_Core-1.20.1-1.4.1.jar",
             "[车万女仆] touhoulittlemaid-1.5.3-forge+mc1.20.1.jar"

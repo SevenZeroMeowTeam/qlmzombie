@@ -29,6 +29,8 @@ public class ScoreboardHandler {
     private static final String OBJECTIVE_NAME = "qlm_survival";
     private static final String TEAM_PREFIX = "qlm_sb_";
 
+    private static final long DAY_LENGTH = 24000L;
+
     private static final int SLOT_DAY = 4;
     private static final int SLOT_TIME = 3;
     private static final int SLOT_PHASE = 2;
@@ -41,7 +43,6 @@ public class ScoreboardHandler {
 
     private static int tickCounter = 0;
 
-    private static final Component[] lastDisplayTexts = new Component[16];
     private static final Set<String> createdEntries = new HashSet<>();
 
     @SubscribeEvent
@@ -99,10 +100,10 @@ public class ScoreboardHandler {
             return;
 
         long dayTime = overworld.getDayTime();
-        long currentDay = dayTime / 57600L;
+        long currentDay = dayTime / DAY_LENGTH;
         long displayDay = currentDay + 1;
 
-        long timeOfDay = dayTime % 57600L;
+        long timeOfDay = dayTime % DAY_LENGTH;
         long hours24 = (timeOfDay / 2400L + 6) % 24;
         long minutes = ((timeOfDay % 2400L) * 60L) / 2400L;
         long hours12 = hours24 % 12;
@@ -111,13 +112,13 @@ public class ScoreboardHandler {
         String ampm = (hours24 >= 12) ? "PM" : "AM";
 
         String daySegment;
-        if (timeOfDay < 2400L)
+        if (timeOfDay < 2000L)
             daySegment = "清晨";
-        else if (timeOfDay < 26400L)
+        else if (timeOfDay < 12000L)
             daySegment = "白天";
-        else if (timeOfDay < 31200L)
+        else if (timeOfDay < 14000L)
             daySegment = "黄昏";
-        else if (timeOfDay < 55200L)
+        else if (timeOfDay < 22000L)
             daySegment = "夜晚";
         else
             daySegment = "黎明";
@@ -206,18 +207,6 @@ public class ScoreboardHandler {
         if (team == null) {
             team = scoreboard.addPlayerTeam(teamName);
         }
-
-        Component cached = lastDisplayTexts[scoreValue];
-        if (cached != null && cached.equals(displayText)) {
-            if (!team.getPlayers().contains(entryName)) {
-                scoreboard.addPlayerToTeam(entryName, team);
-            }
-            Score score = scoreboard.getOrCreatePlayerScore(entryName, objective);
-            score.setScore(scoreValue);
-            createdEntries.add(entryName);
-            return;
-        }
-        lastDisplayTexts[scoreValue] = displayText;
 
         team.setPlayerPrefix(displayText);
         team.setPlayerSuffix(Component.literal(""));

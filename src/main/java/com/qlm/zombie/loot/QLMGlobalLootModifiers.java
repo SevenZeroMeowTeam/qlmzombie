@@ -49,18 +49,19 @@ public class QLMGlobalLootModifiers {
     public static class BuildingWeaponLootModifier extends LootModifier {
 
         public static final Codec<BuildingWeaponLootModifier> CODEC = RecordCodecBuilder.create(inst -> inst.group(
-                LOOT_CONDITIONS_CODEC.fieldOf("conditions").forGetter(lm -> lm.conditions),
-                LootPoolEntry.CODEC.listOf().fieldOf("entries").forGetter(lm -> lm.entries),
-                Codec.INT.optionalFieldOf("rolls", 2).forGetter(lm -> lm.rolls),
-                Codec.INT.optionalFieldOf("bonusRolls", 0).forGetter(lm -> lm.bonusRolls),
-                Codec.FLOAT.optionalFieldOf("injectChance", 1.0f).forGetter(lm -> lm.injectChance),
-                Codec.STRING.listOf().optionalFieldOf("scanNamespaces", List.of()).forGetter(lm -> lm.scanNamespaces),
-                Codec.INT.optionalFieldOf("scanWeight", 5).forGetter(lm -> lm.scanWeight),
-                Codec.INT.optionalFieldOf("scanMinCount", 1).forGetter(lm -> lm.scanMinCount),
-                Codec.INT.optionalFieldOf("scanMaxCount", 1).forGetter(lm -> lm.scanMaxCount)
-            ).apply(inst, BuildingWeaponLootModifier::new));
+                LootPoolEntry.CODEC.listOf().fieldOf("entries").forGetter(m -> m.entries),
+                Codec.INT.fieldOf("rolls").forGetter(m -> m.rolls),
+                Codec.INT.fieldOf("bonusRolls").forGetter(m -> m.bonusRolls),
+                Codec.FLOAT.fieldOf("injectChance").forGetter(m -> m.injectChance),
+                Codec.STRING.listOf().optionalFieldOf("scanNamespaces", List.of()).forGetter(m -> m.scanNamespaces),
+                Codec.INT.fieldOf("scanWeight").forGetter(m -> m.scanWeight),
+                Codec.INT.fieldOf("scanMinCount").forGetter(m -> m.scanMinCount),
+                Codec.INT.fieldOf("scanMaxCount").forGetter(m -> m.scanMaxCount)
+        ).apply(inst, (entries, rolls, bonusRolls, injectChance, scanNamespaces, scanWeight, scanMinCount, scanMaxCount) ->
+                new BuildingWeaponLootModifier(new LootItemCondition[0], entries, rolls, bonusRolls, injectChance, scanNamespaces, scanWeight, scanMinCount, scanMaxCount)
+        ));
 
-        private BuildingWeaponLootModifier(LootItemCondition[] conditionsIn,
+        public BuildingWeaponLootModifier(LootItemCondition[] conditionsIn,
                                            List<LootPoolEntry> entries,
                                            int rolls,
                                            int bonusRolls,

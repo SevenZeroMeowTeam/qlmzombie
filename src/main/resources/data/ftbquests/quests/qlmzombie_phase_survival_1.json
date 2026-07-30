@@ -1,0 +1,58 @@
+{
+  "id": "qlmzombie:phase_survival_1",
+  "title": {
+    "zh_cn": "艰难求生",
+    "en_us": "Struggling to Survive"
+  },
+  "description": {
+    "zh_cn": "随着末日生存难度上升，你需要更好的装备和物资。完成此任务来获得来自斯巴达武器的基础武器和TACZ弹药，为更艰难的挑战做准备。",
+    "en_us": "As the apocalypse difficulty rises, you need better gear and supplies. Complete this quest to get basic Spartan weapons and TACZ ammo to prepare for harder challenges."
+  },
+  "icon": {
+    "item": "spartanweaponry:iron_sword"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭15个僵尸",
+        "en_us": "Kill 15 Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 15
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "spartanweaponry:iron_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "spartanweaponry:iron_helmet",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:pistol_ammo",
+      "count": 32
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "qlmzombie:reinforced_parts",
+      "count": 3
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:master_survivor",
+    "children": [
+      "qlmzombie:phase_survival_2"
+    ]
+  }
+}

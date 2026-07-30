@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:oak_planks"
+    },
+    "title": { "translate": "advancements.qlmzombie.ai_build.title" },
+    "description": { "translate": "advancements.qlmzombie.ai_build.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "qlmzombie:ai_player/tame_1",
+  "criteria": {
+    "build": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["build"]
+  ]
+}

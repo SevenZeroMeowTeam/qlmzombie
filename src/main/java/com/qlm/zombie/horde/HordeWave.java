@@ -1,15 +1,11 @@
 package com.qlm.zombie.horde;
 
-import net.minecraft.world.entity.monster.Zombie;
-import net.minecraft.world.entity.monster.Skeleton;
-
 public enum HordeWave {
-    WAVE_1(20, 0.0, 0, 0, 0, 0),
-    WAVE_2(35, 0.15, 0, 0, 0, 0),
-    WAVE_3(50, 0.30, 0.20, 15, 0, 0),
-    WAVE_4(70, 0.45, 0.15, 20, 0, 0),
-    WAVE_5(100, 0.60, 0.25, 30, 1, 0),
-    WAVE_6(0, 0.0, 0.0, 0, 0, 1);
+    WAVE_1(8, 0.05, 0.10, 2, 0, 0),
+    WAVE_2(12, 0.10, 0.15, 3, 0, 0),
+    WAVE_3(16, 0.15, 0.20, 4, 1, 0),
+    WAVE_4(20, 0.20, 0.25, 5, 1, 1),
+    WAVE_5(25, 0.25, 0.30, 6, 2, 1);
 
     private final int zombieCount;
     private final double eliteChance;

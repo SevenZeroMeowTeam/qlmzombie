@@ -70,43 +70,13 @@ repositories {
         }
     }
     flatDir {
-        dir 'src/main/libs'
+        dirs 'libs'
     }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    compileOnly files("src/main/libs/kubejs-forge-2001.6.5-build.26.jar")
-    runtimeOnly files("src/main/libs/kubejs-forge-2001.6.5-build.26.jar")
-    compileOnly files("src/main/libs/rhino-forge-2001.2.3-build.10.jar")
-    runtimeOnly files("src/main/libs/rhino-forge-2001.2.3-build.10.jar")
-    compileOnly files("src/main/libs/architectury-9.2.14-forge.jar")
-    runtimeOnly files("src/main/libs/architectury-9.2.14-forge.jar")
-    compileOnly files("src/main/libs/Enhanced-Celestials-forge-1.20.1-5.0.3.2.jar")
-    runtimeOnly files("src/main/libs/Enhanced-Celestials-forge-1.20.1-5.0.3.2.jar")
-    compileOnly files("src/main/libs/cloth-config-11.1.136-forge.jar")
-    runtimeOnly files("src/main/libs/cloth-config-11.1.136-forge.jar")
-    compileOnly files("src/main/libs/Data_Anchor-forge-1.20.1-1.0.0.20.jar")
-    runtimeOnly files("src/main/libs/Data_Anchor-forge-1.20.1-1.0.0.20.jar")
-    compileOnly files("src/main/libs/Corgilib-Forge-1.20.1-4.0.3.4.jar")
-    runtimeOnly files("src/main/libs/Corgilib-Forge-1.20.1-4.0.3.4.jar")
-    compileOnly files("src/main/libs/kubejsadditions-forge-4.3.4.jar")
-    runtimeOnly files("src/main/libs/kubejsadditions-forge-4.3.4.jar")
-    compileOnly files("src/main/libs/lootjs-forge-1.20.1-2.13.1.jar")
-    runtimeOnly files("src/main/libs/lootjs-forge-1.20.1-2.13.1.jar")
-    compileOnly files("src/main/libs/taczjs-forge-1.4.2+mc1.20.1.jar")
-    runtimeOnly files("src/main/libs/taczjs-forge-1.4.2+mc1.20.1.jar")
-    compileOnly files("src/main/libs/tacz-1.20.1-1.1.8-hotfix.jar")
-    runtimeOnly files("src/main/libs/tacz-1.20.1-1.1.8-hotfix.jar")
-    compileOnly files("src/main/libs/AdvancedSkillsRe-forge-1.1.0-beta.1.jar")
-    runtimeOnly files("src/main/libs/AdvancedSkillsRe-forge-1.1.0-beta.1.jar")
-    compileOnly files("src/main/libs/kotlinforforge-4.12.0-all.jar")
-    runtimeOnly files("src/main/libs/kotlinforforge-4.12.0-all.jar")
-    compileOnly files("src/main/libs/playerengine-forge-1.20.1-1.4.0.jar")
-    runtimeOnly files("src/main/libs/playerengine-forge-1.20.1-1.4.0.jar")
-    compileOnly files("src/main/libs/player2npc-forge-1.20.1-1.4.0.jar")
-    runtimeOnly files("src/main/libs/player2npc-forge-1.20.1-1.4.0.jar")
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -133,12 +103,10 @@ tasks.named('processResources', ProcessResources).configure {
         expand replaceProperties + [project: project]
     }
 
-    from('src/main/libs') {
-        into('libs')
-        include '*.jar'
-        exclude 'README.txt'
-        exclude 'qlmzombie*.jar'
-    }
+    into('libs')
+    include '*.jar'
+    exclude 'README.txt'
+    exclude 'qlmzombie*.jar'
 }
 
 tasks.named('jar', Jar).configure {

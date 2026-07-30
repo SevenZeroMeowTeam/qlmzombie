@@ -1,0 +1,99 @@
+{
+  "id": "qlmzombie:master_survivor",
+  "title": {
+    "zh_cn": "末日幸存者",
+    "en_us": "Apocalypse Survivor"
+  },
+  "description": {
+    "zh_cn": "你已经成为末日中真正的幸存者。完成了所有挑战，收集了所有珍贵材料。你是这个世界的守护者。",
+    "en_us": "You have become a true apocalypse survivor. Completed all challenges, collected all rare materials. You are the guardian of this world."
+  },
+  "icon": {
+    "item": "qlmzombie:zombie_core"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_cores",
+      "title": {
+        "zh_cn": "收集僵尸核心",
+        "en_us": "Collect Zombie Cores"
+      },
+      "item": "qlmzombie:zombie_core",
+      "count": 10
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_essence",
+      "title": {
+        "zh_cn": "收集感染精华",
+        "en_us": "Collect Infected Essence"
+      },
+      "item": "qlmzombie:infected_essence",
+      "count": 8
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_samples",
+      "title": {
+        "zh_cn": "收集生物样本",
+        "en_us": "Collect Biohazard Samples"
+      },
+      "item": "qlmzombie:biohazard_sample",
+      "count": 5
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "qlmzombie:survival_kit",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "qlmzombie:medical_supply",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "qlmzombie:tactical_ammo",
+      "count": 32
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "minecraft:enchanted_golden_apple",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "minecraft:diamond_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "minecraft:diamond_chestplate",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "minecraft:diamond_leggings",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_8",
+      "item": "minecraft:diamond_boots",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:blood_moon_survivor"
+  }
+}

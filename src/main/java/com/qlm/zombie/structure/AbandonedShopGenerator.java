@@ -28,11 +28,11 @@ import java.util.List;
 public class AbandonedShopGenerator {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final ResourceLocation LOOT_TABLE = ResourceLocation.fromNamespaceAndPath(QLMZombieMod.MOD_ID, "chests/abandoned_shop");
     
     private static final int SHOP_WIDTH = 7;
     private static final int SHOP_HEIGHT = 4;
     private static final int SHOP_DEPTH = 5;
+    private static final ResourceLocation LOOT_TABLE = ResourceLocation.parse("qlmzombie:chests/abandoned_shop");
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {

@@ -32,8 +32,11 @@ public class AIPlayerChatHandler {
         String message = event.getMessage().getString();
         Level level = player.level();
 
-        FakePlayerEntity nearestAI = findNearestAIPlayer(level, player.blockPosition(), 15);
-        if (nearestAI == null) return;
+        FakePlayerEntity targetAI = AISelectionHandler.findSelectedAI(player, player.blockPosition(), 15);
+        if (targetAI == null) {
+            targetAI = findNearestAIPlayer(level, player.blockPosition(), 15);
+        }
+        if (targetAI == null) return;
 
         long lastTime = COOLDOWN.getOrDefault(player.getName().getString(), 0L);
         if (System.currentTimeMillis() - lastTime < COOLDOWN_MS) {
@@ -41,12 +44,12 @@ public class AIPlayerChatHandler {
         }
         COOLDOWN.put(player.getName().getString(), System.currentTimeMillis());
 
-        if (!nearestAI.isTamed()) {
-            player.sendSystemMessage(Component.literal("§c[AI玩家] §7" + nearestAI.getCustomNameStr() + " 还未被驯服，无法交流"));
+        if (!targetAI.isTamed()) {
+            player.sendSystemMessage(Component.literal("§c[AI玩家] §7" + targetAI.getCustomNameStr() + " 还未被驯服，无法交流"));
             return;
         }
 
-        String aiName = nearestAI.getCustomNameStr();
+        String aiName = targetAI.getCustomNameStr();
 
         if (message.toLowerCase().startsWith(aiName.toLowerCase()) ||
             message.contains("@" + aiName.toLowerCase()) ||
@@ -59,7 +62,7 @@ public class AIPlayerChatHandler {
                 task = task.replace("@" + aiName, "").replace("@" + aiName.toLowerCase(), "").trim();
             }
 
-            processPlayerCommand(nearestAI, player, task);
+            processPlayerCommand(targetAI, player, task);
         }
     }
 
@@ -68,11 +71,22 @@ public class AIPlayerChatHandler {
             String characterId = ai.getCustomNameStr();
             Player2APIService.sendTask(characterId, command).thenAccept(response -> {
                 if (response != null) {
-                    AIResponse aiResponse = Player2APIService.parseAIResponse(response);
+                    AIResponse aiResponse;
+                    if (response.equals(command)) {
+                        aiResponse = Player2APIService.parseSimpleResponse(command);
+                    } else {
+                        aiResponse = Player2APIService.parseAIResponse(response);
+                    }
                     executeAIResponse(ai, player, aiResponse);
                 } else {
-                    player.sendSystemMessage(Component.literal("§c[AI玩家] §7" + ai.getCustomNameStr() + " 没有响应，请检查Player2服务"));
+                    AIResponse fallbackResponse = Player2APIService.parseSimpleResponse(command);
+                    executeAIResponse(ai, player, fallbackResponse);
                 }
+            }).exceptionally(ex -> {
+                QLMZombieMod.LOGGER.warn("Player2 task execution failed: {}", ex.getMessage());
+                AIResponse fallbackResponse = Player2APIService.parseSimpleResponse(command);
+                executeAIResponse(ai, player, fallbackResponse);
+                return null;
             });
         } else {
             AIResponse aiResponse = Player2APIService.parseSimpleResponse(command);
@@ -123,12 +137,18 @@ public class AIPlayerChatHandler {
 
             case "mine":
                 ai.setSitting(false);
-                player.sendSystemMessage(Component.literal("§a[" + aiName + "] §f好的，我来挖矿"));
+                player.sendSystemMessage(Component.literal("§a[" + aiName + "] §f好的，我来挖矿，完成后会自动跟随你"));
                 break;
 
             case "chop":
                 ai.setSitting(false);
-                player.sendSystemMessage(Component.literal("§a[" + aiName + "] §f好的，我来砍树"));
+                player.sendSystemMessage(Component.literal("§a[" + aiName + "] §f好的，我来砍树，完成后会自动跟随你"));
+                break;
+
+            case "build":
+            case "house":
+                ai.setSitting(false);
+                player.sendSystemMessage(Component.literal("§a[" + aiName + "] §f好的，我来搭建房子，就地取材，完成后会自动跟随你"));
                 break;
 
             case "stop":

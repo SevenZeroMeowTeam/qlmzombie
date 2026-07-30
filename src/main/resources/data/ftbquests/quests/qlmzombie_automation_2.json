@@ -1,0 +1,81 @@
+{
+  "id": "qlmzombie:automation_2",
+  "title": {
+    "zh_cn": "高级自动化",
+    "en_us": "Advanced Automation"
+  },
+  "description": {
+    "zh_cn": "升级你的自动化系统，使用更先进的存储和处理模组。沉浸工程和AE2等模组将帮助你建立真正的末日基地。",
+    "en_us": "Upgrade your automation with more advanced storage and processing mods. Immersive Engineering and AE2 will help you build a true apocalypse base."
+  },
+  "icon": {
+    "item": "create:industrial_iron_block"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_steel",
+      "title": {
+        "zh_cn": "收集钢材",
+        "en_us": "Collect Steel"
+      },
+      "item": "create:industrial_iron_block",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_storage",
+      "title": {
+        "zh_cn": "收集高级存储",
+        "en_us": "Collect Advanced Storage"
+      },
+      "item": "ironchest:diamond_chest",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭100个僵尸",
+        "en_us": "Kill 100 Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 100
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "ironchest:diamond_chest",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "minecraft:dispenser",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "minecraft:comparator",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "qlmzombie:zombie_core",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "qlmzombie:reinforced_parts",
+      "count": 8
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:automation_1"
+  }
+}
