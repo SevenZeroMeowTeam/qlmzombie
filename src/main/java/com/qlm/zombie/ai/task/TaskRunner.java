@@ -27,7 +27,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * 任务运行器 — 参考 PlayerEngine 的 TaskRunner 设计
@@ -39,6 +43,9 @@ public class TaskRunner {
 
     private final FakePlayerEntity ai;
     private Task currentTask;
+
+    /** 任务链队列（LLM 规划的多步任务串行执行） */
+    private final Queue<Task> taskQueue = new ConcurrentLinkedQueue<>();
 
     /** 冷却: 玩家UUID:AI的UUID → 上次指令时间（每个AI独立冷却） */
     private static final ConcurrentHashMap<String, Long> COOLDOWN = new ConcurrentHashMap<>();
@@ -65,9 +72,10 @@ public class TaskRunner {
         return true;
     }
 
-    /** 启动新任务，自动停止旧任务 */
+    /** 启动新任务，自动停止旧任务（清空任务链队列） */
     public void startTask(Task task) {
         stopCurrent();
+        taskQueue.clear();
         currentTask = task;
         currentTask.startTime = System.currentTimeMillis();
         currentTask.start();
@@ -77,13 +85,43 @@ public class TaskRunner {
         ai.setSitting(false);
     }
 
+    /**
+     * 启动任务链 — LLM 规划的多步任务串行执行
+     * @param tasks 任务列表，按顺序执行
+     */
+    public void startTaskChain(List<Task> tasks) {
+        stopCurrent();
+        taskQueue.clear();
+        if (tasks == null || tasks.isEmpty()) return;
+        taskQueue.addAll(tasks);
+        startNextInChain();
+    }
+
+    /** 启动任务链中的下一个任务 */
+    private void startNextInChain() {
+        Task next = taskQueue.poll();
+        if (next != null) {
+            currentTask = next;
+            currentTask.startTime = System.currentTimeMillis();
+            currentTask.start();
+            ai.setActiveTask(currentTask.isActiveTask());
+            ai.setSitting(false);
+        } else {
+            autoFollow();
+        }
+    }
+
     /** 每 tick 调用 */
     public void tick() {
         if (currentTask == null) return;
 
         // 超时检查
         if (currentTask.isTimedOut()) {
-            notifyOwnerSystem("任务超时，自动切换为跟随模式");
+            if (!taskQueue.isEmpty()) {
+                notifyOwnerSystem("当前任务超时，继续执行下一个任务");
+            } else {
+                notifyOwnerSystem("任务超时，自动切换为跟随模式");
+            }
             autoFollow();
             return;
         }
@@ -110,9 +148,15 @@ public class TaskRunner {
         }
     }
 
-    /** 任务完成/超时后自动切换为跟随 */
+    /** 任务完成/超时后自动切换为跟随（或继续任务链中的下一个任务） */
     public void autoFollow() {
         stopCurrent();
+        // 任务链中还有任务 → 继续执行下一个
+        if (!taskQueue.isEmpty()) {
+            startNextInChain();
+            return;
+        }
+        // 队列为空 → 切换为跟随模式
         LivingEntity ownerEntity = ai.getOwner();
         Player owner = ownerEntity instanceof Player ? (Player) ownerEntity : null;
         startTask(new FollowTask(ai, owner));
@@ -121,9 +165,10 @@ public class TaskRunner {
         }
     }
 
-    /** 强制停止（不自动跟随） */
+    /** 强制停止（不自动跟随，清空任务链） */
     public void forceStop() {
         stopCurrent();
+        taskQueue.clear();
         ai.setActiveTask(false);
     }
 
@@ -136,6 +181,11 @@ public class TaskRunner {
     public boolean hasActiveTask() {
         if (currentTask == null) return false;
         return currentTask.isActiveTask();
+    }
+
+    /** 获取任务链中剩余的任务数 */
+    public int getQueuedTaskCount() {
+        return taskQueue.size();
     }
 
     private void notifyOwnerSystem(String message) {

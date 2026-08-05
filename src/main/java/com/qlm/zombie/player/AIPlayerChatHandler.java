@@ -22,6 +22,7 @@
  */
 package com.qlm.zombie.player;
 
+import com.qlm.zombie.ai.LLMBridge;
 import com.qlm.zombie.ai.Player2APIService;
 import com.qlm.zombie.ai.Player2APIService.AIResponse;
 import com.qlm.zombie.ai.task.Task;
@@ -30,6 +31,7 @@ import com.qlm.zombie.ai.task.TaskRunner;
 import com.qlm.zombie.entity.FakePlayerEntity;
 import com.qlm.zombie.QLMZombieMod;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.BlockPos;
@@ -40,6 +42,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -236,29 +239,91 @@ public class AIPlayerChatHandler {
                         if (response != null && !response.equals(command)) {
                             aiResponse = Player2APIService.parseAIResponse(response);
                         } else {
-                            aiResponse = Player2APIService.parseSimpleResponse(command);
+                            // API 返回原始指令（未处理），走本地/LLM 解析
+                            aiResponse = null;
                         }
                         net.minecraft.server.MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
                         if (server != null) {
-                            final AIResponse finalResponse = aiResponse;
-                            server.execute(() -> executeAIResponse(ai, player, finalResponse));
+                            if (aiResponse != null) {
+                                final AIResponse finalResponse = aiResponse;
+                                server.execute(() -> executeAIResponse(ai, player, finalResponse));
+                            } else {
+                                server.execute(() -> tryLocalOrLLM(ai, player, command));
+                            }
                         }
                     })
                     .exceptionally(ex -> {
-                        QLMZombieMod.LOGGER.warn("[AI玩家] Player2 API 调用失败/超时，使用本地解析: {}", ex.getMessage());
-                        AIResponse fallbackResponse = Player2APIService.parseSimpleResponse(command);
+                        QLMZombieMod.LOGGER.warn("[AI玩家] Player2 API 调用失败/超时，使用本地/LLM解析: {}", ex.getMessage());
                         net.minecraft.server.MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
                         if (server != null) {
-                            server.execute(() -> executeAIResponse(ai, player, fallbackResponse));
+                            server.execute(() -> tryLocalOrLLM(ai, player, command));
                         }
                         return null;
                     });
         } else {
-            // API 不可用，直接使用本地解析
-            QLMZombieMod.LOGGER.info("[AI玩家] Player2 API 不可用，使用本地解析指令: '{}'", command);
-            AIResponse aiResponse = Player2APIService.parseSimpleResponse(command);
+            // API 不可用，直接使用本地解析或 LLM
+            QLMZombieMod.LOGGER.info("[AI玩家] Player2 API 不可用，使用本地/LLM解析指令: '{}'", command);
+            tryLocalOrLLM(ai, player, command);
+        }
+    }
+
+    /**
+     * 尝试本地解析，若无法理解则使用 LLM 大模型翻译
+     * 必须在主线程（server thread）调用
+     */
+    private static void tryLocalOrLLM(FakePlayerEntity ai, Player player, String command) {
+        AIResponse aiResponse = Player2APIService.parseSimpleResponse(command);
+
+        // 本地解析未能理解指令（返回 chat 类型）且 LLM 已启用 → 使用大模型翻译
+        if ("chat".equals(aiResponse.action()) && LLMBridge.isEnabled()) {
+            processLLMCommand(ai, player, command);
+        } else {
             executeAIResponse(ai, player, aiResponse);
         }
+    }
+
+    /**
+     * 使用 LLM 大模型将自然语言指令翻译成任务链
+     * 异步调用 LLM API，不阻塞游戏线程
+     */
+    private static void processLLMCommand(FakePlayerEntity ai, Player player, String command) {
+        player.sendSystemMessage(Component.literal("§6[" + ai.getCustomNameStr() + "] §7正在用大模型分析指令..."));
+
+        LLMBridge.planTask(command, ai).thenAccept(responses -> {
+            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server == null) return;
+
+            server.execute(() -> {
+                if (responses.isEmpty()) {
+                    player.sendSystemMessage(Component.literal("§6[" + ai.getCustomNameStr() + "] §f我不太明白你的意思"));
+                    return;
+                }
+
+                // 将 AIResponse 列表转换为 Task 列表
+                List<Task> tasks = new ArrayList<>();
+                for (AIResponse resp : responses) {
+                    Task task = TaskCatalogue.createTask(ai, player, resp);
+                    if (task != null) {
+                        tasks.add(task);
+                    }
+                }
+
+                if (tasks.isEmpty()) {
+                    player.sendSystemMessage(Component.literal("§6[" + ai.getCustomNameStr() + "] §f无法执行该指令"));
+                    return;
+                }
+
+                // 启动任务链串行执行
+                ai.getTaskRunner().startTaskChain(tasks);
+
+                String taskSummary = responses.stream()
+                        .map(AIResponse::action)
+                        .reduce((a, b) -> a + " → " + b)
+                        .orElse("");
+                player.sendSystemMessage(Component.literal(
+                        "§6[" + ai.getCustomNameStr() + "] §f已规划 " + tasks.size() + " 个任务: §e" + taskSummary));
+            });
+        });
     }
 
     /**

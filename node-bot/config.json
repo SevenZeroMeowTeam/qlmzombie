@@ -1,6 +1,6 @@
 {
   "host": "127.0.0.1",
-  "port": 25565,
+  "port": 25566,
   "username": "QLM_AI_Bot",
   "version": "1.20.1",
   "auth": "offline",
@@ -47,5 +47,15 @@
   "logging": {
     "level": "info",
     "file": "logs/bot.log"
+  },
+
+  "llm": {
+    "enabled": true,
+    "provider": "ollama",
+    "apiUrl": "http://localhost:11434/v1/chat/completions",
+    "apiKey": "ollama",
+    "model": "qwen2.5-coder:1.5b",
+    "temperature": 0.3,
+    "timeout": 30000
   }
 }

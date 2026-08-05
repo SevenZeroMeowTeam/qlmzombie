@@ -34,6 +34,7 @@ const { FSMBrain } = require('./brain/fsm/FSMBrain');
 const { BTBrain } = require('./brain/behavior/BTBrain');
 const { GoapBrain } = require('./brain/goap/GoapBrain');
 const { TaskSystem, TaskPresets } = require('./task/TaskSystem');
+const { LLMBridge } = require('./llm/LLMBridge');
 
 const path = require('path');
 const fs = require('fs');
@@ -50,6 +51,7 @@ class QLMAIBot {
     this.inventory = null;
     this.actions = null;
     this.tasks = null;
+    this.llm = null;
     this.running = false;
     this.lastTickAt = 0;
     this.lastSensorScanAt = 0;
@@ -153,6 +155,12 @@ class QLMAIBot {
       onTaskFailed: (t, reason) => this.log.warn(`✗ ${this.tasks.describe(t)}: ${reason}`)
     });
 
+    // 初始化 LLM 桥接（自然语言 → 任务规划）
+    this.llm = new LLMBridge(this.config.llm || {});
+    if (this.llm.enabled) {
+      this.log.info(`LLM 已启用: ${this.llm.provider} / ${this.llm.model}`);
+    }
+
     // 创建大脑
     const deps = {
       actions: this.actions,
@@ -230,7 +238,7 @@ class QLMAIBot {
 
     switch (action) {
       case 'help':
-        this.bot.chat('指令: !help | !status | !mine <方块> <数量> | !goto <x> <y> <z> | !follow | !stop | !home | !sethome | !brain <fsm|bt|goap> | !task <wooden_pickaxe|cobblestone>');
+        this.bot.chat('指令: !help | !status | !ai <自然语言> | !mine <方块> <数量> | !goto <x> <y> <z> | !follow | !stop | !home | !sethome | !brain <fsm|bt|goap> | !task <wooden_pickaxe|cobblestone> | !inventory');
         break;
       case 'status':
         this.reportStatus();
@@ -331,9 +339,42 @@ class QLMAIBot {
           }
         }
         break;
+      case 'ai': {
+        const prompt = parts.slice(1).join(' ');
+        if (!prompt) {
+          this.bot.chat('用法: !ai <自然语言指令>，例如: !ai 帮我建一座房子');
+          return;
+        }
+        if (!this.llm || !this.llm.enabled) {
+          this.bot.chat('LLM 未启用，请在 config.json 中配置 llm');
+          return;
+        }
+        this.bot.chat(`正在规划: ${prompt}...`);
+        this.handleAICommand(prompt).catch(e => {
+          this.log.error(`AI 规划失败: ${e.message}`);
+          this.bot.chat(`规划失败: ${e.message}`);
+        });
+        break;
+      }
       default:
         this.bot.chat(`未知指令: ${action}。输入 !help 查看`);
     }
+  }
+
+  /**
+   * 处理 !ai 自然语言指令
+   * 流程: 收集上下文 → 调用 LLM 规划任务 → 入队 TaskSystem 串行执行
+   */
+  async handleAICommand(prompt) {
+    const context = {
+      position: this.bot.entity.position,
+      inventory: this.bot.inventory.items().map(i => `${i.count}x${i.name}`),
+      health: this.bot.health,
+      food: this.bot.food
+    };
+    const tasks = await this.llm.planTask(prompt, context);
+    this.tasks.enqueueChain(tasks);
+    this.bot.chat(`已规划 ${tasks.length} 个任务: ${tasks.map(t => t.type).join(' → ')}`);
   }
 
   /** 切换大脑类型 */

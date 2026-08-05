@@ -18,7 +18,16 @@ const DEFAULT_CONFIG = {
   combat: { attackRange: 4.0, attackCooldownMs: 600, fleeHealthThreshold: 8, safeDistance: 24 },
   mining: { range: 16, maxDepth: 60, preferredOres: [] },
   inventory: { autoEat: true, autoTool: true, dropTrash: true, trashItems: [] },
-  logging: { level: 'info', file: 'bot.log' }
+  logging: { level: 'info', file: 'bot.log' },
+  llm: {
+    enabled: true,
+    provider: 'ollama',
+    apiUrl: 'http://localhost:11434/v1/chat/completions',
+    apiKey: 'ollama',
+    model: 'qwen2.5-coder:1.5b',
+    temperature: 0.3,
+    timeout: 30000
+  }
 };
 
 function deepMerge(target, source) {

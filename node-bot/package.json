@@ -25,17 +25,21 @@
   "author": "QLM Zombie Mod",
   "license": "Apache-2.0",
   "dependencies": {
-    "mineflayer": "^4.20.1",
-    "mineflayer-pathfinder": "^2.4.5",
+    "minecraft-data": "^3.0.0",
+    "minecraft-protocol-forge": "^1.0.0",
+    "mineflayer": "4.20.1",
     "mineflayer-auto-eat": "^3.3.4",
+    "mineflayer-pathfinder": "^2.4.5",
     "vec3": "^0.1.10",
-    "winston": "^3.13.0",
-    "minecraft-data": "^3.0.0"
+    "winston": "^3.13.0"
   },
   "devDependencies": {
     "eslint": "^9.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "allowScripts": {
+    "ursa@0.8.5": true
   }
 }

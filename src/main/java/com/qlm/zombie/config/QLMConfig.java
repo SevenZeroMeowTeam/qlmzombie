@@ -103,6 +103,14 @@ public class QLMConfig {
     public static final ForgeConfigSpec.ConfigValue<String> PLAYER2_MCP_API_KEY;
     public static final ForgeConfigSpec.ConfigValue<Integer> PLAYER2_MCP_TIMEOUT;
 
+    // LLM 大模型接入配置
+    public static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_LLM;
+    public static final ForgeConfigSpec.ConfigValue<String> LLM_API_URL;
+    public static final ForgeConfigSpec.ConfigValue<String> LLM_API_KEY;
+    public static final ForgeConfigSpec.ConfigValue<String> LLM_MODEL;
+    public static final ForgeConfigSpec.ConfigValue<Double> LLM_TEMPERATURE;
+    public static final ForgeConfigSpec.ConfigValue<Integer> LLM_TIMEOUT;
+
     public static final ForgeConfigSpec.ConfigValue<Boolean> ENHANCED_MOB_AI;
     public static final ForgeConfigSpec.ConfigValue<Double> MOB_AI_SPEED_BONUS_PER_PHASE;
     public static final ForgeConfigSpec.ConfigValue<Double> MOB_AI_KNOCKBACK_RESISTANCE;
@@ -223,6 +231,15 @@ public class QLMConfig {
         PLAYER2_MCP_URL = BUILDER.comment("Player2 MCP 服务器地址 (来自 Player2 官网 MCP 集成页面)").define("player2McpUrl", "https://api.player2.game/api/v1/mcp");
         PLAYER2_MCP_API_KEY = BUILDER.comment("Player2 MCP API 密钥 (在 Player2 官网 MCP 集成页面生成)").define("player2McpApiKey", "p2_D_FP66wl-SznulcNpYGdPA");
         PLAYER2_MCP_TIMEOUT = BUILDER.comment("API 请求超时(毫秒)").define("player2McpTimeout", 30000);
+        BUILDER.pop();
+
+        BUILDER.push("llm");
+        ENABLE_LLM = BUILDER.comment("启用 LLM 大模型自然语言指令翻译（Mod 内部 AI）").define("enableLlm", true);
+        LLM_API_URL = BUILDER.comment("LLM API 地址（Ollama 或 OpenAI 兼容 /v1/chat/completions）").define("llmApiUrl", "http://localhost:11434/v1/chat/completions");
+        LLM_API_KEY = BUILDER.comment("LLM API 密钥（Ollama 填 ollama）").define("llmApiKey", "ollama");
+        LLM_MODEL = BUILDER.comment("LLM 模型名称").define("llmModel", "qwen2.5-coder:1.5b");
+        LLM_TEMPERATURE = BUILDER.comment("LLM 温度参数 (0.0-1.0)").define("llmTemperature", 0.3);
+        LLM_TIMEOUT = BUILDER.comment("LLM 请求超时(毫秒)").define("llmTimeout", 30000);
         BUILDER.pop();
 
         BUILDER.push("enhanced_mob_ai");

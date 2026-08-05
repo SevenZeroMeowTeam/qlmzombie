@@ -127,6 +127,7 @@ class Navigator {
         cleanup();
         resolve({ ok: false, reason: 'no-path', error: err });
       };
+      const onPathFound = () => {};
 
       const timer = setTimeout(() => {
         if (settled) return;
@@ -136,18 +137,19 @@ class Navigator {
         resolve({ ok: false, reason: 'timeout' });
       }, timeout);
 
-      function cleanup() {
+      const cleanup = () => {
         clearTimeout(timer);
         this.bot.removeListener('goal_reached', onGoalReached);
         this.bot.removeListener('path_stop', onPathStop);
         this.bot.removeListener('path_found', onPathFound);
-      }
-      const onPathFound = () => {};
+        this.bot.removeListener('path_not_found', onPathNotFound);
+      };
       const cleanupBound = cleanup.bind(this);
 
       this.bot.once('goal_reached', onGoalReached);
       this.bot.once('path_stop', onPathStop);
       this.bot.once('path_found', onPathFound);
+      this.bot.once('path_not_found', onPathNotFound);
 
       try {
         this.bot.pathfinder.setGoal(goal, !options.async);

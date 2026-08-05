@@ -59,7 +59,11 @@ class Actions {
         options
       );
       if (!result.ok) {
-        this.log.warn(`寻路失败: ${result.reason}`);
+        this.log.warn(`寻路失败: ${result.reason}, 尝试脱困...`);
+        // 如果寻路失败（如卡住），尝试执行脱困动作
+        if (result.reason === 'stopped' || result.reason === 'no-path') {
+          await this.unstick();
+        }
       }
       return result;
     }, options.timeout || 30000);
@@ -68,7 +72,12 @@ class Actions {
   /** 走到指定方块中心 */
   async goToBlock(x, y, z, options = {}) {
     return this.lock.run('move', async () => {
-      return await this.navigator.goToNear(x, y, z, options.range || 2, options);
+      const result = await this.navigator.goToNear(x, y, z, options.range || 2, options);
+      if (!result.ok && (result.reason === 'stopped' || result.reason === 'no-path')) {
+        this.log.warn(`寻路失败到 (${x},${y},${z}): ${result.reason}, 尝试脱困...`);
+        await this.unstick();
+      }
+      return result;
     }, options.timeout || 30000);
   }
 
@@ -110,7 +119,16 @@ class Actions {
           { timeout: 15000 }
         );
         if (!r.ok) {
-          return { ok: false, reason: 'cannot-reach', block: block.name };
+          // 寻路失败，若目标在高处则搭建方块柱上去
+          const yDiff = blockPos.y - this.bot.entity.position.y;
+          if (yDiff > 2) {
+            this.log.info(`目标方块在高处 (Δy=${yDiff.toFixed(1)})，搭建方块上去挖掘`);
+            // 先水平走到目标正下方
+            await this.navigator.goToXZ(Math.floor(blockPos.x), Math.floor(blockPos.z), { timeout: 8000 });
+            await this.buildPillarUp(blockPos.y - 1, { maxBlocks: Math.ceil(yDiff) + 2 });
+          } else {
+            return { ok: false, reason: 'cannot-reach', block: block.name };
+          }
         }
       }
 
@@ -251,8 +269,87 @@ class Actions {
     }, options.timeout || 15000);
   }
 
+  /** 从背包中查找可用于搭建的方块（按优先级） */
+  findBuildBlock() {
+    const buildBlocks = [
+      'dirt', 'grass_block', 'cobblestone', 'stone',
+      'netherrack', 'oak_planks', 'spruce_planks', 'birch_planks',
+      'andesite', 'diorite', 'granite', 'deepslate',
+      'cobbled_deepslate', 'tuff', 'sandstone', 'terracotta'
+    ];
+    for (const name of buildBlocks) {
+      if (this.inventory && this.inventory.hasItem(name, 1)) {
+        return name;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 搭建方块柱向上爬（用于收集高处的物品/方块）
+   * 流程: 循环「跳起→脚下放置方块→落地」直到到达目标高度
+   * @param {number} targetY 目标 Y 高度（到达此高度即停）
+   * @param {object} options { maxBlocks, blockName, timeout }
+   * @returns {Promise<{ok: boolean, placed: number, currentY: number}>}
+   */
+  async buildPillarUp(targetY, options = {}) {
+    return this.lock.run('build', async () => {
+      const maxBlocks = options.maxBlocks || 32;
+      let placed = 0;
+      let consecFails = 0;
+
+      while (this.bot.entity.position.y < targetY - 0.5 && placed < maxBlocks) {
+        // 1. 找到可搭建方块并装备
+        const blockName = options.blockName || this.findBuildBlock();
+        if (!blockName) {
+          this.log.warn('背包中没有可搭建方块，停止搭建');
+          break;
+        }
+        const item = this.inventory ? this.inventory.findItem(blockName) : null;
+        if (!item) break;
+        await this.inventory.equip(item);
+
+        // 2. 看向脚下方块（参考方块）
+        const feet = this.bot.entity.position.floored();
+        const refBlock = this.bot.blockAt(feet.offset(0, -1, 0));
+        if (!refBlock || refBlock.name === 'air') {
+          this.log.warn('脚下无方块，无法搭建');
+          break;
+        }
+        try {
+          await this.bot.lookAt(refBlock.position);
+        } catch (e) {}
+
+        // 3. 跳起并在脚下放置方块
+        try {
+          await this.bot.setControlState('jump', true);
+          await sleep(150);
+          await this.bot.placeBlock(refBlock, new Vec3(0, 1, 0));
+          placed++;
+          consecFails = 0;
+        } catch (e) {
+          consecFails++;
+          this.log.debug(`搭建方块失败 (${consecFails}): ${e.message}`);
+          if (consecFails >= 3) {
+            this.log.warn('连续搭建失败 3 次，停止');
+            break;
+          }
+        } finally {
+          await this.bot.setControlState('jump', false);
+        }
+        // 4. 等待落地
+        await sleep(350);
+      }
+
+      const reached = this.bot.entity.position.y >= targetY - 0.5;
+      this.log.info(`搭建完成: 已放置 ${placed} 个方块, 当前高度 ${this.bot.entity.position.y.toFixed(1)}, 目标 ${targetY}, 到达=${reached}`);
+      return { ok: reached, placed, currentY: this.bot.entity.position.y };
+    }, options.timeout || 30000);
+  }
+
   /**
    * 拾取附近的掉落物
+   * 若物品在高处（比自身高 2 格以上），会自动搭建方块柱上去拾取
    */
   async collectItem(itemEntity, options = {}) {
     return this.lock.run('pickup', async () => {
@@ -262,7 +359,18 @@ class Actions {
       const pos = itemEntity.position;
       this.log.debug(`拾取 ${itemEntity.name} @ ${pos}`);
 
-      // 走过去
+      // 检测目标是否在高处
+      const myPos = this.bot.entity.position;
+      const yDiff = pos.y - myPos.y;
+      if (yDiff > 2) {
+        this.log.info(`目标在高处 (Δy=${yDiff.toFixed(1)})，搭建方块上去拾取`);
+        // 先水平走到目标正下方
+        await this.navigator.goToXZ(Math.floor(pos.x), Math.floor(pos.z), { timeout: 8000 });
+        // 搭建方块柱到目标高度
+        await this.buildPillarUp(pos.y - 1, { maxBlocks: Math.ceil(yDiff) + 2 });
+      }
+
+      // 走过去拾取
       const r = await this.navigator.goToNear(
         Math.floor(pos.x),
         Math.floor(pos.y),
@@ -346,6 +454,30 @@ class Actions {
       await sleep(300);
       await this.bot.setControlState('jump', false);
     } catch (e) {}
+  }
+
+  /** 脱困：当寻路失败或卡住时执行，尝试跳跃和侧向移动 */
+  async unstick() {
+    try {
+      this.log.info('执行脱困动作...');
+      // 1. 尝试跳跃
+      await this.jump();
+      // 2. 随机选一个方向移动 1-3 格
+      const myPos = this.bot.entity.position;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 1 + Math.random() * 2;
+      const target = {
+        x: Math.floor(myPos.x + Math.cos(angle) * dist),
+        y: Math.floor(myPos.y),
+        z: Math.floor(myPos.z + Math.sin(angle) * dist)
+      };
+      this.log.debug(`脱困移动到 (${target.x}, ${target.y}, ${target.z})`);
+      await this.navigator.goToNear(target.x, target.y, target.z, 1, { timeout: 3000 });
+      // 3. 再次尝试跳跃
+      await this.jump();
+    } catch (e) {
+      this.log.debug(`脱困动作异常: ${e.message}`);
+    }
   }
 
   /** 看向目标 */

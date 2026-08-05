@@ -160,14 +160,19 @@ class FSMBrain {
     if (now - this.lastExploreAt > 8000) {
       this.lastExploreAt = now;
       const myPos = this.memory.selfState.position;
+      if (!myPos) return;
       const angle = Math.random() * Math.PI * 2;
-      const dist = 5 + Math.random() * 8;
+      const dist = 3 + Math.random() * 5;
       const target = {
         x: Math.floor(myPos.x + Math.cos(angle) * dist),
         y: Math.floor(myPos.y),
         z: Math.floor(myPos.z + Math.sin(angle) * dist)
       };
-      await this.actions.goToBlock(target.x, target.y, target.z, { timeout: 6000 });
+      const r = await this.actions.goToBlock(target.x, target.y, target.z, { timeout: 6000 });
+      if (!r.ok) {
+        // 走动失败，尝试执行脱困动作
+        await this.actions.unstick();
+      }
     }
   }
 
@@ -197,12 +202,19 @@ class FSMBrain {
         } else {
           this.memory.dequeueTask();
         }
+      } else if (r.reason === 'cannot-reach' || r.reason === 'dig-failed') {
+        // 无法到达或挖掘失败，尝试脱困
+        this.log.warn(`挖矿失败 (${r.reason})，尝试脱困`);
+        await this.actions.unstick();
       }
       this.memory.clearMineTarget();
     } else if (this.memory.mineTarget) {
       // 直接挖指定方块
       const r = await this.actions.mineBlockAt(this.memory.mineTarget.position);
       if (r.ok || r.reason === 'cannot-reach') {
+        this.memory.clearMineTarget();
+      } else if (r.reason === 'dig-failed') {
+        await this.actions.unstick();
         this.memory.clearMineTarget();
       }
     }
