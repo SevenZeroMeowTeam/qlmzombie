@@ -1,5 +1,6 @@
 # === 构建产物 / 二进制 ===
 *.jar
+*.jar.disabled
 *.class
 *.zip
 *.tar.gz
@@ -38,8 +39,9 @@ logs/
 crash-reports/
 saves/
 
-# === 第三方依赖 JAR（src/libs/ 数百 MB） ===
+# === 第三方依赖 JAR（src/libs/ 和 src/main/libs/ 数百 MB） ===
 src/libs/
+src/main/libs/
 
 # === Node.js ===
 node-bot/node_modules/
