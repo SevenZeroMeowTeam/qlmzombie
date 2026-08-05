@@ -463,4 +463,210 @@ public class PythonAPI {
         MinecraftServer server = getServer();
         return server != null ? server.getLevel(net.minecraft.world.level.Level.OVERWORLD) : null;
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  8. SDK 事件系统（桥接到 SDKEventBus）
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * 注册 SDK 事件监听器。
+     * 支持的事件名：block_break, block_place, entity_death, entity_hurt,
+     *   player_join, player_quit, player_chat, player_tick, world_tick,
+     *   server_start, server_stop
+     * <pre>
+     * qlm.on("player_join", lambda event: qlm.log("玩家加入: " + event["playerName"]))
+     * </pre>
+     */
+    public void on(String eventName, Consumer<Object> callback) {
+        com.qlm.zombie.sdk.event.SDKEventBus bus = com.qlm.zombie.sdk.QLMModSDK.getEventBus();
+        if (bus == null) {
+            LOGGER.warn("[Python API] SDK 事件总线未初始化，无法注册 {}", eventName);
+            return;
+        }
+        bus.registerListener(eventName, event -> {
+            try {
+                callback.accept(event);
+            } catch (Exception e) {
+                LOGGER.error("[Python API] SDK事件回调异常 {}: {}", eventName, e.getMessage());
+            }
+        });
+        LOGGER.info("[Python API] 注册 SDK 事件: {}", eventName);
+    }
+
+    /** 触发 SDK 事件（供 Python 主动触发自定义事件）。 */
+    public void emit(String eventName, Map<String, Object> data) {
+        com.qlm.zombie.sdk.event.SDKEventBus bus = com.qlm.zombie.sdk.QLMModSDK.getEventBus();
+        if (bus != null) {
+            bus.post(new CustomSDKEvent(eventName, data));
+        }
+    }
+
+    /** Python 自定义事件的简单载体。 */
+    public static class CustomSDKEvent extends com.qlm.zombie.sdk.event.SDKEvent {
+        private final Map<String, Object> data;
+        public CustomSDKEvent(String name, Map<String, Object> data) {
+            super(name, false);
+            this.data = data;
+        }
+        public Map<String, Object> getData() { return data; }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  9. SDK 特效系统（桥接到 ParticleAPI / SoundAPI）
+    // ═══════════════════════════════════════════════════════════════
+
+    /** 在坐标生成粒子。particleType: flame/smoke/portal/heart/lava/redstone/cloud 等 */
+    public void spawnParticle(String particleType, double x, double y, double z) {
+        ServerLevel level = getOverworld();
+        if (level != null) {
+            com.qlm.zombie.sdk.effect.ParticleAPI.spawnParticle(level, particleType, x, y, z);
+        }
+    }
+
+    /** 在坐标生成带速度的粒子。 */
+    public void spawnParticle(String particleType, double x, double y, double z,
+                               double dx, double dy, double dz, int count) {
+        ServerLevel level = getOverworld();
+        if (level != null) {
+            com.qlm.zombie.sdk.effect.ParticleAPI.spawnParticle(level, particleType, x, y, z,
+                    dx, dy, dz, count, 0.02);
+        }
+    }
+
+    /** 在坐标播放音效。soundName: block.stone.break/entity.player.hurt/ambient.weather.thunder 等 */
+    public void playSound(String soundName, double x, double y, double z, float volume, float pitch) {
+        ServerLevel level = getOverworld();
+        if (level != null) {
+            com.qlm.zombie.sdk.effect.SoundAPI.playSound(level, soundName, x, y, z, volume, pitch);
+        }
+    }
+
+    /** 只对指定玩家播放音效。 */
+    public void playSoundToPlayer(String playerUuid, String soundName, float volume, float pitch) {
+        Player player = getPlayer(playerUuid);
+        if (player != null) {
+            com.qlm.zombie.sdk.effect.SoundAPI.playSoundToPlayer(player, soundName, volume, pitch);
+        }
+    }
+
+    /** 全场播放音效。 */
+    public void playSoundGlobal(String soundName, float volume, float pitch) {
+        ServerLevel level = getOverworld();
+        if (level != null) {
+            com.qlm.zombie.sdk.effect.SoundAPI.playSoundGlobal(level, soundName, volume, pitch);
+        }
+    }
+
+    /** 生成爆炸特效（仅视觉，不造成伤害）。 */
+    public void spawnExplosionEffect(double x, double y, double z, boolean fire) {
+        ServerLevel level = getOverworld();
+        if (level != null) {
+            com.qlm.zombie.sdk.effect.ParticleAPI.spawnExplosion(level, x, y, z, fire);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  10. SDK 任务调度（桥接到 TaskScheduler）
+    // ═══════════════════════════════════════════════════════════════
+
+    /** 延迟执行任务（delayTicks 后执行一次）。返回任务 ID。 */
+    public int runLater(long delayTicks, Runnable callback) {
+        com.qlm.zombie.sdk.task.TaskScheduler scheduler = com.qlm.zombie.sdk.QLMModSDK.getTaskScheduler();
+        if (scheduler == null) return -1;
+        return scheduler.runTaskLater(callback, delayTicks);
+    }
+
+    /** 重复执行任务（每隔 periodTicks 执行一次）。返回任务 ID。 */
+    public int runTimer(long delayTicks, long periodTicks, Runnable callback) {
+        com.qlm.zombie.sdk.task.TaskScheduler scheduler = com.qlm.zombie.sdk.QLMModSDK.getTaskScheduler();
+        if (scheduler == null) return -1;
+        return scheduler.runTaskTimer(callback, delayTicks, periodTicks);
+    }
+
+    /** 取消任务。 */
+    public void cancelTask(int taskId) {
+        com.qlm.zombie.sdk.task.TaskScheduler scheduler = com.qlm.zombie.sdk.QLMModSDK.getTaskScheduler();
+        if (scheduler != null) {
+            scheduler.cancelTask(taskId);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  11. SDK 注册系统（桥接到 SDKRegistry）
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * 注册自定义方块。必须在 mod 加载阶段调用。
+     * config 为 Map，支持字段：hardness, resistance, lightLevel
+     * <pre>
+     * qlm.registerBlock("my_ore", {"hardness": 3.0, "resistance": 15.0, "lightLevel": 0.5})
+     * </pre>
+     */
+    public boolean registerBlock(String blockId, Map<String, Object> config) {
+        try {
+            com.qlm.zombie.sdk.registry.CustomBlock.Builder builder = com.qlm.zombie.sdk.registry.CustomBlock.builder(blockId);
+            if (config.containsKey("hardness")) builder.hardness(((Number) config.get("hardness")).floatValue());
+            if (config.containsKey("resistance")) builder.resistance(((Number) config.get("resistance")).floatValue());
+            if (config.containsKey("lightLevel")) builder.lightLevel(((Number) config.get("lightLevel")).floatValue());
+            com.qlm.zombie.sdk.registry.SDKRegistry.registerBlock(blockId, builder.build());
+            LOGGER.info("[Python API] 注册方块: {}", blockId);
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("[Python API] 注册方块失败 {}: {}", blockId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 注册自定义物品。必须在 mod 加载阶段调用。
+     * config 支持：maxStackSize, maxDamage, rarity, isFood, nutrition, saturation
+     */
+    public boolean registerItem(String itemId, Map<String, Object> config) {
+        try {
+            com.qlm.zombie.sdk.registry.CustomItem.Builder builder = com.qlm.zombie.sdk.registry.CustomItem.builder(itemId);
+            if (config.containsKey("maxStackSize")) builder.maxStackSize(((Number) config.get("maxStackSize")).intValue());
+            if (config.containsKey("maxDamage")) builder.maxDamage(((Number) config.get("maxDamage")).intValue());
+            if (config.containsKey("rarity")) builder.rarity(net.minecraft.world.item.Rarity.valueOf(
+                    ((String) config.get("rarity")).toUpperCase()));
+            if (config.containsKey("isFood") && (Boolean) config.get("isFood")) {
+                builder.food(true);
+                if (config.containsKey("nutrition")) builder.nutrition(((Number) config.get("nutrition")).intValue());
+                if (config.containsKey("saturation")) builder.saturation(((Number) config.get("saturation")).floatValue());
+            }
+            com.qlm.zombie.sdk.registry.SDKRegistry.registerItem(itemId, builder.build());
+            LOGGER.info("[Python API] 注册物品: {}", itemId);
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("[Python API] 注册物品失败 {}: {}", itemId, e.getMessage());
+            return false;
+        }
+    }
+
+    /** 获取已注册的自定义方块 ID 列表。 */
+    public String[] getRegisteredBlocks() {
+        return com.qlm.zombie.sdk.registry.SDKRegistry.getAllBlocks().stream()
+                .map(com.qlm.zombie.sdk.registry.CustomBlock::getId)
+                .toArray(String[]::new);
+    }
+
+    /** 获取已注册的自定义物品 ID 列表。 */
+    public String[] getRegisteredItems() {
+        return com.qlm.zombie.sdk.registry.SDKRegistry.getAllItems().stream()
+                .map(com.qlm.zombie.sdk.registry.CustomItem::getId)
+                .toArray(String[]::new);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  12. SDK 状态查询
+    // ═══════════════════════════════════════════════════════════════
+
+    /** 获取 SDK 版本。 */
+    public String getSDKVersion() {
+        return "1.0.0";
+    }
+
+    /** 检查 SDK 是否已初始化。 */
+    public boolean isSDKReady() {
+        return com.qlm.zombie.sdk.QLMModSDK.getEventBus() != null;
+    }
 }
