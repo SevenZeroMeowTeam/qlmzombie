@@ -1,0 +1,58 @@
+{
+  "id": "qlmzombie:zombie_hunter",
+  "title": {
+    "zh_cn": "僵尸猎手",
+    "en_us": "Zombie Hunter"
+  },
+  "description": {
+    "zh_cn": "你已经掌握了基本的生存技能。现在是时候消灭更多的僵尸，收集它们的核心来制作强大的装备。",
+    "en_us": "You've mastered basic survival skills. Now it's time to eliminate more zombies and collect their cores to craft powerful equipment."
+  },
+  "icon": {
+    "item": "minecraft:iron_sword"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭僵尸",
+        "en_us": "Kill Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 30
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "qlmzombie:medical_supply",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "qlmzombie:emergency_ration",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "qlmzombie:infected_essence",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "qlmzombie:tactical_ammo",
+      "count": 8
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:ai_companion",
+    "children": [
+      "qlmzombie:blood_moon_survivor"
+    ]
+  }
+}

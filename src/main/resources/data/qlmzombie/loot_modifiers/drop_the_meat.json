@@ -1,0 +1,15 @@
+{
+  "type": "qlmzombie:drop_the_meat",
+  "conditions": [
+    {
+      "condition": "minecraft:entity_properties",
+      "entity": "this",
+      "predicate": {
+        "flags": {
+          "is_alive": false
+        }
+      }
+    }
+  ],
+  "note": "原创实现，参考 DropTheMeat 玩法。动物死亡额外掉落 2~5 块生肉，亡灵几率额外掉落腐肉。"
+}

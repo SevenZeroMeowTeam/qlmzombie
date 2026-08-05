@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:brick"
+    },
+    "title": { "translate": "advancements.qlmzombie.build_survive.title" },
+    "description": { "translate": "advancements.qlmzombie.build_survive.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "qlmzombie:root",
+  "criteria": {
+    "build_survive": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["build_survive"]
+  ]
+}

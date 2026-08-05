@@ -1,0 +1,81 @@
+{
+  "id": "qlmzombie:food_production",
+  "title": {
+    "zh_cn": "食物生产",
+    "en_us": "Food Production"
+  },
+  "description": {
+    "zh_cn": "没有食物就没有长久的生存。建立你的农场，使用农夫乐事等模组来生产稳定的食物供应。",
+    "en_us": "No food, no long-term survival. Establish your farm and use Farmer's Delight and other mods to produce a stable food supply."
+  },
+  "icon": {
+    "item": "farmersdelight:tomato"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_crops",
+      "title": {
+        "zh_cn": "收集农作物",
+        "en_us": "Collect Crops"
+      },
+      "item": "#minecraft:crops",
+      "count": 32
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_meat",
+      "title": {
+        "zh_cn": "收集肉类",
+        "en_us": "Collect Meat"
+      },
+      "item": "#forge:meat",
+      "count": 16
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "craft_cooking_pot",
+      "title": {
+        "zh_cn": "制作烹饪锅",
+        "en_us": "Craft Cooking Pot"
+      },
+      "item": "farmersdelight:cooking_pot",
+      "count": 1
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "farmersdelight:cooked_rice",
+      "count": 16
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "farmersdelight:fruit_salad",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "farmersdelight:stuffed_pumpkin",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "minecraft:iron_hoe",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "qlmzombie:emergency_ration",
+      "count": 6
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:gathering_resources"
+  }
+}

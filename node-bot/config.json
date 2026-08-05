@@ -1,0 +1,51 @@
+{
+  "host": "127.0.0.1",
+  "port": 25565,
+  "username": "QLM_AI_Bot",
+  "version": "1.20.1",
+  "auth": "offline",
+
+  "brain": {
+    "type": "fsm",
+    "tickInterval": 5,
+    "homePos": { "x": 0, "y": 64, "z": 0 }
+  },
+
+  "sensor": {
+    "scanRadius": 32,
+    "hostileScanRadius": 24,
+    "refreshInterval": 20
+  },
+
+  "combat": {
+    "attackRange": 4.0,
+    "attackCooldownMs": 600,
+    "fleeHealthThreshold": 8,
+    "safeDistance": 24
+  },
+
+  "mining": {
+    "range": 16,
+    "maxDepth": 60,
+    "preferredOres": [
+      "iron_ore", "deepslate_iron_ore",
+      "coal_ore", "deepslate_coal_ore",
+      "copper_ore", "deepslate_copper_ore",
+      "gold_ore", "deepslate_gold_ore",
+      "diamond_ore", "deepslate_diamond_ore",
+      "redstone_ore", "deepslate_redstone_ore"
+    ]
+  },
+
+  "inventory": {
+    "autoEat": true,
+    "autoTool": true,
+    "dropTrash": true,
+    "trashItems": ["dirt", "cobblestone", "granite", "diorite", "andesite", "gravel"]
+  },
+
+  "logging": {
+    "level": "info",
+    "file": "logs/bot.log"
+  }
+}

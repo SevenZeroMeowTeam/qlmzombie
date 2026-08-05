@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:clock"
+    },
+    "title": { "translate": "advancements.qlmzombie.survival_days.title" },
+    "description": { "translate": "advancements.qlmzombie.survival_days.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:survival_days/day_150",
+  "criteria": {
+    "day_365": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["day_365"]
+  ]
+}

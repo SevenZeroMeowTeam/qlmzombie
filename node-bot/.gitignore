@@ -1,0 +1,23 @@
+# 依赖
+node_modules/
+package-lock.json
+
+# 日志
+logs/
+*.log
+
+# 配置（含密码）
+config.local.json
+
+# 数据
+data/
+*.db
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+
+# 系统
+.DS_Store
+Thumbs.db

@@ -1,0 +1,70 @@
+{
+  "id": "qlmzombie:horde_survivor",
+  "title": {
+    "zh_cn": "尸潮幸存者",
+    "en_us": "Horde Survivor"
+  },
+  "description": {
+    "zh_cn": "在血月中抵挡5波尸潮攻击。只有最勇敢的幸存者才能做到这一点。获得来自TACZ和斯巴达的顶级武器作为奖励。",
+    "en_us": "Survive 5 waves of horde attacks during a Blood Moon. Only the bravest survivors can accomplish this. Get top-tier TACZ and Spartan weapons as rewards."
+  },
+  "icon": {
+    "item": "minecraft:totem_of_undying"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭100个僵尸",
+        "en_us": "Kill 100 Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 100
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "minecraft:totem_of_undying",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "spartanweaponry:diamond_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "spartanweaponry:diamond_helmet",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "ironchest:diamond_chest",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "qlmzombie:medical_supply",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "qlmzombie:survival_kit",
+      "count": 2
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:blood_moon_survivor",
+    "children": [
+      "qlmzombie:phase_survival_1"
+    ]
+  }
+}

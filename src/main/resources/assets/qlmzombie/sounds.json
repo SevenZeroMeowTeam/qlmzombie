@@ -1,0 +1,90 @@
+{
+  "boss_phase_1": {
+    "sounds": [
+      {
+        "name": "qlmzombie:music/boss_phase_1",
+        "stream": true,
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.qlmzombie.boss.phase1"
+  },
+  "boss_phase_2": {
+    "sounds": [
+      {
+        "name": "qlmzombie:music/boss_phase_2",
+        "stream": true,
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.qlmzombie.boss.phase2"
+  },
+  "boss_phase_3": {
+    "sounds": [
+      {
+        "name": "qlmzombie:music/boss_phase_3",
+        "stream": true,
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.qlmzombie.boss.phase3"
+  },
+  "horde_ambient": {
+    "sounds": [
+      {
+        "name": "qlmzombie:music/horde_ambient",
+        "stream": true,
+        "volume": 0.7,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.qlmzombie.horde.ambient"
+  },
+  "epic_main_theme": {
+    "sounds": [
+      {
+        "name": "qlmzombie:music/epic_main_theme",
+        "stream": true,
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.qlmzombie.epic.main_theme"
+  },
+  "blood_moon_battle": {
+    "sounds": [
+      {
+        "name": "qlmzombie:music/blood_moon_battle",
+        "stream": true,
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.qlmzombie.blood.moon.battle"
+  },
+  "adventure_overture": {
+    "sounds": [
+      {
+        "name": "qlmzombie:music/adventure_overture",
+        "stream": true,
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.qlmzombie.adventure.overture"
+  },
+  "blood_moon_rising": {
+    "sounds": [
+      {
+        "name": "qlmzombie:music/blood_moon_rising",
+        "stream": true,
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ],
+    "subtitle": "subtitles.qlmzombie.blood.moon.rising"
+  }
+}

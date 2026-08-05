@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:item/handheld",
+    "textures": {
+        "layer0": "qlmzombie:item/purified_water_bottle"
+    }
+}

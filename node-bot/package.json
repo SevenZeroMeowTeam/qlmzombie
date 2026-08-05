@@ -1,0 +1,41 @@
+{
+  "name": "qlmzombie-node-bot",
+  "version": "1.0.0",
+  "description": "QLM Zombie AI Player — 外部 Node.js + mineflayer 实现的多层架构 AI 玩家",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:fsm": "node src/index.js --brain fsm",
+    "start:bt": "node src/index.js --brain behavior-tree",
+    "start:goap": "node src/index.js --brain goap",
+    "start:debug": "node --inspect src/index.js",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "minecraft",
+    "mineflayer",
+    "ai",
+    "bot",
+    "behavior-tree",
+    "fsm",
+    "goap",
+    "pathfinder"
+  ],
+  "author": "QLM Zombie Mod",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "mineflayer": "^4.20.1",
+    "mineflayer-pathfinder": "^2.4.5",
+    "mineflayer-auto-eat": "^3.3.4",
+    "vec3": "^0.1.10",
+    "winston": "^3.13.0",
+    "minecraft-data": "^3.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

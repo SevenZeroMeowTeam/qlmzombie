@@ -1,0 +1,156 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '6.0.+'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'KubeJS maven'
+        url = 'https://maven.saps.dev/minecraft'
+        content {
+            includeGroup 'dev.latvian.mods'
+            includeGroup 'dev.latvian.mods.kubejs'
+        }
+    }
+    maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+        content {
+            includeGroup 'curse.maven'
+        }
+    }
+    flatDir {
+        dirs 'src/main/libs'
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // === Python 脚本引擎 ===
+    // Jython: 纯 Java 实现的 Python 2.7
+    implementation 'org.python:jython-standalone:2.7.3'
+    // GraalPy: Python 3.x on JVM
+    implementation 'org.graalvm.polyglot:polyglot:23.1.0'
+    implementation 'org.graalvm.polyglot:python:23.1.0'
+    // Jep: 运行时动态检测，需 pip install jep
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters', '-Xlint:deprecation']
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    var replaceProperties = [
+            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+            forge_version: forge_version, forge_version_range: forge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+            mod_authors: mod_authors, mod_description: mod_description,
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+    // 将 libs 目录中的依赖 mod 打包进最终 jar（ModDependencyHandler 运行时释放到 mods 目录）
+    // 注意：Jython/GraalPy 已作为 implementation 依赖提取类到 JAR 中，
+    //       必须排除其原始 JAR，否则嵌套 JAR 中的 org.w3c.dom.html 会导致 JPMS 模块冲突
+    from('src/libs') {
+        into('libs')
+        include '*.jar'
+        exclude 'README.txt'
+        exclude 'qlmzombie*.jar'
+        // 排除 Python 引擎原始 JAR（已通过 implementation 依赖提取类，原始 JAR 会导致模块冲突）
+        exclude '*jython*'
+        exclude '*graal*'
+        exclude '*polyglot*'
+        exclude '*[Python]*'
+    }
+    // 将 Jython/GraalPy 依赖打包进 jar，同时过滤与 JDK 冲突的包
+    // 冲突包: org.w3c.dom.html (JDK jdk.xml.dom), netscape.javascript 等
+    // 注意: GraalPy 的 artifact ID 是 polyglot 和 python，不含 'graal'
+    from(configurations.runtimeClasspath.filter {
+        it.name.contains('jython') ||
+        it.name.contains('polyglot') ||
+        (it.name ==~ /python-\d+\.\d+\.\d+\.jar$/ && it.group?.contains('graalvm'))
+    }.collect { zipTree(it) }) {
+        exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/maven/**'
+        // 排除与 JDK 冲突的包（module-info.java 也声明了不导出这些包）
+        exclude 'org/w3c/dom/**'
+        exclude 'netscape/**'
+        exclude 'org/antlr/**'
+        exclude 'com/ibm/icu/**'
+        exclude 'META-INF/versions/**/org/w3c/dom/**'
+    }
+    finalizedBy 'reobfJar'
+}

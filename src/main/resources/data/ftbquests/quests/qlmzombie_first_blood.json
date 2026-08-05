@@ -1,0 +1,51 @@
+{
+  "id": "qlmzombie:first_blood",
+  "title": {
+    "zh_cn": "第一滴血",
+    "en_us": "First Blood"
+  },
+  "description": {
+    "zh_cn": "末日生存的第一课：消灭你的第一个僵尸。在这个充满危险的世界里，每一个敌人都可能成为你的威胁。",
+    "en_us": "The first lesson of apocalypse survival: Eliminate your first zombie. In this dangerous world, every enemy is a threat."
+  },
+  "icon": {
+    "item": "minecraft:zombie_head"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombie",
+      "title": {
+        "zh_cn": "消灭僵尸",
+        "en_us": "Kill Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 5
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "qlmzombie:emergency_ration",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "qlmzombie:reinforced_parts",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "minecraft:iron_sword",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "children": [
+      "qlmzombie:gathering_resources"
+    ]
+  }
+}

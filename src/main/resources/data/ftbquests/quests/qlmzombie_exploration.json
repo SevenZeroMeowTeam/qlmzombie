@@ -1,0 +1,81 @@
+{
+  "id": "qlmzombie:exploration",
+  "title": {
+    "zh_cn": "末日探索者",
+    "en_us": "Apocalypse Explorer"
+  },
+  "description": {
+    "zh_cn": "探索末日世界的各个角落。在废弃建筑、地牢和神殿中寻找珍贵的战利品。使用旅行地图来帮助你导航。",
+    "en_us": "Explore every corner of the apocalypse world. Find precious loot in abandoned buildings, dungeons and temples. Use JourneyMap to help you navigate."
+  },
+  "icon": {
+    "item": "minecraft:compass"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_compass",
+      "title": {
+        "zh_cn": "收集指南针",
+        "en_us": "Collect Compass"
+      },
+      "item": "minecraft:compass",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_map",
+      "title": {
+        "zh_cn": "收集地图",
+        "en_us": "Collect Maps"
+      },
+      "item": "minecraft:map",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭40个僵尸",
+        "en_us": "Kill 40 Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 40
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "journeymap:fullscreenmap",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "minecraft:spyglass",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "travelerstitles:travelers_title",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "qlmzombie:emergency_ration",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "qlmzombie:reinforced_parts",
+      "count": 3
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:gathering_resources"
+  }
+}

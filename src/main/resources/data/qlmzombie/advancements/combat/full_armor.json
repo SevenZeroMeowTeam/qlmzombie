@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:iron_helmet"
+    },
+    "title": { "translate": "advancements.qlmzombie.wearmor.title" },
+    "description": { "translate": "advancements.qlmzombie.wearmor.description" },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "qlmzombie:root",
+  "criteria": {
+    "wearmor": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["wearmor"]
+  ]
+}

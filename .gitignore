@@ -1,0 +1,77 @@
+# === 构建产物 / 二进制 ===
+*.jar
+*.class
+*.zip
+*.tar.gz
+*.tar
+*.7z
+*.rar
+
+# === Gradle ===
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+bin/
+
+# === IDE / 编辑器 ===
+.idea/
+.vs/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.factorypath
+
+# === 系统文件 ===
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# === 运行时目录（含 mods/saves/logs，几百 MB） ===
+run/
+logs/
+crash-reports/
+saves/
+
+# === 第三方依赖 JAR（src/libs/ 数百 MB） ===
+src/libs/
+
+# === Node.js ===
+node-bot/node_modules/
+node-bot/logs/
+node-bot/data/
+node-bot/*.log
+
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# === 备份 / 临时 ===
+backup/
+*.bak
+*.tmp
+*.swp
+*~
+
+# === 调试 / 临时文档 ===
+debug-*.md
+tmp/
+
+# === Minecraft 客户端 ===
+options.txt
+usercache.json
+usernamecache.json
+mcp/
+
+# === 大文件清单（防误传） ===
+*.mca
+*.dat
+*.lock

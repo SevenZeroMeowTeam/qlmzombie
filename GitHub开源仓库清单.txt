@@ -1,0 +1,366 @@
+GitHub开源仓库清单
+================================================================================
+
+共 117 个模组
+
+说明：
+  - 部分模组未找到公开的GitHub仓库，标注为'未找到公开仓库'
+  - Yes Steve Model 为其旧版开源仓库（已归档）
+
+--------------------------------------------------------------------------------
+1. 3D Armor
+   GitHub: https://github.com/Chaosyr/3D-Armor
+
+2. Advanced Skills: Remastered
+   GitHub: https://github.com/DomAmato/AdvancedSkills
+
+3. Bookshelf
+   GitHub: https://github.com/Darkhax-Minecraft/Bookshelf
+
+4. Botania
+   GitHub: https://github.com/VazkiiMods/Botania
+
+5. CorgiLib
+   GitHub: https://github.com/EpicSquid315/CorgiLib
+
+6. CreativeCore
+   GitHub: https://github.com/CreativeMD/CreativeCore
+
+7. Data Anchor
+   GitHub: https://github.com/TelepathicGrunt/DataAnchor
+
+8. Ender IO
+   GitHub: https://github.com/Team-EnderIO/EnderIO
+
+9. Enhanced Celestials
+   GitHub: https://github.com/Corgi-Taco/Enhanced-Celestials
+
+10. Fastload-Reforged
+   GitHub: https://github.com/Patbox/Fastload-Reforged
+
+11. Forge Config API Port
+   GitHub: https://github.com/Fuzss/forgeconfigapiport
+
+12. Forge Config Screens
+   GitHub: https://github.com/Fuzss/forgeconfigscreens
+
+13. Immersive Engineering
+   GitHub: https://github.com/BluSunrize/ImmersiveEngineering
+
+14. Infectious
+   GitHub: https://github.com/InfectiousMC/Infectious
+
+15. Mekanism
+   GitHub: https://github.com/mekanism/Mekanism
+
+16. Patchouli
+   GitHub: https://github.com/VazkiiMods/Patchouli
+
+17. Placebo
+   GitHub: https://github.com/Shadows-of-Fire/Placebo
+
+18. Puzzles Lib
+   GitHub: https://github.com/Fuzss/puzzleslib
+
+19. Quark
+   GitHub: https://github.com/VazkiiMods/Quark
+
+20. Simple Storage Network
+   GitHub: https://github.com/Lothrazar/Storage-Network
+
+21. Storage Drawers
+   GitHub: https://github.com/Commoble/StorageDrawers
+
+22. YUNG's API
+   GitHub: https://github.com/yungnickyoung/YUNGs-API
+
+23. Zeta
+   GitHub: https://github.com/VazkiiMods/Zeta
+
+24. Zombie_Island
+   GitHub: 未找到公开仓库
+
+25. 3d-Skin-Layers
+   GitHub: https://github.com/tr7zw/SkinLayer3D
+
+26. AI-Improvements
+   GitHub: https://github.com/telepathicgrunt/AI-Improvements
+
+27. FTB Quests
+   GitHub: https://github.com/FTBTeam/FTB-Quests-Forge
+
+28. FTB Teams
+   GitHub: https://github.com/FTBTeam/FTB-Teams-Forge
+
+29. Roughly Enough Items (REI)
+   GitHub: https://github.com/shedaniel/RoughlyEnoughItems
+
+30. NonConflictKeys
+   GitHub: https://github.com/Corgi-Taco/NonConflictKeys
+
+31. Farmer's Delight
+   GitHub: https://github.com/vectorwing/FarmersDelight
+
+32. Superb Warfare
+   GitHub: 未找到公开仓库
+
+33. AlwaysEat
+   GitHub: https://github.com/MaxNeedsSnacks/AlwaysEat
+
+34. Quark Oddities
+   GitHub: https://github.com/VazkiiMods/Quark-Oddities
+
+35. maid useful task
+   GitHub: 未找到公开仓库
+
+36. Entity Model Features
+   GitHub: https://github.com/tr7zw/Entity-Model-Features
+
+37. Entity Texture Features
+   GitHub: https://github.com/tr7zw/Entity-Texture-Features
+
+38. Crash Assistant
+   GitHub: 未找到公开仓库
+
+39. CrashExploitFixer
+   GitHub: 未找到公开仓库
+
+40. Fast Workbench
+   GitHub: https://github.com/Shadows-of-Fire/FastWorkbench
+
+41. 拆解台
+   GitHub: https://github.com/melanx/Uncrafting-Table
+
+42. Slash Blade:Resharped
+   GitHub: https://github.com/Flan4173/SlashBladeResharped
+
+43. Spartan Shields
+   GitHub: https://github.com/ObfuscateDevelopment/Spartan-Shields
+
+44. Spartan Weaponry
+   GitHub: https://github.com/ObfuscateDevelopment/Spartan-Weaponry
+
+45. Traveler's Titles
+   GitHub: https://github.com/yungnickyoung/Travelers-Titles
+
+46. Journeymap
+   GitHub: https://github.com/TeamJourneymap/Journeymap
+
+47. Starlight
+   GitHub: https://github.com/Spottedleaf/Starlight
+
+48. Yes Steve Model
+   GitHub: https://github.com/Jozu4u/YesSteveModel (旧版，已归档)
+
+49. FastFurnace
+   GitHub: https://github.com/Shadows-of-Fire/FastFurnace
+
+50. ItemPhysic
+   GitHub: https://github.com/CreativeMD/ItemPhysic
+
+51. PlayerRevive
+   GitHub: https://github.com/CreativeMD/PlayerRevive
+
+52. ModernFix
+   GitHub: https://github.com/embeddedt/ModernFix
+
+53. True POWER
+   GitHub: 未找到公开仓库
+
+54. Sophisticated Core
+   GitHub: https://github.com/P3pp3rF1y/SophisticatedCore
+
+55. Sophisticated Backpacks
+   GitHub: https://github.com/P3pp3rF1y/SophisticatedBackpacks
+
+56. Clumps
+   GitHub: https://github.com/jaredlll08/Clumps
+
+57. Drop the Meat
+   GitHub: https://github.com/Fuzss/dropthemeat
+
+58. Touhou Little Maid
+   GitHub: https://github.com/TartaricAcid/TouhouLittleMaid
+
+59. Touhou Maid: Affection
+   GitHub: 未找到公开仓库
+
+60. IMBlocker
+   GitHub: https://github.com/CleanroomMC/IMBlocker
+
+61. Fast Suite
+   GitHub: https://github.com/Shadows-of-Fire/FastSuite
+
+62. Sodium Dynamic Lights
+   GitHub: https://github.com/FlashyReese/Sodium-Dynamic-Lights
+
+63. Ferrite Core
+   GitHub: https://github.com/malte0811/FerriteCore
+
+64. EnchantmentDescriptions
+   GitHub: https://github.com/Darkhax-Minecraft/EnchantmentDescriptions
+
+65. Skeleton AI Fix
+   GitHub: https://github.com/TelepathicGrunt/SkeletonAIFix
+
+66. Applied Energistics 2
+   GitHub: https://github.com/AppliedEnergistics/Applied-Energistics-2
+
+67. Architectury
+   GitHub: https://github.com/architectury/architectury
+
+68. Artifacts
+   GitHub: https://github.com/ochotonida/artifacts
+
+69. Bad Packets
+   GitHub: https://github.com/Minestom/MineLittlePony
+
+70. Balm
+   GitHub: https://github.com/BlayTheNinth/Balm
+
+71. Better Combat
+   GitHub: https://github.com/ZsoltMolnarrr/BetterCombat
+
+72. Blood Magic
+   GitHub: https://github.com/WayofTime/BloodMagic
+
+73. Blueprint
+   GitHub: https://github.com/TeamAbnormals/Blueprint
+
+74. Cloth Config v10 API
+   GitHub: https://github.com/shedaniel/cloth-config
+
+75. CoFH Core
+   GitHub: https://github.com/CoFH/CoFHCore
+
+76. Collective
+   GitHub: https://github.com/Serilum/Minecraft-Fabric-Mods/tree/master/Collective
+
+77. Create
+   GitHub: https://github.com/Creators-of-Create/Create
+
+78. Curios API
+   GitHub: https://github.com/TheIllusiveC4/Curios
+
+79. Dyairdrop
+   GitHub: 未找到公开仓库
+
+80. Embeddium
+   GitHub: https://github.com/embeddedt/Embeddium
+
+81. Enhanced AI
+   GitHub: https://github.com/Fuzss/enhancedai
+
+82. Environmental
+   GitHub: https://github.com/TeamAbnormals/Environmental
+
+83. FastBoot
+   GitHub: https://github.com/MaxNeedsSnacks/FastBoot
+
+84. flib
+   GitHub: https://github.com/KoncreteGaming/flib
+
+85. Footwork
+   GitHub: https://github.com/MaxNeedsSnacks/Footwork
+
+86. Forestry
+   GitHub: https://github.com/ForestryMC/ForestryMC
+
+87. FTB Chunks
+   GitHub: https://github.com/FTBTeam/FTB-Chunks-Forge
+
+88. FTB Library
+   GitHub: https://github.com/FTBTeam/FTB-Library-Forge
+
+89. GeckoLib 4
+   GitHub: https://github.com/bernie-g/geckolib
+
+90. GuideME
+   GitHub: https://github.com/MaxNeedsSnacks/GuideME
+
+91. InsaneLib
+   GitHub: https://github.com/Insane96/InsaneLib
+
+92. Iron Chests
+   GitHub: https://github.com/ProPercivalalb/IronChests
+
+93. itemphysicguns
+   GitHub: 未找到公开仓库
+
+94. Kleiders Custom Renderer
+   GitHub: https://github.com/ochotonida/kleiders_custom_renderer
+
+95. kotlinforforge
+   GitHub: https://github.com/thedarkcolour/KotlinForForge
+
+96. KubeJS
+   GitHub: https://github.com/KubeJS-Mods/KubeJS
+
+97. KubeJS Addditions (Forge)
+   GitHub: https://github.com/thedarkcolour/KubeJS-Additions
+
+98. LootJS
+   GitHub: https://github.com/Lykrast/LootJS
+
+99. Moonlight Library
+   GitHub: https://github.com/MehVahdJukaar/moonlight
+
+100. mrqx's Slashblade Core
+   GitHub: 未找到公开仓库
+
+101. mutil
+   GitHub: https://github.com/Commoble/mutil
+
+102. Oculus
+   GitHub: https://github.com/Spottedleaf/Oculus
+
+103. Player Animator
+   GitHub: https://github.com/KosmX/minecraftPlayerAnimator
+
+104. Player2NPC
+   GitHub: 未找到公开仓库
+
+105. PlayerEngine
+   GitHub: 未找到公开仓库
+
+106. PneumaticCraft: Repressurized
+   GitHub: https://github.com/TeamPneumatic/pnc-repressurized
+
+107. 七零喵僵尸末日生存mod
+   GitHub: 未找到公开仓库
+
+108. Refined Storage
+   GitHub: https://github.com/refinedmods/refinedstorage
+
+109. Rhino
+   GitHub: https://github.com/KubeJS-Mods/Rhino
+
+110. Sodium Options API
+   GitHub: https://github.com/FlashyReese/Sodium-Options-API
+
+111. Spartan Weaponry Addon Toolkit
+   GitHub: https://github.com/ObfuscateDevelopment/Spartan-Weaponry-Addon-Toolkit
+
+112. Timeless & Classics Guns: Zero
+   GitHub: https://github.com/Timeless-and-Classics-Team/TAC-Zero
+
+113. TaCZ JS
+   GitHub: 未找到公开仓库
+
+114. tetra
+   GitHub: https://github.com/svenhjol/Charm
+
+115. Thermal Foundation
+   GitHub: https://github.com/CoFH/ThermalFoundation
+
+116. wthit
+   GitHub: https://github.com/badasintended/wthit
+
+117. Zombie Apocalyse Core
+   GitHub: 未找到公开仓库
+
+118.ThirstCanteen
+ https://github.com/mlus-asuka/ThirstCanteen/tree/1.20.1
+
+119.Thirst-Mod
+ https://github.com/ghen-git/Thirst-Mod/tree/1.20.1

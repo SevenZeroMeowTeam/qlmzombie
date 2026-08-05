@@ -1,0 +1,74 @@
+{
+  "id": "qlmzombie:phase_survival_2",
+  "title": {
+    "zh_cn": "武装升级",
+    "en_us": "Armed Upgrade"
+  },
+  "description": {
+    "zh_cn": "你已经度过了初期的困难。现在是时候升级你的武器装备。获得拔刀剑、斯巴达盾牌和TACZ步枪来应对越来越多的僵尸。",
+    "en_us": "You've survived the early struggles. Now it's time to upgrade your arsenal. Get SlashBlades, Spartan shields and TACZ rifles to handle the growing zombie threat."
+  },
+  "icon": {
+    "item": "spartanweaponry:diamond_sword"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭30个僵尸",
+        "en_us": "Kill 30 Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 30
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_ingots",
+      "title": {
+        "zh_cn": "收集钻石",
+        "en_us": "Collect Diamonds"
+      },
+      "item": "minecraft:diamond",
+      "count": 3
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "spartanweaponry:diamond_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "spartanshields:diamond_shield",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "slashblade:slash_blade",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "tacz:rifle_ammo",
+      "count": 64
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "farmersdelight:iron_knife",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:phase_survival_1",
+    "children": [
+      "qlmzombie:phase_survival_3"
+    ]
+  }
+}

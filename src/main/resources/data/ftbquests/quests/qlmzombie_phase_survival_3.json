@@ -1,0 +1,90 @@
+{
+  "id": "qlmzombie:phase_survival_3",
+  "title": {
+    "zh_cn": "机械革命",
+    "en_us": "Mechanical Revolution"
+  },
+  "description": {
+    "zh_cn": "在这个阶段，科技成为你最大的武器。使用机械动力、沉浸工程的物品来建立你的末日基地，并获得强大的装备。",
+    "en_us": "At this stage, technology becomes your greatest weapon. Use Create and tech mod items to build your apocalypse base and obtain powerful equipment."
+  },
+  "icon": {
+    "item": "create:andesite_alloy"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_create",
+      "title": {
+        "zh_cn": "收集安山合金",
+        "en_us": "Collect Andesite Alloy"
+      },
+      "item": "create:andesite_alloy",
+      "count": 8
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_ingots",
+      "title": {
+        "zh_cn": "收集铁锭",
+        "en_us": "Collect Iron Ingots"
+      },
+      "item": "minecraft:iron_ingot",
+      "count": 16
+    },
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭50个僵尸",
+        "en_us": "Kill 50 Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 50
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "minecraft:iron_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "spartanweaponry:iron_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "create:belt_connector",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "ironchest:iron_chest",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "qlmzombie:zombie_core",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "qlmzombie:reinforced_parts",
+      "count": 5
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:phase_survival_2",
+    "children": [
+      "qlmzombie:phase_survival_4"
+    ]
+  }
+}

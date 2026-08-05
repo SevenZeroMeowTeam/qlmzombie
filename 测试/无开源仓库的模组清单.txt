@@ -1,0 +1,20 @@
+# 无开源仓库的模组清单（共 16 个）
+# 以下模组未找到公开的 GitHub 仓库，继续通过 src/libs → run/mods 释放机制加载
+
+24. Zombie_Island - 丧尸岛维度
+32. Superb Warfare - 卓越前线（战争/枪械）
+35. maid useful task - 女仆实用任务（TLM 附属）
+38. Crash Assistant - 崩溃助手（工具）
+39. CrashExploitFixer - 崩溃漏洞修复
+53. True POWER - 真正的力量（附魔/属性）
+59. Touhou Maid: Affection - 车万女仆附属：爱恋
+79. Dyairdrop - 空投 mod
+93. itemphysicguns - 物品物理（枪械相关）
+100. mrqx's Slashblade Core - mrqx 的拔刀剑核心
+104. Player2NPC - Player2NPC（AI 玩家核心依赖，必保留）
+105. PlayerEngine - PlayerEngine（AI 玩家核心依赖，必保留）
+107. 七零喵僵尸末日生存mod - 本项目自身（不处理）
+113. TaCZ JS - TACZ JS（枪械附属）
+117. Zombie Apocalyse Core (ZAC) - 僵尸末日核心
+
+# 重要：Player2NPC + PlayerEngine 是本模组 AI 玩家系统的核心依赖，永不删除/禁用
