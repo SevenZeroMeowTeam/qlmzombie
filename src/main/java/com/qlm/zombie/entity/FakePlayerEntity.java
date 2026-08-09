@@ -895,7 +895,9 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             }
 
             if (this.getFoodLevel() <= 0 && this.tickCount % 80 == 0) {
-                this.hurt(this.damageSources().starve(), 1.0F);
+                // 修复: FakePlayer 不应饥饿掉血 - 饥饿伤害会触发 Footwork/Mekanism capability NPE 崩溃
+                // 改为恢复饱食度，避免 hurt 链路中的 capability 检查
+                this.setFoodLevel(20);
             }
         }
 
@@ -995,7 +997,12 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
                 return false;
             }
         }
-        return super.hurt(source, amount);
+        // 安全网: 防止 Footwork/Mekanism 等 mod 在 LivingHurtEvent 中检查 capability 时 NPE 崩服
+        try {
+            return super.hurt(source, amount);
+        } catch (NullPointerException e) {
+            return false;
+        }
     }
 
     @Override

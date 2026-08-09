@@ -46,7 +46,7 @@
 
   "logging": {
     "level": "info",
-    "file": "logs/bot.log"
+    "file": "bot.log"
   },
 
   "llm": {

@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -28,7 +29,7 @@ import java.util.List;
 public class AbandonedShopGenerator {
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    
+
     private static final int SHOP_WIDTH = 7;
     private static final int SHOP_HEIGHT = 4;
     private static final int SHOP_DEPTH = 5;
@@ -36,36 +37,47 @@ public class AbandonedShopGenerator {
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
+        // 只处理服务端的完整区块（LevelChunk），跳过 ProtoChunk 以避免区块加载死锁
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
-        
-        ChunkPos chunkPos = event.getChunk().getPos();
-        
+        if (!(event.getChunk() instanceof LevelChunk chunk)) {
+            return;
+        }
+
+        ChunkPos chunkPos = chunk.getPos();
+
         if (level.getRandom().nextFloat() > 0.02F) {
             return;
         }
-        
+
         if (level.getServer().getPlayerList().getPlayers().isEmpty()) {
             return;
         }
-        
+
         BlockPos centerPos = chunkPos.getMiddleBlockPosition(0);
-        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, centerPos.getX(), centerPos.getZ());
-        
+        // 使用区块自身的高度图而非 level.getHeight()，避免在区块加载事件中
+        // 同步调用 getChunk() 导致区块加载死锁（ServerHangWatchdog 60秒超时崩溃）
+        int surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, centerPos.getX(), centerPos.getZ());
+
         if (surfaceY < 60) {
             return;
         }
-        
+
         BlockPos groundPos = new BlockPos(centerPos.getX(), surfaceY - 1, centerPos.getZ());
-        BlockState groundState = level.getBlockState(groundPos);
-        
+        BlockState groundState = chunk.getBlockState(groundPos);
+
         if (groundState.isAir() || groundState.is(Blocks.WATER) || groundState.is(Blocks.LAVA)) {
             return;
         }
-        
+
         BlockPos shopPos = new BlockPos(centerPos.getX(), surfaceY, centerPos.getZ());
-        generateShop(level, shopPos, level.getRandom());
+        long seed = level.getRandom().nextLong();
+        // 延迟到下一 tick 执行商店生成，避免在 ChunkEvent.Load 中调用 level.setBlock()
+        // 触发 getChunk() 导致区块加载死锁
+        level.getServer().execute(() -> {
+            generateShop(level, shopPos, RandomSource.create(seed));
+        });
     }
 
     public static void generateShop(WorldGenLevel level, BlockPos pos, RandomSource random) {

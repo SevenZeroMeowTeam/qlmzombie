@@ -35,6 +35,7 @@ const { BTBrain } = require('./brain/behavior/BTBrain');
 const { GoapBrain } = require('./brain/goap/GoapBrain');
 const { TaskSystem, TaskPresets } = require('./task/TaskSystem');
 const { LLMBridge } = require('./llm/LLMBridge');
+const { ForgeHandshake } = require('./forge/ForgeHandshake');
 
 const path = require('path');
 const fs = require('fs');
@@ -68,6 +69,22 @@ class QLMAIBot {
       username: this.config.username,
       version: this.config.version,
       auth: this.config.auth
+    });
+
+    // 初始化 Forge 握手处理器（让 bot 能连接 Forge 服务器）
+    new ForgeHandshake(this.bot, this.log);
+
+    // 捕获 minecraft-protocol 客户端的 error 事件
+    // PartialReadError (declare_commands 解析失败) 不会导致 Bot 崩溃，
+    // 但如果 error 事件没有被监听，Node.js 会抛出未处理异常，中断 TCP 回调，
+    // 导致 keepalive 包无法处理 → 30秒后超时断开
+    this.bot._client.on('error', (err) => {
+      const errName = err.constructor.name;
+      if (errName === 'PartialReadError') {
+        this.log.warn(`协议解析错误 (已忽略): ${err.message}`);
+        return;
+      }
+      this.log.error(`客户端错误 [${errName}]: ${err.message}`);
     });
 
     this.attachEventHandlers();
@@ -115,7 +132,41 @@ class QLMAIBot {
     });
 
     bot.on('error', (err) => {
-      this.log.error(`Bot 错误: ${err.message}`);
+      // 连接重置/服务器未启动 → 自动重连
+      const msg = err.message || String(err);
+      if (msg.includes('ECONNRESET') || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT')) {
+        this.log.warn(`连接失败 (${msg.substring(0, 50)})，3秒后重试...`);
+        setTimeout(() => {
+          this.log.info('尝试重连...');
+          try {
+            this.bot = mineflayer.createBot({
+              host: this.config.host,
+              port: this.config.port,
+              username: this.config.username,
+              version: this.config.version,
+              auth: this.config.auth
+            });
+            // 重新初始化 Forge 握手处理器
+            new ForgeHandshake(this.bot, this.log);
+            // 重新绑定客户端 error 处理
+            this.bot._client.on('error', (err) => {
+              const errName = err.constructor.name;
+              if (errName === 'PartialReadError') {
+                this.log.warn(`协议解析错误 (已忽略): ${err.message}`);
+                return;
+              }
+              this.log.error(`客户端错误 [${errName}]: ${err.message}`);
+            });
+            // 重新绑定事件
+            this.attachEventHandlers();
+            this.bot.once('spawn', () => this.onSpawn());
+          } catch (e) {
+            this.log.error(`重连失败: ${e.message}`);
+          }
+        }, 3000);
+      } else {
+        this.log.error(`Bot 错误: ${msg}`);
+      }
     });
 
     bot.on('end', () => {

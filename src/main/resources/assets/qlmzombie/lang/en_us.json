@@ -70,6 +70,18 @@
   "qlmzombie.quality.mythic": "Mythic",
   "qlmzombie.tooltip.quality": "Quality: %s",
   "qlmzombie.tooltip.damage_bonus": "Damage Bonus: +%s",
+
+  "qlmzombie.pickaxe_ability.obsidian_breaker": "Obsidian Breaker",
+  "qlmzombie.pickaxe_ability.range_3x3": "3x3 Area Mine",
+  "qlmzombie.pickaxe_ability.range_5x5": "5x5 Area Mine",
   "item.qlmzombie.plank_axe": "Plank Axe",
-  "item.qlmzombie.plank_collector": "Plank Collector"
+  "item.qlmzombie.plank_collector": "Plank Collector",
+
+  "itemGroup.qlmzombie.cloudai_items": "CloudAI Follower",
+
+  "item.qlmzombie.ai_caller": "AI Caller",
+  "item.qlmzombie.ai_recover": "AI Recovery Potion",
+  "item.qlmzombie.mode_switch": "AI Mode Switcher",
+  "item.qlmzombie.ai_speed_pill": "AI Speed Pill",
+  "item.qlmzombie.ai_shield": "AI Shield Charm"
 }

@@ -1,13 +1,23 @@
 package com.qlm.zombie;
 
 import com.mojang.logging.LogUtils;
+import com.qlm.zombie.cloudai.event.EventBusSubscriber;
 import com.qlm.zombie.config.QLMConfig;
+import com.qlm.zombie.craftingdead.block.CDBlocks;
+import com.qlm.zombie.craftingdead.effect.CDEffects;
+import com.qlm.zombie.craftingdead.entity.CDEntities;
+import com.qlm.zombie.craftingdead.entity.zombie.CivilianZombie;
+import com.qlm.zombie.craftingdead.entity.zombie.ScientistZombie;
+import com.qlm.zombie.craftingdead.entity.zombie.SoldierZombie;
+import com.qlm.zombie.craftingdead.item.CDItems;
+import com.qlm.zombie.craftingdead.tab.CDCreativeTabs;
 import com.qlm.zombie.dayphase.DayPhaseManager;
 import com.qlm.zombie.dependency.ModDependencyHandler;
 import com.qlm.zombie.entity.FakePlayerEntity;
 import com.qlm.zombie.entity.GiantZombieEntity;
 import com.qlm.zombie.entity.QLMEntities;
 import com.qlm.zombie.item.QLMItems;
+import com.qlm.zombie.item.QLMTabs;
 import com.qlm.zombie.ai.Player2APIService;
 import com.qlm.zombie.loot.QLMGlobalLootModifiers;
 import com.qlm.zombie.music.QLMSounds;
@@ -34,7 +44,7 @@ public class QLMZombieMod {
 
     public static final String MOD_ID = "qlmzombie";
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final String MOD_VERSION = "2.10.0.rewrite.beta.build.32.0";
+    public static final String MOD_VERSION = "2.10.0.rewrite.beta.build.37.0";
 
     public static boolean needsRestart = false;
 
@@ -44,11 +54,23 @@ public class QLMZombieMod {
         modEventBus.addListener(this::commonSetup);
 
         QLMItems.ITEMS.register(modEventBus);
+        QLMTabs.TABS.register(modEventBus);
         QLMSounds.register(modEventBus);
         QLMGlobalLootModifiers.LOOT_MODIFIER_SERIALIZERS.register(modEventBus);
         QLMEntities.ENTITY_TYPES.register(modEventBus);
         // DropTheMeat 玩法的 GLM Codec（原创实现，参考开源设计模式）
         com.qlm.zombie.feature.DropTheMeatLootModifier.GLM_CODECS.register(modEventBus);
+        // CloudAI Follower 模块绑定（DeferredRegister + Mod生命周期事件）
+        EventBusSubscriber.onModConstruct(context);
+
+        // ========== Crafting Dead 模块注册 ==========
+        CDEffects.MOB_EFFECTS.register(modEventBus);
+        CDItems.ITEMS.register(modEventBus);
+        CDEntities.ENTITY_TYPES.register(modEventBus);
+        CDBlocks.BLOCKS.register(modEventBus);
+        CDBlocks.BLOCK_ENTITIES.register(modEventBus);
+        CDBlocks.BLOCK_ITEM_REGISTER.register(modEventBus);
+        CDCreativeTabs.TABS.register(modEventBus);
 
         modEventBus.addListener(this::registerEntityAttributes);
 
@@ -101,6 +123,13 @@ public class QLMZombieMod {
             LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.28.0 GraalPy集成：build.gradle直接依赖org.graalvm.polyglot:polyglot+python 23.1.0，三引擎(GraalPy/Jython/Jep)全部开箱即用，无需手动配置JAR");
             LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.29.0 崩溃修复：移除Jython/GraalPy编译依赖(org.w3c.dom.html与JDK jdk.xml.dom模块冲突)，Jython改为src/libs释放；移除ThirstCanteen 3.6(与ThirstWasTaken 1.4.0包名不兼容)");
             LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.30.0 模块冲突彻底修复：排除libs/中Python引擎原始JAR(jython/graal/polyglot)，仅保留implementation依赖提取的类，彻底解决JPMS模块冲突");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.35.0 FakePlayer崩溃修复: FakePlayer饥饿掉血时触发Footwork/Mekanism的LivingHurtEvent，ItemCapabilityWrapper.getCapability因capability为null抛出NullPointerException导致服务端崩溃。修复方案：(1)FakePlayer不再饥饿掉血，改为自动恢复饱食度至20；(2)hurt方法添加try-catch安全网，捕获capability检查NPE返回false，防止任何伤害源的capability检查崩溃");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.34.0 严重崩溃修复: 随机建筑/废弃商店生成器在ChunkEvent.Load中调用level.getHeight()导致区块加载死锁，服务器tick超60秒被Watchdog强制关闭，AI Bot因服务器无响应而超时断开。改用区块自身高度图chunk.getHeight(WORLD_SURFACE)并延迟到下一tick执行建筑生成");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.33.0 LLM大模型接入+AI修复+自动搭建: Node.js LLMBridge自然语言转任务JSON(!ai指令)，Mod内部AI LLMBridge.java异步规划，TaskRunner任务链串行执行，AI自动搭建方块收集高处物品，Navigator/FSMBrain原地打转修复");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.36.0 Crafting Dead 末日装备系统移植：42+ 物品（8枪/7弹/13附件/3近战/3手雷/4防具/2方块）+ 3僵尸变种 + 4创意标签页，全部 cd_ 前缀，forge DeferredRegister 注册，compileJava 0 错误");
+            LOGGER.info("[QLM Zombie] Crafting Dead 模块注册完成：CDEffects(5效果)/CDItems(42+物品)/CDEntities(4实体)/CDBlocks(2方块+1方块实体)/CDCreativeTabs(4标签页) 五大 DeferredRegister 已接入");
+            LOGGER.info("[QLM Zombie] Crafting Dead 模块内容：医疗8物、枪械AK47/M4A1/MP5/M1014/DesertEagle/Glock17/BarrettM82/AWM、4镜3握3枪管3弹匣、战斗刀/博伊刀/撬棍、破片/闪光/燃烧弹、防弹衣/头盔/背心/靴子、军人/科学家/平民僵尸、医疗补给箱/弹药箱方块");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.37.0 镐子随机能力系统：合成镐子有概率获得黑曜石破坏者(15%)/3x3范围挖掘(10%)/5x5范围挖掘(5%)，可叠加，NBT bitmask存储");
 
             if (Player2APIService.isPlayer2Available()) {
                 LOGGER.info("[QLM Zombie] Player2 MCP API 服务已连接，AI玩家可通过远程API执行智能任务");
@@ -146,7 +175,19 @@ public class QLMZombieMod {
             event.getEntity().sendSystemMessage(Component.literal(msg));
         }
 
-        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §b新增 LittleSkin 随机形象皮肤系统！AI 玩家不再是史蒂夫！"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §a镐子随机能力系统上线！合成镐子有概率获得特殊能力"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §d黑曜石破坏者(15%)：§b左键黑曜石/哭泣黑曜石直接破坏+掉落物，任何品质镐子均可"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §b3x3范围挖掘(10%)：§b破坏方块时以面向平面为中心3x3同种方块连锁"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §65x5范围挖掘(5%)：§b同上5x5范围，可叠加多能力，Tooltip显示✦标记"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aCrafting Dead 末日装备系统上线！42+ 新物品（枪械/弹药/医疗/防具/近战/手雷/方块）"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aCD战斗页：§bAK47/M4A1/MP5/M1014/沙鹰/Glock17/BarrettM82/AWM 8枪 + 4镜3握3枪管3弹匣13附件 + 战斗刀博伊刀撬棍 + 破片闪光燃烧弹"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aCD医疗页：§b绷带/急救包/肾上腺素/止痛药/止血带/生理盐水袋/夹板/手术剪刀（5自定义效果：流血/骨折/肾上腺素/止痛/重度感染）"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aCD装备页：§b防弹头盔/插板防弹衣/战术背心/作战靴（自定义CDArmorMaterial 头3胸8腿6靴3 韧性1.0）"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aCD方块页：§b医疗补给箱（右键随机医疗物）+ 弹药箱（1-3种随机弹药×8-32发），60%保留为刷新点"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aCD僵尸变种：§b军人僵尸（35血+铁装+流血光环）/科学家僵尸（25血+毒反伤）/平民僵尸（弱化版）"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §c修复FakePlayer饥饿掉血NPE崩溃！Footwork/Mekanism capability检查不再崩服！"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §c崩溃修复：§bFakePlayer不再饥饿掉血(自动恢复饱食度)，hurt方法添加try-catch安全网防止capability NPE"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aAI Bot修复：§bForge握手ModData不再发送多余Ack，消除服务器'Recieved unexpected index'警告"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aAI随机形象：§b从 https://littleskin.cn/skinlib 抓取热门皮肤，40+ 内置兜底（苦力怕娘/蔡徐坤/胡桃/miku/GawrGura…）"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §aURL皮肤修复：§bFakePlayerEntityRenderer HTTP 下载 bug 修复，setSkinURL(url) 现在能真的加载皮肤"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a外部AI机器人：§bnode-bot 目录，mineflayer+pathfinder，FSM/行为树/GOAP 三大脑可切换"));
@@ -167,6 +208,9 @@ public class QLMZombieMod {
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §d好感度驯服：§b喂食AI食物提升信任度(0-100)，满100驯服"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §c口渴系统：§b饱食度上方蓝色口渴条+像素水滴图标，仅口渴值<=6时才上debuff，雨天补水，纯净水饮用，自动释放ThirstWasTaken"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §9Python脚本：§bJython(内置)/Jep(pip install)/GraalPy(可选)，方块/实体/事件API，scripts/python/放.py自动加载"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §bLLM大模型：§b!ai <自然语言> 让AI理解指令(\"帮我建房子\"→任务链)，Mod内部AI也支持聊天自然语言指令"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §bAI自动搭建：§b高处物品/方块→自动搭方块柱上去收集/挖掘，背包需有可搭建方块"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §bAI修复：§bNavigator/FSMBrain原地打转修复，脱困机制(跳跃+侧向移动)，寻路失败自动重建路径"));
     }
 
     private void onAddReloadListener(AddReloadListenerEvent event) {
@@ -178,5 +222,9 @@ public class QLMZombieMod {
     private void registerEntityAttributes(final EntityAttributeCreationEvent event) {
         event.put(QLMEntities.FAKE_PLAYER.get(), FakePlayerEntity.createAttributes().build());
         event.put(QLMEntities.GIANT_ZOMBIE.get(), GiantZombieEntity.createAttributes().build());
+        // Crafting Dead 僵尸变种实体属性
+        event.put(CDEntities.SOLDIER_ZOMBIE.get(), SoldierZombie.createAttributes().build());
+        event.put(CDEntities.SCIENTIST_ZOMBIE.get(), ScientistZombie.createAttributes().build());
+        event.put(CDEntities.CIVILIAN_ZOMBIE.get(), CivilianZombie.createAttributes().build());
     }
 }

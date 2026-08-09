@@ -89,5 +89,17 @@
   "qlmzombie.quality.legendary": "传说",
   "qlmzombie.quality.mythic": "神话",
   "qlmzombie.tooltip.quality": "品质: %s",
-  "qlmzombie.tooltip.damage_bonus": "伤害加成: +%s"
+  "qlmzombie.tooltip.damage_bonus": "伤害加成: +%s",
+
+  "qlmzombie.pickaxe_ability.obsidian_breaker": "黑曜石破坏者",
+  "qlmzombie.pickaxe_ability.range_3x3": "3×3 范围挖掘",
+  "qlmzombie.pickaxe_ability.range_5x5": "5×5 范围挖掘",
+
+  "itemGroup.qlmzombie.cloudai_items": "CloudAI 追随者",
+
+  "item.qlmzombie.ai_caller": "AI 召唤符",
+  "item.qlmzombie.ai_recover": "AI 恢复药剂",
+  "item.qlmzombie.mode_switch": "AI 模式切换器",
+  "item.qlmzombie.ai_speed_pill": "AI 加速药丸",
+  "item.qlmzombie.ai_shield": "AI 护盾符"
 }

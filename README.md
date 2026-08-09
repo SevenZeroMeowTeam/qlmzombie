@@ -1,7 +1,7 @@
 # 七零喵僵尸末日生存mod (QLM Zombie Apocalypse)
 
 **制作团队：七零喵团队 (SevenZeroMeowTeam)**
-**当前版本：`2.10.0.rewrite.beta.build.32.0`**
+**当前版本：`2.10.0.rewrite.beta.build.37.0`**
 
 基于 Minecraft Forge 1.20.1 的末日生存 mod。
 
@@ -19,7 +19,7 @@
 ./gradlew build
 ```
 
-输出 JAR：`build/libs/qlmzombie-2.10.0.rewrite.beta.build.32.0.jar`
+输出 JAR：`build/libs/qlmzombie-2.10.0.rewrite.beta.build.37.0.jar`
 
 ---
 
@@ -98,6 +98,89 @@
 
 ---
 
+## Crafting Dead 末日生存装备系统（v2.10.0.b36 新增）
+
+基于 Crafting Dead（NEXUSNODE 开源架构，参考 `crafting-dead-upstream/`）原创实现的装备系统，包含医疗、枪械、附件、近战、投掷物、防具、僵尸变种、补给箱方块等完整末日装备生态：
+
+### 4 个创意标签页
+
+| 标签 | 说明 | 图标 |
+|------|------|------|
+| CD 医疗 | 医疗物品与急救设备 | 急救包 |
+| CD 战斗 | 枪械/近战/弹药/手雷/附件 | AK47 |
+| CD 装备 | 防具/服装/战术装备 | 防弹衣 |
+| CD 方块 | 医疗补给箱/弹药箱 | 医疗补给箱 |
+
+### 医疗系统（8 物品 + 5 自定义效果）
+
+| 物品 | 用途 |
+|------|------|
+| 绷带 | 恢复生命值，止血 |
+| 急救包 | 大幅恢复生命值，移除流血效果 |
+| 肾上腺素 | 瞬时回复 + 速度/力量，移除疼痛与骨折 |
+| 止痛药 | 抑制疼痛（止痛效果） |
+| 止血带 | 停止流血（移除 BLEEDING） |
+| 生理盐水袋 | 恢复生命值 + 水分 |
+| 夹板 | 移除骨折（BROKEN_BONE） |
+| 手术剪刀 | 医疗工具，右键快速使用绷带 |
+
+**CDEffects** 5 种自定义效果：BLEEDING 流血、BROKEN_BONE 骨折、ADRENALINE_RUSH 肾上腺素、PAIN_SUPPRESSION 止痛、INFECTION_SEVERE 重度感染。
+
+### 枪械系统（8 枪 + 7 弹 + 13 附件）
+
+| 类别 | 内容 |
+|------|------|
+| **枪械** | AK47 / M4A1 / MP5 / M1014（霰弹）/ Desert Eagle / Glock17 / Barrett M82（.50 反器材）/ AWM（.338 狙击） |
+| **弹药** | 5.56×45 / 7.62×39 / 9×19 / .45 ACP / 12 号霰弹 / .50 BMG / .338 Lapua |
+| **瞄准镜** | 红点 / EOTECH 全息 / ACOG 4× / 8× 狙击镜 |
+| **握把** | 垂直握把 / 转角握把 / 两脚架（反器材专用） |
+| **枪管** | 消音器 / 补偿器 / 加长枪管（+伤害+射程） |
+| **弹匣** | 标准 / 扩容（+50%）/ 弹鼓（+150%） |
+
+所有物品注册名前缀 `cd_`（如 `cd_ak47`, `cd_ballistic_helmet`）。
+
+### 近战武器
+
+| 物品 | 效果 |
+|------|------|
+| 战斗刀 | 15% 概率造成流血 |
+| 博伊刀 | 25% 流血 + 10% 骨折 |
+| 撬棍 | 高伤害慢攻速，右键 10% 概率直接破坏方块 |
+
+### 投掷物系统
+
+| 物品 | 效果 |
+|------|------|
+| 破片手雷 | 4F 范围爆炸 |
+| 闪光弹 | 半径 15 格失明 5 秒 + 缓慢 3 秒 |
+| 燃烧弹（莫洛托夫） | 2.5F 爆炸 + 5×5 区域随机点火 |
+
+### 防具系统（自定义材料 CDArmorMaterial）
+
+| 物品 | 防御 | 稀有度 |
+|------|------|--------|
+| 防弹头盔 | 头 3 | UNCOMMON |
+| 防弹衣（插板） | 胸 8 | RARE |
+| 战术背心 | 胸 6 | UNCOMMON |
+| 作战靴 | 靴 3 | UNCOMMON |
+
+### 僵尸变种实体
+
+| 实体 | 血量 | 攻击 | 特殊 |
+|------|------|------|------|
+| 军人僵尸 cd_soldier_zombie | 35 | 6 + 甲 5 | 铁剑/斧装备 + 每分钟 8 格内玩家流血光环 |
+| 科学家僵尸 cd_scientist_zombie | 25 | 4 | 受伤 30% 毒反伤 + 白衣外套 + 死后云雾粒子 |
+| 平民僵尸 cd_civilian_zombie | 20 | 3 | 弱化版，经验奖励 3 |
+
+### 方块系统
+
+| 方块 | 行为 |
+|------|------|
+| 医疗补给箱 cd_medical_supply_crate | 右键随机获得医疗物品（60%绷带/25%急救包/15%其他），60% 保留可重复开箱 |
+| 弹药箱 cd_ammo_crate | 右键获得 1-3 种随机弹药 × 8-32 发，60% 保留 |
+
+---
+
 ## 游戏系统
 
 ### 时间系统
@@ -122,6 +205,20 @@
 ### 武器品质系统
 
 合成武器/工具/盔甲随机生成 7 档品质（破损→神话），品质越高伤害越高。神话级可破坏基岩、无视游戏规则限制。
+
+### 镐子随机能力系统（v2.10.0.b37 新增）
+
+合成镐子时有概率获得特殊能力，可叠加多个，Tooltip 显示 ✦ 标记：
+
+| 能力 | 概率 | 颜色 | 效果 |
+|------|------|------|------|
+| 黑曜石破坏者 | 15% | 紫色 | 左键黑曜石/哭泣黑曜石直接破坏+掉落物，任何品质镐子均可，消耗 2 耐久 |
+| 3×3 范围挖掘 | 10% | 青色 | 破坏方块时以玩家面向平面为中心，3×3 同种方块连锁破坏 |
+| 5×5 范围挖掘 | 5% | 金色 | 同上 5×5 范围（5×5 优先于 3×3），消耗耐久 |
+
+- NBT bitmask 存储（`qlm_pickaxe_abilities.flags`），一个 int 存所有能力 flag
+- 范围挖掘根据 `getDirection()` + `getXRot()` 自动判断平面（水平/垂直）
+- 防递归 ThreadLocal，仅破坏同种方块
 
 ### 连锁挖矿/砍树
 
@@ -217,7 +314,13 @@
 src/main/java/com/qlm/zombie/
 ├── QLMZombieMod.java              # @Mod 主类
 ├── config/QLMConfig.java          # Forge 配置
-├── ai/                            # AI 优化 + Player2 API + AI 物品注册表
+├── ai/                            # AI 优化 + Player2 API + AI 物品注册表 + LLM 桥接
+├── craftingdead/                  # Crafting Dead 装备系统（原创实现，参考开源架构）
+│   ├── item/CDItems.java          # 42 个物品注册（医疗/枪械/弹药/附件/近战/手雷/防具）
+│   ├── effect/CDEffects.java      # 5 种自定义状态（流血/骨折/肾上腺素/止痛/重度感染）
+│   ├── entity/CDEntities.java     # 手雷实体 + 3 种僵尸变种
+│   ├── block/CDBlocks.java        # 医疗补给箱/弹药箱 + BlockEntity
+│   └── tab/CDCreativeTabs.java    # 4 个创意标签页
 ├── dayphase/                      # 难度阶段管理
 ├── dependency/                    # mod 自动释放/去重/冲突检测
 ├── feature/                       # 源码替代玩法（AlwaysEat/Clumps/AIImprovements 等）
@@ -227,15 +330,201 @@ src/main/java/com/qlm/zombie/
 ├── mining/                        # 连锁挖矿
 ├── moon/                          # 月相系统
 ├── music/                         # 音乐系统
-├── player/                        # 初始物资/血量UI/AI玩家/聊天指令
+├── player/                        # 初始物资/血量UI/AI玩家/聊天指令/皮肤系统
 ├── restriction/                   # 封禁系统
+├── script/                        # Python 三引擎脚本 + qlm API 桥接
 ├── scoreboard/                    # HUD 计分板
+├── structure/                     # 随机建筑/废弃商店生成
 └── zombie/                        # 僵尸进化
 ```
+## Changelog
+
+### v2.10.0.rewrite.beta.build.37.0 — 2026-08-09
+
+**镐子随机能力系统：合成镐子有概率获得黑曜石破坏/3×3/5×5 范围挖掘能力！**
+
+合成镐子时独立 roll 每个能力（可叠加），NBT bitmask 存储，Tooltip 显示 ✦ 标记：
+
+- **黑曜石破坏者（15%）**：左键黑曜石/哭泣黑曜石直接破坏 + 掉落物，任何品质镐子（木/石/铁/钻石/下界合金）均可使用，消耗 2 耐久
+  - 监听 `PlayerInteractEvent.LeftClickBlock`，手动 `destroyBlock(pos, true, player)` 产生掉落 + cancel 事件
+- **3×3 范围挖掘（10%）**：破坏方块时以玩家面向平面为中心，3×3 同种方块连锁破坏
+  - 监听 `BlockEvent.BreakEvent`，根据 `getDirection()` + `getXRot()` 自动判断平面（水平/垂直）
+  - 仅破坏同种方块，消耗耐久，防递归 ThreadLocal
+- **5×5 范围挖掘（5%）**：同上 5×5 范围（5×5 优先于 3×3）
+- **NBT 存储**：`qlm_pickaxe_abilities.flags` bitmask（bit 0=黑曜石, bit 1=3x3, bit 2=5x5）
+- **语言文件**：zh_cn.json / en_us.json 添加 3 个能力翻译键
+
+**新增文件：**
+- `item/PickaxeAbility.java` — 镐子能力枚举（NBT 读写 + 随机 roll）
+- `item/PickaxeAbilityHandler.java` — 事件处理器（黑曜石破坏 + 范围挖掘）
+
+**修改文件：**
+- `item/ItemAttributeHandler.java` — 合成时调用 `PickaxeAbility.rollAbilities()` + Tooltip 显示能力
+- `assets/qlmzombie/lang/zh_cn.json` — 添加 3 个能力翻译键
+- `assets/qlmzombie/lang/en_us.json` — 英文翻译
+- `QLMZombieMod.java` — 版本号 build.37.0 + 游戏公告
+- `gradle.properties` — 版本号 build.37.0
 
 ---
 
-## Changelog
+### v2.10.0.rewrite.beta.build.36.0 — 2026-08-09
+
+**Crafting Dead 末日装备系统完整移植：8 枪 + 7 弹 + 13 附件 + 3 近战 + 3 投掷物 + 4 防具 + 3 僵尸变种 + 2 补给箱方块，共 42+ 新物品全接入 Forge 1.20.1 DeferredRegister！**
+
+新增 `com.qlm.zombie.craftingdead` 子包，完全原创 Forge 1.20.1 代码实现（参考 Crafting Dead 开源架构，上游源码保留在 `crafting-dead-upstream/` 目录，含完整 LICENSE/NOTICE/HEADER 署名）：
+
+- **注册中心 5 大 DeferredRegister**：
+  - `CDEffects.MOB_EFFECTS` — 5 种自定义效果：BLEEDING 流血 / BROKEN_BONE 骨折 / ADRENALINE_RUSH 肾上腺素 / PAIN_SUPPRESSION 止痛 / INFECTION_SEVERE 重度感染
+  - `CDItems.ITEMS` — 42 个 `RegistryObject<Item>`，全部 `cd_` 前缀（`cd_bandage`, `cd_ak47`, `cd_ballistic_helmet` 等）
+  - `CDEntities.ENTITY_TYPES` — 通用手雷实体（Fragment/Flashbang/Molotov 三种子）+ 军人/科学家/平民 3 种僵尸变种
+  - `CDBlocks.BLOCKS` + `BLOCK_ENTITIES` + `BLOCK_ITEM_REGISTER` — 医疗补给箱方块 + 弹药箱方块 + SupplyCrateBlockEntity（预留 GUI 扩展）
+  - `CDCreativeTabs.TABS` — 4 个创意标签页（CD医疗/CD战斗/CD装备/CD方块），图标与 displayItems 完全配置
+- **医疗系统（8 物品）**：绷带、急救包、肾上腺素针、止痛药、止血带、生理盐水袋、夹板、手术剪刀 — 各自右键互动 + 效果处理 + Tooltip
+- **枪械系统（8 枪 + 7 弹 + 13 附件）**：
+  - 接口/基类：IGun（6 种 SlotType）+ AbstractGunItem（抽象基类）+ IAttachmentItem
+  - 枪械预设：AK47 / M4A1 / MP5 / M1014（霰弹）/ Desert Eagle / Glock17 / Barrett M82（.50 反器材）/ AWM（.338 狙击）
+  - 弹药：7 种 AmmoType（5.56×45 / 7.62×39 / 9×19 / .45 ACP / 12号霰弹 / .50 BMG / .338 Lapua）
+  - 附件：瞄准镜 4 种（红点/全息/ACOG/8x）、握把/两脚架 3 种、枪管 3 种（消音/补偿/加长）、弹匣 3 种（标准/扩容/弹鼓）
+- **近战武器（3）**：战斗刀（15%流血）、博伊刀（25%流血+10%骨折）、撬棍（10%概率直接破坏方块）
+- **投掷物系统（3 物品 + 1 通用实体）**：破片手雷（4F爆炸）/ 闪光弹（15格失明+缓慢）/ 燃烧弹（2.5F爆炸+5×5点火）
+- **防具系统（4 护甲 + 自定义材料）**：CDArmorMaterial（耐久倍率20 / 头3胸8腿6靴3 / 韧性1.0）+ 防弹头盔 / 防弹衣 / 战术背心 / 作战靴
+- **僵尸变种实体（3）**：
+  - SoldierZombie — 血量35，攻击6，甲5，装备铁剑/斧，每分钟对 8 格内玩家施加流血光环
+  - ScientistZombie — 血量25，白衣外套，受伤 30% 反毒，死后云雾粒子
+  - CivilianZombie — 弱化基础版，血量20，攻击3，经验奖励3
+- **方块系统（2 方块 + BlockEntity）**：
+  - MedicalSupplyCrateBlock — 右键随机医疗物品（60%绷带/25%急救包/15%其他），60%概率保留刷新点
+  - AmmoCrateBlock — 右键 1-3 种随机弹药 × 8-32 发，60%概率保留刷新点
+- **QLMZombieMod 主类接入**：所有 DeferredRegister 调用 `.register(modEventBus)` + 三种僵尸变种 `EntityAttributeCreationEvent` 注册属性
+- **上游源码保留（Fork+署名，非商业用途）**：`crafting-dead-upstream/` 目录含 1.18.x 原始源码（89 个 Java 文件 + 344 个资源）+ LICENSE.txt + HEADER.txt + NOTICE 署名声明
+- **编译验证**：`./gradlew build` 通过，`compileJava` 无错误，JAR 重新打包成功
+
+**新增文件（60+）：**
+- `craftingdead/item/gun/` — IGun / AbstractGunItem / AmmoType / AmmoItem / IAttachmentItem + 4 种附件类
+- `craftingdead/item/medical/` — 8 个医疗物品类
+- `craftingdead/item/melee/` — CombatKnifeItem / BowieKnifeItem / CrowbarItem
+- `craftingdead/item/grenade/` — FragmentGrenadeItem / FlashbangGrenadeItem / MolotovCocktailItem
+- `craftingdead/item/armor/` — CDArmorMaterial + 4 个护甲类
+- `craftingdead/entity/zombie/` — SoldierZombie / ScientistZombie / CivilianZombie
+- `craftingdead/block/` — MedicalSupplyCrateBlock / AmmoCrateBlock / SupplyCrateBlockEntity
+- `crafting-dead-upstream/` — 上游参考源码（含 LICENSE/NOTICE/HEADER 署名）
+
+**修改文件：**
+- `QLMZombieMod.java` — 版本号 build.36.0 + 游戏公告 + changelog
+- `README.md` — 版本号 + 新增「Crafting Dead 末日生存装备系统」大章节（创意标签/医疗/枪械/近战/投掷物/防具/僵尸/方块）+ 项目结构更新
+- `gradle.properties` — 版本号 build.36.0
+
+---
+
+### v2.10.0.rewrite.beta.build.35.0 — 2026-08-06
+
+**严重崩溃修复：FakePlayer 饥饿掉血触发 Footwork/Mekanism capability NPE — 服务端不再崩溃！**
+
+FakePlayer（AI 玩家）在饱食度归零后触发饥饿掉血，`hurt()` → `actuallyHurt()` → `ForgeHooks.onLivingHurt()` → Footwork `EntityHandler.pain()` 检查物品 capability → Mekanism `ItemCapabilityWrapper.getCapability()` 因 `capability` 为 null 抛出 `NullPointerException`，导致服务端 `Ticking entity` 崩溃。
+
+- **根因**：`java.lang.NullPointerException: Cannot invoke "net.minecraftforge.common.capabilities.Capability.isRegistered()" because "capability" is null`
+  - `mekanism.common.capabilities.ItemCapabilityWrapper.getCapability(ItemCapabilityWrapper.java:43)`
+  - `jackiecrazy.footwork.handler.EntityHandler.pain(EntityHandler.java:119)` — Footwork 在 LivingHurtEvent 中对 FakePlayer 持有的物品调用 `getCapability()` 检查
+  - Mekanism 的 `ItemCapabilityWrapper` 未注册对应 capability → NPE
+  - 崩溃链：`FakePlayerEntity.aiStep():898` → `hurt():998` → `LivingEntity.actuallyHurt` → `ForgeHooks.onLivingHurt` → Footwork → Mekanism NPE
+- **2 次崩溃报告确认同一根因**：`crash-2026-08-06_13.18.18`、`crash-2026-08-06_13.31.41`
+- **修复方案**：
+  - **(1) FakePlayer 不再饥饿掉血**：`aiStep()` 中 `foodLevel <= 0` 时不再调用 `this.hurt(starve, 1.0F)`，改为 `this.setFoodLevel(20)` 自动恢复饱食度，从源头切断触发 hurt 链路的可能
+  - **(2) hurt 方法添加 try-catch 安全网**：`super.hurt(source, amount)` 包裹 try-catch 捕获 `NullPointerException` 返回 false，防止任何伤害源（怪物攻击/掉落/火焰等）触发 Footwork/Mekanism capability 检查时崩溃
+
+**修改文件：**
+- `src/main/java/com/qlm/zombie/entity/FakePlayerEntity.java` — 饥饿掉血改为恢复饱食度 + hurt 方法 try-catch 安全网
+- `QLMZombieMod.java` — 版本号 build.35.0 + 游戏公告 + changelog
+- `gradle.properties` — 版本号 build.35.0
+
+---
+
+### v2.10.0.rewrite.beta.build.34.0 — 2026-08-05
+
+**严重崩溃修复：服务器区块加载死锁 — AI Bot 不再因服务器无响应而超时断开！**
+
+AI Bot 连接 Forge 服务器后约 30 秒超时断开，根本原因是服务器在加载区块时发生死锁被 Watchdog 强制关闭。
+
+- **根因**：`RandomBuildingGenerator.onChunkLoad()` 和 `AbandonedShopGenerator.onChunkLoad()` 在 `ChunkEvent.Load` 事件中调用 `level.getHeight()`，该方法内部调用 `level.getChunk()` 阻塞等待区块加载。但此时区块正在加载中（`protoChunkToFullChunk`），事件处理在区块注册到缓存之前触发 → 死锁 → 服务器 tick 超时 60 秒 → Watchdog 强制关闭 → AI Bot 收不到 keepalive 超时断开
+- **3 次崩溃报告确认同一根因**：`crash-2026-08-05_18.56.44`（AbandonedShopGenerator:54）、`19.03.22`（RandomBuildingGenerator:47）、`19.08.42`（RandomBuildingGenerator:47）
+- **修复方案**：
+  - `level.getHeight(WORLD_SURFACE_WG)` → `chunk.getHeight(WORLD_SURFACE)`：使用事件中的区块对象自身的 heightmap，不经过 `getChunk()`
+  - `level.getBlockState()` → `chunk.getBlockState()`：同理，直接访问区块数据
+  - 建筑生成延迟到下一 tick：`level.getServer().execute(() -> generateBuilding(...))`，此时区块已完全注册到缓存，`setBlock()` 不会再死锁
+  - 跳过 ProtoChunk：`if (!(event.getChunk() instanceof LevelChunk chunk)) return;`
+
+- **Forge 握手修复**：ModData 不再发送 Acknowledgement（之前导致服务器日志 "Recieved unexpected index 0 in client reply" 警告），改为 `understood=true, data=null` 空响应
+- **日志路径修复**：`config.json` 的 `file` 从 `logs/bot.log` 改为 `bot.log`，修复嵌套 `logs/logs/` 目录
+
+**修改文件：**
+- `src/main/java/com/qlm/zombie/structure/RandomBuildingGenerator.java` — 区块高度图 + 延迟 tick 生成
+- `src/main/java/com/qlm/zombie/structure/AbandonedShopGenerator.java` — 同上死锁修复
+- `node-bot/src/forge/ForgeHandshake.js` — ModData 空响应替代 Ack
+- `node-bot/config.json` — 日志路径修复
+- `QLMZombieMod.java` — 版本号 build.34.0 + 游戏公告
+- `gradle.properties` — 版本号 build.34.0
+
+---
+
+### v2.10.0.rewrite.beta.build.33.0 — 2026-08-05
+
+**新增：LLM 大模型接入（Node.js 外部 AI + Mod 内部 AI）+ AI 自动搭建 + 原地打转修复**
+
+AI 玩家现在可以理解自然语言指令，自动搭建方块收集高处物品，不再原地打转。
+
+- **Node.js 外部 AI (mineflayer)**：
+  - `LLMBridge.js`：Ollama/OpenAI 兼容 API，自然语言 → 任务 JSON 数组
+  - `!ai <自然语言>` 聊天指令，LLM 规划任务链交给 TaskSystem 串行执行
+  - `buildPillarUp()`：自动搭建方块柱向上爬，收集高处物品/挖掘高处方块
+  - `findBuildBlock()`：从背包按优先级查找可搭建方块
+  - `collectItem()` / `mineBlockAt()`：集成高处自动搭建
+  - 修复 `Navigator.js` 变量引用和事件清理
+  - 修复 `FSMBrain.js` 寻路失败死循环，新增 `unstick()` 脱困机制（跳跃 + 侧向移动）
+
+- **Mod 内部 AI (Forge Java)**：
+  - `LLMBridge.java`：异步调用 LLM API，注入 AI 上下文（坐标/背包/血量），CompletableFuture 不阻塞游戏线程
+  - 系统提示词支持 17 种任务类型，自动过滤非法类型
+  - `TaskRunner` 新增任务链队列 `startTaskChain()`，多步任务串行执行
+  - `AIPlayerChatHandler` 三级降级：Player2 API → 本地关键词解析 → LLM 翻译
+  - `QLMConfig` 新增 `llm` 配置段（enableLlm/llmApiUrl/llmModel/llmTemperature/llmTimeout）
+
+- **LLM 配置**（config.json / qlmzombie-common.toml）：
+  ```json
+  "llm": {
+    "enabled": true,
+    "provider": "ollama",
+    "apiUrl": "http://localhost:11434/v1/chat/completions",
+    "model": "qwen2.5-coder:1.5b",
+    "temperature": 0.3,
+    "timeout": 30000
+  }
+  ```
+
+- **使用示例**：
+  ```
+  !ai 帮我建一座房子          → 规划: mine→craft→craft→build
+  !ai 挖10个铁矿石           → 规划: mine iron_ore × 10
+  对驯服AI说: 帮我收集5个橡木  → LLM 翻译 → 任务链执行
+  ```
+
+**新增文件：**
+- `node-bot/src/llm/LLMBridge.js` — Node.js LLM 客户端
+- `src/main/java/com/qlm/zombie/ai/LLMBridge.java` — Java LLM 客户端
+
+**修改文件：**
+- `node-bot/src/action/Actions.js` — buildPillarUp / findBuildBlock / collectItem / mineBlockAt
+- `node-bot/src/brain/fsm/FSMBrain.js` — unstick() 脱困 + 寻路失败修复
+- `node-bot/src/executor/Navigator.js` — 变量引用 + 事件清理修复
+- `node-bot/src/index.js` — !ai 指令 + LLMBridge 初始化
+- `node-bot/src/utils/config.js` — llm 配置默认值
+- `node-bot/config.json` — llm 配置段
+- `src/main/java/com/qlm/zombie/ai/task/TaskRunner.java` — 任务链队列 startTaskChain
+- `src/main/java/com/qlm/zombie/config/QLMConfig.java` — llm 配置段
+- `src/main/java/com/qlm/zombie/player/AIPlayerChatHandler.java` — LLM 翻译路径
+- `QLMZombieMod.java` — 版本号 build.33.0 + 游戏公告
+- `gradle.properties` — 版本号 build.33.0
+
+---
 
 ### v2.10.0.rewrite.beta.build.32.0 — 2026-08-05
 

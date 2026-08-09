@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -35,27 +36,36 @@ public class RandomBuildingGenerator {
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
+        // 只处理服务端的完整区块（LevelChunk），跳过 ProtoChunk 以避免区块加载死锁
         if (!(event.getLevel() instanceof ServerLevel level)) return;
+        if (!(event.getChunk() instanceof LevelChunk chunk)) return;
 
-        ChunkPos chunkPos = event.getChunk().getPos();
+        ChunkPos chunkPos = chunk.getPos();
 
         if (level.getRandom().nextFloat() > GENERATE_CHANCE) return;
 
         if (level.getServer().getPlayerList().getPlayers().isEmpty()) return;
 
         BlockPos centerPos = chunkPos.getMiddleBlockPosition(0);
-        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, centerPos.getX(), centerPos.getZ());
+        // 使用区块自身的高度图而非 level.getHeight()，避免在区块加载事件中
+        // 同步调用 getChunk() 导致区块加载死锁（ServerHangWatchdog 60秒超时崩溃）
+        int surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, centerPos.getX(), centerPos.getZ());
 
         if (surfaceY < 60) return;
 
         BlockPos groundPos = new BlockPos(centerPos.getX(), surfaceY - 1, centerPos.getZ());
-        BlockState groundState = level.getBlockState(groundPos);
+        BlockState groundState = chunk.getBlockState(groundPos);
 
         if (groundState.isAir() || groundState.is(Blocks.WATER) || groundState.is(Blocks.LAVA)) return;
 
         BlockPos buildPos = new BlockPos(centerPos.getX(), surfaceY, centerPos.getZ());
         int buildingType = level.getRandom().nextInt(3); // 0=小屋, 1=瞭望塔, 2=废墟
-        generateBuilding(level, buildPos, level.getRandom(), buildingType);
+        long seed = level.getRandom().nextLong();
+        // 延迟到下一 tick 执行建筑生成，避免在 ChunkEvent.Load 中调用 level.setBlock()
+        // 触发 getChunk() 导致区块加载死锁
+        level.getServer().execute(() -> {
+            generateBuilding(level, buildPos, RandomSource.create(seed), buildingType);
+        });
     }
 
     public static void generateBuilding(WorldGenLevel level, BlockPos pos, RandomSource random, int type) {

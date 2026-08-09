@@ -61,6 +61,9 @@ public class ItemAttributeHandler {
         double damage = quality.randomDamage(rnd);
         WeaponQuality.applyQuality(stack, quality, damage);
 
+        // 镐子随机能力：合成镐子时有概率获得特殊能力（黑曜石破坏/3x3/5x5 范围挖掘）
+        PickaxeAbility.rollAbilities(stack, rnd);
+
         QLMZombieMod.LOGGER.debug("[QLM Zombie] 合成品质: {} 伤害加成: {} ({})",
                 quality.getTranslationKey(), damage, stack.getDescriptionId());
     }
@@ -136,6 +139,18 @@ public class ItemAttributeHandler {
         } else {
             tooltip.add(qualityLine);
             tooltip.add(damageLine);
+        }
+
+        // 镐子能力 Tooltip
+        if (PickaxeAbility.hasAnyAbility(stack)) {
+            java.util.List<PickaxeAbility> abilities = PickaxeAbility.getAbilities(stack);
+            int insertIndex = tooltip.size() > 2 ? 3 : tooltip.size();
+            for (PickaxeAbility ability : abilities) {
+                tooltip.add(insertIndex, Component.literal("✦ ")
+                        .append(ability.getDisplayName())
+                        .withStyle(ability.getFormatting()));
+                insertIndex++;
+            }
         }
     }
 }
