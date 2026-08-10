@@ -44,7 +44,7 @@ public class QLMZombieMod {
 
     public static final String MOD_ID = "qlmzombie";
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final String MOD_VERSION = "2.10.0.rewrite.beta.build.37.0";
+    public static final String MOD_VERSION = "2.10.0.rewrite.beta.build.38.0";
 
     public static boolean needsRestart = false;
 
@@ -130,6 +130,7 @@ public class QLMZombieMod {
             LOGGER.info("[QLM Zombie] Crafting Dead 模块注册完成：CDEffects(5效果)/CDItems(42+物品)/CDEntities(4实体)/CDBlocks(2方块+1方块实体)/CDCreativeTabs(4标签页) 五大 DeferredRegister 已接入");
             LOGGER.info("[QLM Zombie] Crafting Dead 模块内容：医疗8物、枪械AK47/M4A1/MP5/M1014/DesertEagle/Glock17/BarrettM82/AWM、4镜3握3枪管3弹匣、战斗刀/博伊刀/撬棍、破片/闪光/燃烧弹、防弹衣/头盔/背心/靴子、军人/科学家/平民僵尸、医疗补给箱/弹药箱方块");
             LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.37.0 镐子随机能力系统：合成镐子有概率获得黑曜石破坏者(15%)/3x3范围挖掘(10%)/5x5范围挖掘(5%)，可叠加，NBT bitmask存储");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.38.0 9层高楼建筑系统：13×9高楼/5房间每层/每层奖励箱，15%概率注入其他模组物品，建筑不重复（区块坐标去重）");
 
             if (Player2APIService.isPlayer2Available()) {
                 LOGGER.info("[QLM Zombie] Player2 MCP API 服务已连接，AI玩家可通过远程API执行智能任务");
@@ -175,7 +176,10 @@ public class QLMZombieMod {
             event.getEntity().sendSystemMessage(Component.literal(msg));
         }
 
-        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §a镐子随机能力系统上线！合成镐子有概率获得特殊能力"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §b9层高楼建筑系统上线！13×9高楼，5房间每层，每层奖励箱"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §515%概率奖励箱注入其他模组物品：§bTaCZ枪械/SpartanWeaponry近战/Create/Mekanism/Botania等29个模组"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a建筑不重复：区块坐标去重，每层奖励箱在不同房间循环放置，动态扫描模组命名空间"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §a镐子随机能力系统上线！合成镐子有概率获得特殊能力"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §d黑曜石破坏者(15%)：§b左键黑曜石/哭泣黑曜石直接破坏+掉落物，任何品质镐子均可"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §b3x3范围挖掘(10%)：§b破坏方块时以面向平面为中心3x3同种方块连锁"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §65x5范围挖掘(5%)：§b同上5x5范围，可叠加多能力，Tooltip显示✦标记"));

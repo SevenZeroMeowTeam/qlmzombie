@@ -1,7 +1,7 @@
 # 七零喵僵尸末日生存mod (QLM Zombie Apocalypse)
 
 **制作团队：七零喵团队 (SevenZeroMeowTeam)**
-**当前版本：`2.10.0.rewrite.beta.build.37.0`**
+**当前版本：`2.10.0.rewrite.beta.build.38.0`**
 
 基于 Minecraft Forge 1.20.1 的末日生存 mod。
 
@@ -19,7 +19,7 @@
 ./gradlew build
 ```
 
-输出 JAR：`build/libs/qlmzombie-2.10.0.rewrite.beta.build.37.0.jar`
+输出 JAR：`build/libs/qlmzombie-2.10.0.rewrite.beta.build.38.0.jar`
 
 ---
 
@@ -220,6 +220,40 @@
 - 范围挖掘根据 `getDirection()` + `getXRot()` 自动判断平面（水平/垂直）
 - 防递归 ThreadLocal，仅破坏同种方块
 
+### 9 层高楼建筑系统（v2.10.0.b38 新增）
+
+世界生成时 20% 概率生成 9 层高楼（其余 80% 为小屋/瞭望塔/废墟）：
+
+**建筑规格**：13×9 外部尺寸，36 格高（9 层 × 4 格/层）
+
+**每层布局**（5 个房间 + 十字走廊）：
+
+| 房间 | 位置 | 尺寸 | 说明 |
+|------|------|------|------|
+| 房间 0 | 左前 | 3×3 | 奖励箱位置 0 |
+| 房间 1 | 中前 | 3×3 | 奖励箱位置 1 |
+| 房间 2 | 右前 | 3×3 | 奖励箱位置 2 |
+| 房间 3 | 左后 | 5×3 | 奖励箱位置 3 |
+| 房间 4 | 右后 | 5×3 | 奖励箱位置 4 |
+
+- 走廊交叉 `x=4, z=4`，楼梯连接各层
+- 每层 1 个奖励箱，5 个房间位置按楼层循环
+- 随机裂纹石砖装饰 + 窗户 + 火把照明
+
+**其他模组物品注入**（15% 概率）：
+
+每个奖励箱 15% 概率使用 `other_mod_building` loot 表，通过 loot 修改器动态扫描 29 个模组命名空间：
+
+| 类别 | 扫描的模组 |
+|------|-----------|
+| 武器/弹药 | TaCZ（tacz）— 手枪/步枪/霰弹枪/狙击枪/弹药 |
+| 近战/防具 | SpartanWeaponry/SpartanShields — 长剑/刀/矛/斧/盾 |
+| 科技 | Create/Mekanism/Botania/BloodMagic/IE/Thermal/Quark |
+| 存储 | IronChest/StorageDrawers/RefinedStorage/AE2 |
+| 其他 | Environmental/FarmersDelight/Forestry/PneumaticCraft/EnderIO/CofHCore/Patchouli/KubeJS/Oculus/Embeddium 等 |
+
+**建筑不重复**：使用 `ConcurrentHashMap<Long>` 记录已生成区块坐标，已生成的区块不会再生成新建筑。
+
 ### 连锁挖矿/砍树
 
 镐子挖矿石、铲子挖泥土、斧头砍树 → 一键连锁破坏同类方块。支持所有 mod 工具和 mod 矿石/树木。
@@ -334,10 +368,38 @@ src/main/java/com/qlm/zombie/
 ├── restriction/                   # 封禁系统
 ├── script/                        # Python 三引擎脚本 + qlm API 桥接
 ├── scoreboard/                    # HUD 计分板
-├── structure/                     # 随机建筑/废弃商店生成
+├── structure/                     # 随机建筑/废弃商店/9层高楼生成
 └── zombie/                        # 僵尸进化
 ```
 ## Changelog
+
+### v2.10.0.rewrite.beta.build.38.0 — 2026-08-10
+
+**9 层高楼建筑系统：13×9 高楼 + 5 房间/层 + 每层奖励箱 + 15% 其他模组物品注入！**
+
+新增 `HighriseBuildingGenerator`，世界生成时 20% 概率生成 9 层高楼（其余 80% 为小屋/瞭望塔/废墟）：
+
+- **建筑规格**：13×9 外部尺寸，36 格高（9 层 × 4 格/层）
+- **每层布局**：3 前排房间(3×3) + 2 后排房间(5×3) + 十字走廊 + 楼梯
+- **奖励箱**：每层 1 个，5 个房间位置按楼层循环放置
+- **建筑不重复**：`ConcurrentHashMap<Long>` 记录已生成区块坐标
+- **15% 其他模组物品注入**：每个奖励箱 15% 概率使用 `other_mod_building` loot 表
+  - 扫描 29 个模组命名空间：tacz/spartanweaponry/spartanshields/superbwarfare/slashblade/tetra/artifacts/environmental/farmersdelight/create/mekanism/botania/bloodmagic/immersiveengineering/forestry/thermal/quark/pneumaticcraft/enderio/ironchest/storagedrawers/refinedstorage/ae2/cofh_core/patchouli/kubejs/rhino/oculus/embeddium
+  - 通过 `QLMGlobalLootModifiers.BuildingWeaponLootModifier` 动态注入武器/弹药/附件/防具/材料
+  - `injectChance=0.15` + `scanWeight=5` + `scanMinCount=1` + `scanMaxCount=3`
+
+**新增文件：**
+- `structure/HighriseBuildingGenerator.java` — 9 层高楼生成器（地板/墙壁/窗户/楼梯/奖励箱）
+- `data/qlmzombie/loot_tables/chests/other_mod_building.json` — 其他模组 loot 表
+- `data/qlmzombie/loot_modifiers/other_mod_building_loot.json` — loot 修改器（80+ 物品条目 + 29 命名空间扫描）
+
+**修改文件：**
+- `structure/RandomBuildingGenerator.java` — 20% 高楼生成概率 + 区块坐标去重
+- `data/qlmzombie/loot_modifiers/global_loot_modifiers.json` — 注册 `other_mod_building_loot`
+- `QLMZombieMod.java` — 版本号 build.38.0 + 游戏公告
+- `gradle.properties` — 版本号 build.38.0
+
+---
 
 ### v2.10.0.rewrite.beta.build.37.0 — 2026-08-09
 

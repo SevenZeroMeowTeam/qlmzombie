@@ -33,6 +33,8 @@ public class RandomBuildingGenerator {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final ResourceLocation LOOT_TABLE = ResourceLocation.parse("qlmzombie:chests/random_building");
     private static final float GENERATE_CHANCE = 0.015F;
+    /** 高楼生成概率（在普通建筑生成成功后，20% 概率改为生成高楼） */
+    private static final float HIGHRISE_CHANCE = 0.20F;
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
@@ -42,9 +44,16 @@ public class RandomBuildingGenerator {
 
         ChunkPos chunkPos = chunk.getPos();
 
+        // 建筑不重复：检查该区块是否已生成过建筑
+        long chunkKey = chunkPos.toLong();
+        if (HighriseBuildingGenerator.isChunkGenerated(chunkKey)) return;
+
         if (level.getRandom().nextFloat() > GENERATE_CHANCE) return;
 
         if (level.getServer().getPlayerList().getPlayers().isEmpty()) return;
+
+        // 标记该区块已生成建筑
+        HighriseBuildingGenerator.markChunkGenerated(chunkKey);
 
         BlockPos centerPos = chunkPos.getMiddleBlockPosition(0);
         // 使用区块自身的高度图而非 level.getHeight()，避免在区块加载事件中
@@ -59,13 +68,21 @@ public class RandomBuildingGenerator {
         if (groundState.isAir() || groundState.is(Blocks.WATER) || groundState.is(Blocks.LAVA)) return;
 
         BlockPos buildPos = new BlockPos(centerPos.getX(), surfaceY, centerPos.getZ());
-        int buildingType = level.getRandom().nextInt(3); // 0=小屋, 1=瞭望塔, 2=废墟
+        // 20% 概率生成 9 层高楼，否则随机生成普通建筑（小屋/瞭望塔/废墟）
+        boolean isHighrise = level.getRandom().nextFloat() < HIGHRISE_CHANCE;
         long seed = level.getRandom().nextLong();
         // 延迟到下一 tick 执行建筑生成，避免在 ChunkEvent.Load 中调用 level.setBlock()
         // 触发 getChunk() 导致区块加载死锁
-        level.getServer().execute(() -> {
-            generateBuilding(level, buildPos, RandomSource.create(seed), buildingType);
-        });
+        if (isHighrise) {
+            level.getServer().execute(() -> {
+                HighriseBuildingGenerator.generate(level, buildPos, RandomSource.create(seed));
+            });
+        } else {
+            int buildingType = level.getRandom().nextInt(3); // 0=小屋, 1=瞭望塔, 2=废墟
+            level.getServer().execute(() -> {
+                generateBuilding(level, buildPos, RandomSource.create(seed), buildingType);
+            });
+        }
     }
 
     public static void generateBuilding(WorldGenLevel level, BlockPos pos, RandomSource random, int type) {
