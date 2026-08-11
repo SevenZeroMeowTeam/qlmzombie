@@ -179,6 +179,8 @@ public class QLMGlobalLootModifiers {
                     "box", "case", "container", "bag", "sack", "pack",
                     "fuel", "oil", "gas", "can", "tank", "barrel_item",
                     "empty", "placeholder", "debug", "test", "dummy",
+                    // TaCZ 工作台（枪械工作台、武器台等）由 JSON 手工添加一次，不参与动态扫描（避免重复刷出）
+                    "gun_bench", "gunbench", "weapon_bench", "weaponbench", "tacz_workbench", "taczworkbench",
                     "frame", "base", "component", "material", "ingot", "ore",
                     "wood", "stone", "cloth", "fiber", "thread", "leather",
                     "plastic", "metal", "steel", "iron", "copper", "aluminum",
@@ -344,10 +346,27 @@ public class QLMGlobalLootModifiers {
             List<WeightedResolvedEntry> pool = getResolvedEntries();
             if (pool.isEmpty()) return generatedLoot;
 
+            // ── 工作台类物品（枪械工作台等）每个宝箱最多刷 1 次 ──
+            // 记录当前已经放入宝箱的工作台物品，防止重复出现
+            Set<ResourceLocation> placedWorkbenches = new HashSet<>();
+            for (ItemStack existing : generatedLoot) {
+                ResourceLocation rid = ForgeRegistries.ITEMS.getKey(existing.getItem());
+                if (rid != null && isWorkbenchItem(rid)) {
+                    placedWorkbenches.add(rid);
+                }
+            }
+
             int realRolls = rolls + random.nextInt(Math.max(bonusRolls + 1, 1));
             for (int i = 0; i < realRolls; i++) {
                 WeightedResolvedEntry entry = weightedPick(pool, random);
                 if (entry == null) continue;
+
+                ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(entry.item());
+                // 若此物品是工作台且该种工作台已经出现在宝箱里，则跳过（一次生成只允许一个）
+                if (itemId != null && isWorkbenchItem(itemId)) {
+                    if (placedWorkbenches.contains(itemId)) continue;
+                    placedWorkbenches.add(itemId);
+                }
 
                 int count = entry.minCount() + random.nextInt(
                         Math.max(entry.maxCount() - entry.minCount() + 1, 1));
@@ -359,6 +378,15 @@ public class QLMGlobalLootModifiers {
                 }
             }
             return generatedLoot;
+        }
+
+        /** 判断是否是"工作台类物品"（如 TaCZ 枪械工作台），这类物品在同一宝箱中仅刷新一次。 */
+        private static boolean isWorkbenchItem(ResourceLocation id) {
+            String path = id.getPath().toLowerCase();
+            return path.contains("gun_bench") || path.contains("weapon_bench")
+                || path.contains("gunbench") || path.contains("weaponbench")
+                || path.contains("tacz_workbench") || path.contains("taczworkbench")
+                || path.endsWith("_workbench") || path.endsWith("_bench");
         }
 
         private static WeightedResolvedEntry weightedPick(List<WeightedResolvedEntry> pool,

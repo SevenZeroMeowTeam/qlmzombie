@@ -1,6 +1,8 @@
 package com.qlm.zombie.dependency;
 
 import com.mojang.logging.LogUtils;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.*;
@@ -17,6 +19,39 @@ import org.slf4j.Logger;
 public class ModDependencyHandler {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+
+    // ──────────────────────────────────────────────────────────────────
+    // 在类加载时尽早设置系统属性：禁用非必要网络加载，避免阻塞世界生成
+    // （静态初始化块在任何方法调用之前执行，可最大程度减少其他 mod 的网络检查）
+    // ──────────────────────────────────────────────────────────────────
+    static {
+        // Forge：禁用版本检查与签名验证（导致 30+ 秒连接超时）
+        System.setProperty("forge.noverify", "true");
+        System.setProperty("forge.updateChecker", "false");
+        System.setProperty("forge.disableUpdateCheck", "true");
+        System.setProperty("forge.disableVersionCheck", "true");
+
+        // Placebo：禁用 Patreon 相关的网络数据加载（Wing/Trail 都有 30s 超时）
+        System.setProperty("placebo.disablePatreonFeatures", "true");
+        System.setProperty("placebo.patreon.wings", "false");
+        System.setProperty("placebo.patreon.trails", "false");
+
+        // CorgiLib：禁用公告/网络信息拉取（SSL 握手失败导致阻塞）
+        System.setProperty("corgilib.announcements", "false");
+        System.setProperty("corgilib.disableAnnouncements", "true");
+
+        // Immersive Engineering：禁用贡献者线程（HTTP 连接超时）
+        System.setProperty("immersiveengineering.contributors", "false");
+        System.setProperty("immersiveengineering.disableContributors", "true");
+
+        // Moonlight：禁用 Hub Fetcher（URL 拉取超时）
+        System.setProperty("moonlight.hub", "false");
+        System.setProperty("moonlight.disableHubFetcher", "true");
+
+        // 通用 Java 网络：缩短超时时间，避免 HTTP 请求长时间阻塞主线程
+        System.setProperty("sun.net.client.defaultConnectTimeout", "5000");
+        System.setProperty("sun.net.client.defaultReadTimeout", "5000");
+    }
 
     private static final String LIBS_INTERNAL_PATH = "libs/";
     private static final String DEPENDENCY_MARKER_FILE = "qlmzombie_deps_installed.txt";
@@ -39,9 +74,26 @@ public class ModDependencyHandler {
     // 永远不释放的文件（排除列表）
     private static final List<String> EXCLUDE_PATTERNS = List.of(
         "qlmzombie-",    // 自己 mod
+        "serveradmin-",   // 独立 serveradmin mod
+        "player2-",       // 独立 player2 mod
+        "vanilla_server", // 原版服务端文件
         ".connector/",    // 连接器中间文件
         ".input",         // 中间输入文件
-        "README.txt"     // 说明文件
+        "README.txt",     // 说明文件
+        "-fabric",        // Fabric 版 jar（当前加载器是 Forge）
+        "fabric-"         // 以防命名前缀为 fabric 的版本
+    );
+
+    // --------------------------------------------------------------------
+    // 强制永久禁止的 mod：无论客户端/服务端都不应该加载的 mod
+    // (例如：与必须保留的 mod 有严重 Mixin 冲突、破坏渲染管线等)
+    // --------------------------------------------------------------------
+    private static final List<String> BANNED_ALWAYS_KEYWORDS = List.of(
+        // Oculus 光影 (Iris 移植版) 与 Embeddium 严重 Mixin 冲突：
+        // 日志显示 occlus 篡改 Embeddium 内部类导致 Mixin Taint，
+        // 强制禁用多个 Embeddium 渲染 Mixin，引发稳定性问题。
+        // 按项目记忆要求：Oculus (oculus-mc1.20.1-1.8.0.jar) 必须禁用。
+        "oculus"
     );
 
     // --------------------------------------------------------------------
@@ -77,7 +129,13 @@ public class ModDependencyHandler {
         "nonconflictkeys",        // NonConflictKeys — 0 资源 → NonConflictKeysFeature
         "non_conflict_keys",      // 备用
         "[全键无冲]",              // NonConflictKeys 中文名
-        "[全键无冲] nonconflictkeys-forge" // 全名备用
+        "[全键无冲] nonconflictkeys-forge", // 全名备用
+        // ---------- build.46 新增 ----------
+        "dropthemeat",            // DropTheMeat — 0 资源(除了自有资源，JAR在libs里，但已实现DropTheMeatLootModifier/DropTheMeatFeature)
+        "[肉多多]",                // DropTheMeat 中文名
+        "fastworkbench",          // FastWorkbench — 配方性能优化（与 FastSuite/FastFurnace 同系列）
+        "[工作台性能优化]",        // FastWorkbench 中文名
+        "fastbench"               // 备用前缀
         // —— 以下保留原 JAR 释放（开源口渴 mod 提供纹理和机制） ——
         // "thirstmod" / "thirstcanteen" → 保留原 JAR，仅添加经验条 HUD
     );
@@ -90,7 +148,71 @@ public class ModDependencyHandler {
         "ftb-chunks",     // FTB 区块（功能 mod）
         "ftb-library",    // FTB Library（FTB 前置库）
         "architectury",   // Architectury（几乎所有 Fabric/Forge 兼容 mod 依赖）
-        "cloth-config"   // Cloth Config（配置前置）
+        "cloth-config",   // Cloth Config（配置前置）
+        // ---------- 核心库：大量其他 mod 依赖它们 ----------
+        "kotlinforforge", // Kotlin for Forge（Kotlin 语言运行时）
+        "kotlin-for-forge",
+        "rhino",          // Rhino JS 引擎（KubeJS 依赖）
+        "kubejs",         // KubeJS（脚本引擎核心）
+        "moonlight",      // Moonlight Library（MehVahdJukaar 系列前置）
+        "bookshelf",      // Bookshelf（Darkhax 系列前置）
+        "puzzleslib",     // Puzzles Lib（Fuzss 系列前置）
+        "placebo",        // Placebo（Shadows 系列前置）
+        "corgilib",       // CorgiLib（CorgiTaco 系列前置）
+        "corgi-taco",
+        "yungsapi",       // YUNG's API（YUNG 系列结构前置）
+        "balm",           // Balm（Twelve Iterations 前置）
+        "blueprint",      // Blueprint（Team Abnormals 核心库）
+        "zeta",           // Zeta（Vazkii 通用前置）
+        "glitchcore",     // GlitchCore（Glitchfiend 系列前置）
+        "geckolib",       // GeckoLib（实体动画库，大量生物 mod 依赖）
+        "curios",         // Curios API（饰品系统，大量 mod 依赖）
+        "badpackets",     // Bad Packets（网络传输库）
+        "mutil",          // mutil（Mickelus 工具库，Tetra 等依赖）
+        "creativecore",   // CreativeCore（CreativeMD 系列前置）
+        "insanelib",      // InsaneLib（Insane96 系列前置）
+        "copperative",    //（预留）
+        "cofh_core"       // CoFH Core（CoFH/Thermal 系列前置）
+    );
+
+    // --------------------------------------------------------------------
+    // 客户端专用 mod：仅在客户端生效的 mod（渲染/UX/UI/光影等）
+    // 在专用服务器（DEDICATED_SERVER）上自动跳过释放，避免浪费内存和引发错误
+    // --------------------------------------------------------------------
+    private static final List<String> CLIENT_SIDE_KEYWORDS = List.of(
+        "skinlayers3d",              // [3D 皮肤层] 纯客户端 3D 皮肤渲染
+        "3d-armor",                  // 3D 盔甲渲染（纯客户端）
+        "3d_armor",
+        "roughlyenough",             // [REI物品管理器] 纯客户端物品查看
+        "[rei物品管理器]",
+        "imblocker",                 // [输入法冲突修复] 纯客户端
+        "entity_model_features",     // [实体模型特性] 纯客户端渲染
+        "entity_texture_features",   // [实体纹理特性] 纯客户端渲染
+        "ysm-",                      // [是，史蒂夫模型] 纯客户端模型渲染
+        "[是，史蒂夫模型]",
+        "sodiumdynamiclights",       // [钠/Embeddium：动态光源] 纯客户端
+        "[钠／embeddium：动态光源]",
+        "embeddium",                 // Embeddium 渲染优化（纯客户端，Sodium 分支）
+        "oculus",                    // Oculus 光影（纯客户端，Iris 移植）
+        "wthit",                     // WTHIT 悬停信息（纯客户端）
+        "sodiumoptionsapi",          // Sodium 选项 API（纯客户端）
+        "kleiders_custom_renderer",  // 自定义渲染器（纯客户端）
+        "kleiders",
+        "player-animation-lib",      // 玩家动画库（纯客户端）
+        "player-animator",
+        "playeranimation",
+        "enchantmentdescriptions",   // [附魔描述] 纯客户端 Tooltip
+        "[附魔描述]",
+        "travelerstitles",           // [旅人标题] 纯客户端 UI
+        "[旅人标题]",
+        "journeymap",                // [旅行地图] 纯客户端 地图显示
+        "[旅行地图]",
+        "itemphysic",                // [物品物理掉落] 纯客户端 渲染效果
+        "itemphysicguns",            // 物品物理掉落-枪械扩展（纯客户端）
+        "[物品物理掉落]",
+        "crashassistant",            // [崩溃助手] 纯客户端 辅助工具
+        "[崩溃助手]",
+        "fastboot"                   // 快速启动（纯客户端优化）
     );
 
     // 前缀提取白名单：如果文件名包含这些关键字，直接将它们作为前缀
@@ -194,10 +316,54 @@ public class ModDependencyHandler {
                 return true;
             }
         }
+        // 永久封禁的 mod（与关键组件冲突，如 Oculus vs Embeddium）：
+        // 无论客户端/服务端都不应该释放
+        for (String kw : BANNED_ALWAYS_KEYWORDS) {
+            if (lower.contains(kw.toLowerCase())) {
+                LOGGER.info("[ModDependencyHandler] mod 已永久封禁(冲突)，跳过释放: {}", fileName);
+                return true;
+            }
+        }
         // 玩法已通过源码替代：这些 JAR 不再释放到 mods 文件夹
         for (String kw : FEATURE_REPLACED_KEYWORDS) {
             if (lower.contains(kw.toLowerCase())) {
                 LOGGER.info("[ModDependencyHandler] 玩法已源码替代，跳过释放: {}", fileName);
+                return true;
+            }
+        }
+        // 专用服务器：跳过客户端专用 mod（渲染/UI/光影等）
+        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
+            for (String kw : CLIENT_SIDE_KEYWORDS) {
+                if (lower.contains(kw.toLowerCase())) {
+                    LOGGER.info("[ModDependencyHandler] 专用服务器跳过客户端 mod: {}", fileName);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断文件是否为客户端专用 mod（在专用服务器上应跳过）
+     */
+    private static boolean isClientSideMod(String fileName) {
+        String lower = fileName.toLowerCase();
+        for (String kw : CLIENT_SIDE_KEYWORDS) {
+            if (lower.contains(kw.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断文件是否命中"永久封禁 mod 列表"（与关键组件冲突，如 Oculus vs Embeddium）
+     */
+    private static boolean isBannedAlways(String fileName) {
+        if (fileName == null) return false;
+        String lower = fileName.toLowerCase();
+        for (String kw : BANNED_ALWAYS_KEYWORDS) {
+            if (lower.contains(kw.toLowerCase())) {
                 return true;
             }
         }
@@ -245,6 +411,7 @@ public class ModDependencyHandler {
 
         // 同时使用手动定义的内部 jar 列表（基于 build.gradle 中的依赖）
         // 这是主要方式，因为打包后 jar 文件位于 qlmzombie.jar 内的 libs/ 目录
+        // 列表与 src/libs 目录中的实际 JAR 文件一一对应，自动释放到 mods 目录
         List<String> knownInternalJars = List.of(
             // --------- 必需依赖（在 build.gradle 中定义） ---------
             "kubejs-forge-2001.6.5-build.26.jar",
@@ -263,151 +430,116 @@ public class ModDependencyHandler {
             "AdvancedSkillsRe-forge-1.1.0-beta.1.jar",
             "kotlinforforge-4.12.0-all.jar",
 
-            // --------- 可选依赖（在 libs 文件夹中的其他 mod） ---------
-            "blueprint-1.20.1-7.1.4.jar",
-            "CreativeCore_FORGE_v2.12.39_mc1.20.1.jar",
-            "Fastload-Reforged-mc1.20.1-3.4.0.jar",
-            "ForgeConfigAPIPort-v8.0.3-1.20.1-Fabric.jar",
-            "ForgeConfigScreens-v8.0.2-1.20.1-Forge.jar",
-            "[AI改进] AI-Improvements-1.20-0.5.2.jar",
-            "[拆解台] uncrafting_table-1.20.1-forge-1.1.0.jar",
-            "[车万女仆附属：爱恋] touhou-maid-affection-1.7.2.2.jar",
-            "[女仆实用任务] 1.20.1-maid_useful_task-1.4.2.jar",
-            "[玩家救援] PlayerRevive_FORGE_v2.0.31_mc1.20.1.jar",
-            "[真正的力量] True_POWER-1.20.1-1.1.8.jar",
-            "[精妙核心] sophisticatedcore-1.20.1-1.3.65.2126.jar",
-            "[精妙背包] sophisticatedbackpacks-1.20.1-3.24.59.1960.jar",
-            "[经验机制改革] Clumps-forge-1.20.1-12.0.0.4.jar",
-            "[配方性能优化] FastSuite-1.20.1-5.1.2.jar",
-            "[铁氧体磁芯] ferritecore-6.0.1-forge.jar",
-            "[附魔描述] EnchantmentDescriptions-Forge-1.20.1-17.1.21.jar",
-            "[骷髅 AI 修复] SkeletonAIFix-v20.1.1-1.20.1-Forge.jar",
+            // --------- 客户端 mod（含中文名前缀） ---------
+            "[3D 皮肤层] skinlayers3d-forge-1.11.2-mc1.20.1.jar",
+            "[REI物品管理器] RoughlyEnoughItems-12.1.785-forge.jar",
+            "[输入法冲突修复] IMBlocker-5.5.4-forge+1.17-1.20.4.jar",
+            "[实体模型特性] entity_model_features-3.2.4-1.20.1-forge.jar",
+            "[实体纹理特性] entity_texture_features_1.20.1-forge-7.1.jar",
+            "[是，史蒂夫模型] ysm-2.6.5-forge+mc1.20.1-release.jar",
+            "[旅行地图] journeymap-1.20.1-5.10.3-forge.jar",
+            "[旅人标题] TravelersTitles-1.20-Forge-4.0.2.jar",
+            "[钠／Embeddium：动态光源] sodiumdynamiclights-forge-1.0.10-1.20.1.jar",
+            "3d-armor-0.9.4.1-mod.jar",
+            "embeddium-0.3.31+mc1.20.1.jar",
+            "oculus-mc1.20.1-1.8.0.jar",
+            "wthit-1.20.1-forge-8.21.1.jar",
+            "sodiumoptionsapi-forge-1.0.10-1.20.1.jar",
+            // ---------- Lost Cities x TaCZ 联动（小集成 mod，无纹理纯逻辑配置） ----------
+            // 注：[Python] jython-standalone-2.7.3.jar 不通过 libs/ 释放，
+            // 由 build.gradle implementation 'org.python:jython-standalone:2.7.3' 直接解压 class
+            // 并过滤冲突包(org.w3c.dom.* / netscape.*)，避免 JPMS 模块冲突。
+            "lostcitytacz.jar",
+
+            // --------- 服务器/通用 mod ---------
             "appliedenergistics2-forge-15.4.10.jar",
+            "artifacts-forge-9.5.19.jar",
             "badpackets-forge-0.4.3.jar",
             "balm-forge-1.20.1-7.3.39-all.jar",
+            "bettercombat-forge-1.9.0+1.20.1.jar",
+            "bloodmagic-1.20.1-3.3.7-49.jar",
+            "blueprint-1.20.1-7.1.4.jar",
+            "Bookshelf-Forge-1.20.1-20.2.15.jar",
+            "Botania-1.20.1-454-FORGE.jar",
             "cofh_core-1.20.1-11.0.2.56.jar",
+            "collective-1.20.1-8.39.jar",
+            "create-1.20.1-6.0.8.jar",
+            "CreativeCore_FORGE_v2.12.39_mc1.20.1.jar",
             "curios-forge-5.14.1+1.20.1.jar",
-            "embeddium-0.3.31+mc1.20.1.jar",
+            "dyairdrop-1.1.0-1.20.1-beta.jar",
+            "EnderIO-1.20.1-6.2.18-beta-all.jar",
             "enhancedai-3.3.7.3.jar",
-            "fastboot-1.20.x-1.2.jar",
-            "geckolib-forge-1.20.1-4.8.4.jar",
-            "insanelib-1.23.4.6.jar",
-            "kleiders_custom_renderer-7.4.1-forge-1.20.1.jar",
-            "moonlight-1.20-2.16.34-forge.jar",
-            "oculus-mc1.20.1-1.8.0.jar",
-            "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
-            "sodiumoptionsapi-forge-1.0.10-1.20.1.jar",
-            "thermal_foundation-1.20.1-11.0.6.70.jar",
-            "zac-1.1.0.jar",
             "environmental-1.20.1-4.1.2.jar",
-            "[夸克] Quark-4.0-462.jar",
-            "Quark-4.0-462.jar",
-            "Zeta-1.0-31.jar",
-            "artifacts-forge-9.5.19.jar",
-            "mutil-1.20.1-6.3.0.jar",
-            "tetra-1.20.1-6.15.0.jar",
+            "fastboot-1.20.x-1.2.jar",
+            "Fastload-Reforged-mc1.20.1-3.4.0.jar",
+            "flib-1.20.1-0.0.14.jar",
+            "footwork-4.3.9.jar",
+            "forestry-1.20.1-2.10.2.jar",
+            "ForgeConfigAPIPort-v8.0.3-1.20.1-Fabric.jar",
+            "ForgeConfigScreens-v8.0.2-1.20.1-Forge.jar",
+            "ftb-chunks-forge-2001.3.8.jar",
             "ftb-library-forge-2001.2.13.jar",
+            "geckolib-forge-1.20.1-4.8.4.jar",
+            "GlitchCore-forge-1.20.1-0.0.1.1.jar",
+            "guideme-20.1.15.jar",
+            "ImmersiveEngineering-1.20.1-10.2.0-183.jar",
+            "Infectious-forge-1.20.1-1.7.jar",
+            "insanelib-1.23.4.6.jar",
+            "ironchest-1.20.1-14.4.4.jar",
+            "itemphysicguns-1.0.3-7686b43.jar",
+            "kleiders_custom_renderer-7.4.1-forge-1.20.1.jar",
+            "Mekanism-1.20.1-10.4.16.80.jar",
+            "moonlight-1.20-2.16.34-forge.jar",
+            "mrqxs_Slashblade_Core-1.20.1-1.4.1.jar",
+            "mutil-1.20.1-6.3.0.jar",
+            "Patchouli-1.20.1-85-FORGE.jar",
+            "Placebo-1.20.1-8.6.3.jar",
+            "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
+            "pneumaticcraft-repressurized-6.0.22+mc1.20.1.jar",
+            "PuzzlesLib-v8.1.33-1.20.1-Forge.jar",
+            "Quark-4.0-462.jar",
+            "refinedstorage-1.12.4.jar",
+            "SimpleStorageNetwork-1.20.1-1.11.3.jar",
+            "spartantoolkit-1.20.1-1.6.1.jar",
+            "StorageDrawers-forge-1.20.1-12.14.3.jar",
+            "tan_plus-1.4-forge-1.20.1.jar",
+            "tetra-1.20.1-6.15.0.jar",
+            "thermal_foundation-1.20.1-11.0.6.70.jar",
+            "YungsApi-1.20-Forge-4.0.6.jar",
+            "zac-1.1.0.jar",
+            "Zeta-1.0-31.jar",
+            "Zombie Island 1.20.1 0.1.3.5.jar",
+
+            // --------- 中文名前缀 mod ---------
             "[FTB 任务] ftb-quests-forge-2001.4.22.jar",
             "[FTB 团队] ftb-teams-forge-2001.3.2.jar",
-            "ftb-chunks-forge-2001.3.8.jar",
-            "SimpleStorageNetwork-1.20.1-1.11.3.jar",
-            "flib-1.20.1-0.0.14.jar",
-            "refinedstorage-1.12.4.jar",
-            "EnderIO-1.20.1-6.2.18-beta-all.jar",
-            "forestry-1.20.1-2.10.2.jar",
-            "Botania-1.20.1-454-FORGE.jar",
-            "bloodmagic-1.20.1-3.3.7-49.jar",
-            "Patchouli-1.20.1-85-FORGE.jar",
-            "pneumaticcraft-repressurized-6.0.22+mc1.20.1.jar",
-            "ImmersiveEngineering-1.20.1-10.2.0-183.jar",
-            "cofh_core-1.20.1-11.0.2.56.jar",
-            "thermal_foundation-1.20.1-11.0.6.70.jar",
-            "guideme-20.1.15.jar",
-            "appliedenergistics2-forge-15.4.10.jar",
-            "Mekanism-1.20.1-10.4.16.80.jar",
-            "create-1.20.1-6.0.8.jar",
-            "StorageDrawers-forge-1.20.1-12.14.3.jar",
-            "ironchest-1.20.1-14.4.4.jar",
-            "badpackets-forge-0.4.3.jar",
-            "wthit-1.20.1-forge-8.21.1.jar",
-            "jei-1.20.1-forge-15.20.0.133.jar",
-            "[肉多多] dropthemeat-1.7.1.jar",
-            "itemphysicguns-1.0.3-7686b43.jar",
-            "[帕秋莉手册] Patchouli-1.20.1-85-FORGE.jar",
-            "[卓越前线] superbwarfare-0.8.9-final-mc1.20.1-6effe4385-all.jar",
-            "[物品物理掉落] ItemPhysic_FORGE_v1.8.13_mc1.20.1.jar",
-            "[全键无冲] NonConflictKeys-Forge-1.19.X-1.20-1.0.0.jar",
-            "balm-forge-1.20.1-7.3.39-all.jar",
-            "[农夫乐事] FarmersDelight-1.20.1-1.3.2.jar",
-            "collective-1.20.1-8.39.jar",
-            "[精妙核心] sophisticatedcore-1.20.1-1.3.65.2126.jar",
-            "[精妙背包] sophisticatedbackpacks-1.20.1-3.24.59.1960.jar",
-            "moonlight-1.20-2.16.34-forge.jar",
-            "[附魔描述] EnchantmentDescriptions-Forge-1.20.1-17.1.21.jar",
-            "Bookshelf-Forge-1.20.1-20.2.15.jar",
-            "[经验机制改革] Clumps-forge-1.20.1-12.0.0.4.jar",
-            "kotlinforforge-4.12.0-all.jar",
-            "fastboot-1.20.x-1.2.jar",
-            "[崩溃漏洞修复] crashexploitfixer-forge-1.1.0+1.20.1.jar",
-            "[镭] radium-mc1.20.1-0.12.4+git.26c9d8e.jar",
-            "[崩溃助手] CrashAssistant-forge-1.19-1.20.1-1.11.10.jar",
-            "[星光] starlight-1.1.2+forge.1cda73c.jar",
-            "Fastload-Reforged-mc1.20.1-3.4.0.jar",
-            "[钠／Embeddium：动态光源] sodiumdynamiclights-forge-1.0.10-1.20.1.jar",
-            "[配方性能优化] FastSuite-1.20.1-5.1.2.jar",
-            "sodiumoptionsapi-forge-1.0.10-1.20.1.jar",
-            "[熔炉性能优化] FastFurnace-1.20.1-8.0.2.jar",
-            "Placebo-1.20.1-8.6.3.jar",
-            "[工作台性能优化] FastWorkbench-1.20.1-8.0.4.jar",
-            "[现代化修复] modernfix-forge-5.27.58+mc1.20.1.jar",
-            "[铁氧体磁芯] ferritecore-6.0.1-forge.jar",
-            "[REI物品管理器] RoughlyEnoughItems-12.1.785-forge.jar",
-            "[实体纹理特性] entity_texture_features_1.20.1-forge-7.1.jar",
-            "[实体模型特性] entity_model_features-3.2.4-1.20.1-forge.jar",
-            "kleiders_custom_renderer-7.4.1-forge-1.20.1.jar",
-            "3d-armor-0.9.4.1-mod.jar",
-            "[3D 皮肤层] skinlayers3d-forge-1.11.2-mc1.20.1.jar",
-            "[斯巴达的武器] SpartanWeaponry-1.20.1-forge-3.2.1-all.jar",
-            "bettercombat-forge-1.9.0+1.20.1.jar",
-            "[简单矿石] SimpleOres2-1.20.1-6.0.0.3.jar",
-            "spartantoolkit-1.20.1-1.6.1.jar",
-            "[简单前置] SimpleCoreLib-1.20.1-6.0.1.2.jar",
-            "[斯巴达的武器：简单矿石] spartansimpleores-1.20.1-2.2.0.jar",
-            "bucketlib-1.20.1-2.3.8.0.jar",
-            "[斯巴达之盾] SpartanShields-1.20.1-forge-3.1.1.jar",
-            "footwork-4.3.9.jar",
-            "[旅人标题] TravelersTitles-1.20-Forge-4.0.2.jar",
-            "YungsApi-1.20-Forge-4.0.6.jar",
-            "[旅行地图] journeymap-forge-1.20.1-6.0.0-beta.3.jar",
-            "oculus-mc1.20.1-1.8.0.jar",
-            "embeddium-0.3.31+mc1.20.1.jar",
-            "geckolib-forge-1.20.1-4.8.4.jar",
-            "curios-forge-5.14.1+1.20.1.jar",
-            "ForgeConfigAPIPort-v8.0.3-1.20.1-Fabric.jar",
-            "ForgeConfigScreens-v8.0.2-1.20.1-Forge.jar",
-            "PuzzlesLib-v8.1.33-1.20.1-Forge.jar",
-            "[骷髅 AI 修复] SkeletonAIFix-v20.1.1-1.20.1-Forge.jar",
-            "insanelib-1.23.4.6.jar",
-            "enhancedai-3.3.7.3.jar",
-            "[AI改进] AI-Improvements-1.20-0.5.2.jar",
-            "[玉 🔍] Jade-1.20.1-Forge-11.13.2.jar",
-            "Zombie Island 1.20.1 0.1.3.5.jar",
-            "Infectious-forge-1.20.1-1.7.jar",
-            "zac-1.1.0.jar",
-            "[是，史蒂夫模型] ysm-2.6.5-forge+mc1.20.1-release.jar",
-            "[女仆实用任务] 1.20.1-maid_useful_task-1.4.2.jar",
-            "[玩家救援] PlayerRevive_FORGE_v2.0.31_mc1.20.1.jar",
-            "CreativeCore_FORGE_v2.12.39_mc1.20.1.jar",
-            "[车万女仆附属：爱恋] touhou-maid-affection-1.7.2.2.jar",
-            "[车万女仆：真正的力量] True_POWER_of_Maid-1.20.1-1.2.2.jar",
-            "[真正的力量] True_POWER-1.20.1-1.1.8.jar",
-            "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
             "[拔刀剑：重锋] SlashBladeResharped-1.20.1-1.9.65.jar",
-            "mrqxs_Slashblade_Core-1.20.1-1.4.1.jar",
+            "[崩溃漏洞修复] crashexploitfixer-forge-1.1.0+1.20.1.jar",
+            "[崩溃助手] CrashAssistant-forge-1.19-1.20.1-1.11.10.jar",
+            "[拆解台] uncrafting_table-1.20.1-forge-1.1.0.jar",
             "[车万女仆] touhoulittlemaid-1.5.3-forge+mc1.20.1.jar",
-            // ---------- 口渴 mod（ThirstWasTaken 1.4.0 包名已改为 dev.ghen.thirst，
-            //            ThirstCanteen 3.6 仍用旧 cn.milus.thirst，版本不兼容已移除） ----------
-            "[口渴] ThirstWasTaken-1.20.1-1.4.0.jar"
+            "[车万女仆附属：爱恋] touhou-maid-affection-1.7.2.2.jar",
+            "[附魔描述] EnchantmentDescriptions-Forge-1.20.1-17.1.21.jar",
+            "[工作台性能优化] FastWorkbench-1.20.1-8.0.4.jar",
+            "[精妙背包] sophisticatedbackpacks-1.20.1-3.24.59.1960.jar",
+            "[精妙核心] sophisticatedcore-1.20.1-1.3.65.2126.jar",
+            "[口渴] ThirstWasTaken-1.20.1-1.4.0.jar",
+            "[夸克-奇思妙想] QuarkOddities-1.20.1.jar",
+            "[末日生存工具包] Zombie Survival Kit-1.20.1-forge-2.1.8.jar",
+            "[农夫乐事] FarmersDelight-1.20.1-1.3.2.jar",
+            "[女仆实用任务] 1.20.1-maid_useful_task-1.4.2.jar",
+            "[肉多多] dropthemeat-1.7.1.jar",
+            "[唢呐生存指南] Sona-1.20.1-forge-1.5.1.jar",
+            "[斯巴达的武器] SpartanWeaponry-1.20.1-forge-3.2.1-all.jar",
+            "[斯巴达之盾] SpartanShields-1.20.1-forge-3.1.1.jar",
+            "[铁氧体磁芯] ferritecore-6.0.1-forge.jar",
+            "[玩家救援] PlayerRevive_FORGE_v2.0.31_mc1.20.1.jar",
+            "[物品物理掉落] ItemPhysic_FORGE_v1.8.13_mc1.20.1.jar",
+            "[现代化修复] modernfix-forge-5.27.58+mc1.20.1.jar",
+            "[星光] starlight-1.1.2+forge.1cda73c.jar",
+            "[意志坚定] ToughAsNails-forge-1.20.1-9.2.0.171.jar",
+            "[真正的力量] True_POWER-1.20.1-1.1.8.jar",
+            "[卓越前线] superbwarfare-0.8.9-final-mc1.20.1-6effe4385-all.jar"
         );
 
         Set<String> result = new LinkedHashSet<>(found);
@@ -482,6 +614,90 @@ public class ModDependencyHandler {
     }
 
     /**
+     * 清理 mods 目录中被"永久封禁"的 JAR 文件（例如与核心组件严重冲突的 Oculus）。
+     * 这些 JAR 在客户端/服务端都不应该存在。
+     * 如果之前版本已释放过，必须删除以避免崩溃/Mixin 冲突。
+     */
+    private static void cleanupBannedAlwaysJars(Path modsDir) {
+        int deleted = 0;
+        try (Stream<Path> stream = Files.list(modsDir)) {
+            List<Path> jars = stream
+                .filter(Files::isRegularFile)
+                .filter(p -> p.toString().endsWith(".jar"))
+                .collect(Collectors.toList());
+
+            for (Path p : jars) {
+                String name = p.getFileName().toString();
+                if (isBannedAlways(name)) {
+                    try {
+                        Files.deleteIfExists(p);
+                        LOGGER.info("[ModDependencyHandler] 已清理永久封禁mod(严重冲突): {}", name);
+                        deleted++;
+                    } catch (Exception e) {
+                        // 删除失败则禁用
+                        Path disabledPath = p.getParent().resolve(name + DISABLED_MARKER);
+                        try {
+                            Files.move(p, disabledPath, StandardCopyOption.REPLACE_EXISTING);
+                            LOGGER.info("[ModDependencyHandler] 永久封禁mod无法删除，已禁用: {}", name);
+                            deleted++;
+                        } catch (IOException ignored2) {
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        if (deleted > 0) {
+            LOGGER.info("[QLM Zombie] 共清理 {} 个永久封禁mod（需重启生效，避免Mixin冲突）", deleted);
+            com.qlm.zombie.QLMZombieMod.needsRestart = true;
+        }
+    }
+
+    /**
+     * 清理 mods 目录中已被识别为客户端专用的 JAR 文件。
+     * 在专用服务器上，这些 mod 不应存在（仅客户端渲染/UI/光影）。
+     * 如果之前版本已释放过，需要删除以避免浪费内存和潜在错误。
+     */
+    private static void cleanupClientSideJars(Path modsDir) {
+        if (FMLEnvironment.dist != Dist.DEDICATED_SERVER) return;
+
+        int deleted = 0;
+        try (Stream<Path> stream = Files.list(modsDir)) {
+            List<Path> jars = stream
+                .filter(Files::isRegularFile)
+                .filter(p -> p.toString().endsWith(".jar"))
+                .collect(Collectors.toList());
+
+            for (Path p : jars) {
+                String name = p.getFileName().toString();
+                if (isClientSideMod(name)) {
+                    try {
+                        Files.deleteIfExists(p);
+                        LOGGER.info("[ModDependencyHandler] 专用服务器清理客户端 mod: {}", name);
+                        deleted++;
+                    } catch (Exception e) {
+                        // 删除失败则禁用
+                        Path disabledPath = p.getParent().resolve(name + DISABLED_MARKER);
+                        try {
+                            Files.move(p, disabledPath, StandardCopyOption.REPLACE_EXISTING);
+                            LOGGER.info("[ModDependencyHandler] 客户端 mod 无法删除，已禁用: {}", name);
+                            deleted++;
+                        } catch (IOException ignored2) {
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        if (deleted > 0) {
+            LOGGER.info("[QLM Zombie] 专用服务器清理 {} 个客户端专用 mod（需重启生效）", deleted);
+            com.qlm.zombie.QLMZombieMod.needsRestart = true;
+        }
+    }
+
+    /**
      * 从内部 jar 释放 mod 到 mods 目录
      */
     public static boolean extractModFromJar(String modFileName, Path targetDir) {
@@ -546,6 +762,15 @@ public class ModDependencyHandler {
         // 之前版本可能已将 FEATURE_REPLACED 的 JAR 释放到 mods 目录；
         // 现在这些玩法已由 qlmzombie 源码替代，必须删除旧 JAR 避免双重加载。
         cleanupStaleReplacedJars(modsDir);
+
+        // ── 清理永久封禁 mod（客户端/服务端都不应该存在） ──
+        // 例如 Oculus 与 Embeddium 的 Mixin 严重冲突，必须移除。
+        cleanupBannedAlwaysJars(modsDir);
+
+        // ── 清理客户端专用 mod（专用服务器） ──
+        // 之前版本可能已将客户端 mod（渲染/光影/UI）释放到 mods 目录；
+        // 专用服务器不需要这些 mod，删除以节省内存和避免错误。
+        cleanupClientSideJars(modsDir);
 
         Set<String> existingMods = getExistingModsIn(modsDir);
         List<String> releasedNames = new ArrayList<>();

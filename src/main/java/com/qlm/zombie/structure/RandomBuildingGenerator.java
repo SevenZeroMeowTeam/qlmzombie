@@ -35,6 +35,8 @@ public class RandomBuildingGenerator {
     private static final float GENERATE_CHANCE = 0.015F;
     /** 高楼生成概率（在普通建筑生成成功后，20% 概率改为生成高楼） */
     private static final float HIGHRISE_CHANCE = 0.20F;
+    /** 海底废墟生成概率 */
+    private static final float OCEAN_RUIN_CHANCE = 0.08F;
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
@@ -83,13 +85,57 @@ public class RandomBuildingGenerator {
                 generateBuilding(level, buildPos, RandomSource.create(seed), buildingType);
             });
         }
+
+        // 海底废墟生成（海洋区域额外 8% 概率）
+        if (level.getRandom().nextFloat() < OCEAN_RUIN_CHANCE) {
+            int oceanFloorY = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR, centerPos.getX(), centerPos.getZ());
+            BlockPos oceanPos = new BlockPos(centerPos.getX(), oceanFloorY, centerPos.getZ());
+            long oceanSeed = level.getRandom().nextLong();
+            level.getServer().execute(() -> {
+                OceanRuinGenerator.generate(level, oceanPos, RandomSource.create(oceanSeed));
+            });
+        }
     }
 
     public static void generateBuilding(WorldGenLevel level, BlockPos pos, RandomSource random, int type) {
+        // 平整地基：扫描建筑区域，填充下方空隙
+        flattenBuildingFoundation(level, pos, type);
+
         switch (type) {
             case 0 -> generateCabin(level, pos, random);
             case 1 -> generateWatchtower(level, pos, random);
             case 2 -> generateRuins(level, pos, random);
+        }
+    }
+
+    /**
+     * 平整普通建筑地基：扫描建筑覆盖区域，填充下方空隙（防浮空）
+     */
+    private static void flattenBuildingFoundation(WorldGenLevel level, BlockPos pos, int type) {
+        int w, d;
+        switch (type) {
+            case 0 -> { w = 5; d = 5; }   // 小屋
+            case 1 -> { w = 3; d = 3; }   // 瞭望塔
+            default -> { w = 6; d = 6; }  // 废墟
+        }
+        int x = pos.getX();
+        int z = pos.getZ();
+        int baseY = pos.getY();
+        BlockState foundationMat = Blocks.COBBLESTONE.defaultBlockState();
+
+        for (int dx = 0; dx < w; dx++) {
+            for (int dz = 0; dz < d; dz++) {
+                // 从建筑底部向下填充空隙
+                for (int dy = baseY - 1; dy >= baseY - 5; dy--) {
+                    BlockPos bp = new BlockPos(x + dx, dy, z + dz);
+                    BlockState state = level.getBlockState(bp);
+                    if (state.isAir() || state.is(Blocks.WATER) || state.is(Blocks.LAVA)) {
+                        level.setBlock(bp, foundationMat, 3);
+                    } else {
+                        break;
+                    }
+                }
+            }
         }
     }
 

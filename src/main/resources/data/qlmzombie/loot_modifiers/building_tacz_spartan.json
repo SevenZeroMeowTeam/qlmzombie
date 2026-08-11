@@ -51,6 +51,9 @@
     { "item": "tacz:ump45", "weight": 9, "min": 1, "max": 1 },
     { "item": "tacz:m60", "weight": 3, "min": 1, "max": 1 },
     { "item": "tacz:rpg_7", "weight": 1, "min": 1, "max": 1 },
+    // ── TaCZ 枪械工作台：每个宝箱只刷新一次（由 LootModifier 强制去重） ──
+    //    极低权重表示稀有度，每个宝箱最多出现 1 个工作台（配合 Java 端 isWorkbenchItem 逻辑）
+    { "item": "tacz:gun_bench", "weight": 1, "min": 1, "max": 1 },
     { "item": "tacz:9mm", "weight": 40, "min": 3, "max": 12 },
     { "item": "tacz:45_acp", "weight": 28, "min": 2, "max": 8 },
     { "item": "tacz:556x45", "weight": 25, "min": 3, "max": 10 },

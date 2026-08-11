@@ -19,11 +19,11 @@ import java.util.List;
  */
 public enum PickaxeAbility {
     OBSIDIAN_BREAKER(0, "qlmzombie.pickaxe_ability.obsidian_breaker",
-            "可破坏黑曜石/哭泣黑曜石", ChatFormatting.LIGHT_PURPLE, 15),
+            "可破坏黑曜石/哭泣黑曜石", ChatFormatting.LIGHT_PURPLE, 5),
     RANGE_3X3(1, "qlmzombie.pickaxe_ability.range_3x3",
-            "3×3 范围挖掘", ChatFormatting.AQUA, 10),
+            "3×3 范围挖掘", ChatFormatting.AQUA, 3),
     RANGE_5X5(2, "qlmzombie.pickaxe_ability.range_5x5",
-            "5×5 范围挖掘", ChatFormatting.GOLD, 5);
+            "5×5 范围挖掘", ChatFormatting.GOLD, 1);
 
     public static final String NBT_TAG = "qlm_pickaxe_abilities";
     public static final String NBT_FLAGS = "flags";
@@ -99,17 +99,20 @@ public enum PickaxeAbility {
 
     /**
      * 合成镐子时随机附加能力。
-     * 每个能力独立判定，概率 = weight%。
-     * 30% 的镐子至少获得一个能力。
+     * 仅随机赋予一个能力（不再叠加）。
+     * 黑曜石破坏 5% / 3×3 范围 3% / 5×5 范围 1%。
      */
     public static void rollAbilities(ItemStack stack, RandomSource rnd) {
         if (!(stack.getItem() instanceof PickaxeItem)) return;
         if (hasAnyAbility(stack)) return; // 已有能力不重复 roll
 
-        for (PickaxeAbility ability : values()) {
-            if (rnd.nextInt(100) < ability.weight) {
-                addAbility(stack, ability);
-            }
+        int roll = rnd.nextInt(100);
+        if (roll < 5) {
+            addAbility(stack, OBSIDIAN_BREAKER);
+        } else if (roll < 8) {
+            addAbility(stack, RANGE_3X3);
+        } else if (roll < 9) {
+            addAbility(stack, RANGE_5X5);
         }
     }
 }

@@ -1,7 +1,7 @@
 # 七零喵僵尸末日生存mod (QLM Zombie Apocalypse)
 
 **制作团队：七零喵团队 (SevenZeroMeowTeam)**
-**当前版本：`2.10.0.rewrite.beta.build.38.0`**
+**当前版本：`2.10.0.rewrite.beta.build.47.0`**
 
 基于 Minecraft Forge 1.20.1 的末日生存 mod。
 
@@ -19,7 +19,7 @@
 ./gradlew build
 ```
 
-输出 JAR：`build/libs/qlmzombie-2.10.0.rewrite.beta.build.38.0.jar`
+输出 JAR：`build/libs/qlmzombie-2.10.0.rewrite.beta.build.47.0.jar`
 
 ---
 
@@ -93,6 +93,7 @@
 | 全实体 AI Goal 节流 | AI-Improvements | `WrappedGoal` 包装 + 每 2-3 tick 执行 |
 | 全键无冲 | NonConflictKeys | 反射 `KeyMapping` 设 `NO_CONFLICT` |
 | 动物额外掉肉 / 亡灵额外腐肉 | DropTheMeat | Global Loot Modifier（原 JAR 保留，含纹理） |
+| 工作台配方性能优化 | FastWorkbench | 与 FastSuite/FastFurnace 同系列签名哈希缓存机制 |
 
 > 含纹理/模型/语言资源的 mod 一律保留原 JAR 释放，不做源码替代。
 
@@ -254,6 +255,60 @@
 
 **建筑不重复**：使用 `ConcurrentHashMap<Long>` 记录已生成区块坐标，已生成的区块不会再生成新建筑。
 
+**保底武器**：所有建筑奖励箱保底一把武器 + 弹药（独立 pool，rolls=1 必出）：
+- Pool 1（武器）：TaCZ 手枪/步枪/霰弹枪/狙击枪 + SpartanWeaponry 近战 + MC 弓弩
+- Pool 2（弹药）：TaCZ 9mm/.45 ACP/5.56/7.62/12gauge + MC 箭
+
+**高楼改进**：
+- 螺旋楼梯：石砖阶梯旋转上升，不挡走廊通行
+- 外墙门洞：底层四面中央开门（2 格宽 × 2 格高）
+- 陆地检测：检查建筑区域 5 点（四角+中心）是否为陆地，非陆地取消生成
+
+### 海底废墟系统（v2.10.0.b39 新增）
+
+海洋区域 8% 概率在海底生成废墟结构：
+
+**建筑规格**：7×7 × 5 格高，海泡菜/海灵灯笼装饰
+
+**奖励箱**：2 个箱子，保底其他模组物品/武器：
+- Pool 1（武器）：TaCZ 全系列枪械 + SpartanWeaponry 近战 + MC 三叉戟/弓弩
+- Pool 2（弹药）：TaCZ 全口径弹药 + MC 箭
+- Pool 3（额外物品）：金/铁/钻石/绿宝石/海晶碎片/鹦鹉螺壳/海洋之心/附魔书（含水下亲和分析）
+
+### 击杀掉落随机品质装备系统（v2.10.0.b40 新增）
+
+击杀除玩家、村民、铁傀儡外的所有生物，30% 概率掉落随机品质装备（武器/工具/盔甲）。
+
+**10 级品质**：
+
+| 品质 | 颜色 | 攻击力 | 生命上限 | 护甲 | 概率 |
+|------|------|--------|----------|------|------|
+| 劣质 | 灰色 | ×0.5 | 0 | 0 | 20% |
+| 一般 | 白色 | ×1.0 +2 | 0 | 1 | 20% |
+| 普通 | 绿色 | ×1.5 +4 | 1 | 2 | 15% |
+| 精良 | 蓝色 | ×2.0 +7 | 2 | 3 | 12% |
+| 高级 | 青色 | ×3.0 +12 | 3 | 5 | 10% |
+| 稀有 | 粉色 | ×5.0 +20 | 5 | 8 | 8% |
+| 神器 | 金色 | ×10 +50 | 10 | 15 | 6% |
+| 传说 | 红色 | ×25 +200 | 20 | 25 | 4% |
+| 史诗 | 暗红 | ×100 +2000 | 50 | 50 | 3% |
+| 神话 | 暗紫 | 99999 | 100 | 100 | 2% |
+
+**神话品质特殊属性**：
+- 攻击力 99999（一刀秒杀）
+- 无耐久消耗（Unbreakable）
+- 可破坏基岩（左键基岩直接破坏+掉落）
+- 虚空不掉生命值（穿戴任意神话品质盔甲时虚空伤害无效）
+
+**盔甲生命上限机制**：
+- 穿上品质盔甲 → 增加生命上限（不扣当前生命）
+- 脱下品质盔甲 → 减少生命上限（如果当前生命超过新上限则减到新上限）
+
+**镐子能力改进**：
+- 合成镐子时仅随机赋予一个能力（不再叠加）
+- 黑曜石破坏者 5% / 3×3 范围 3% / 5×5 范围 1%
+- 品质越高的镐子（从击杀掉落获得）能力概率越高
+
 ### 连锁挖矿/砍树
 
 镐子挖矿石、铲子挖泥土、斧头砍树 → 一键连锁破坏同类方块。支持所有 mod 工具和 mod 矿石/树木。
@@ -282,13 +337,127 @@
 
 ## 源码替代 mod 管理
 
-`ModDependencyHandler` 自动管理 112 个依赖 mod JAR：
+`ModDependencyHandler` 自动管理 115 个依赖 mod JAR：
 
 - **有开源仓库 + 0 资源**：源码替代，JAR 不释放（`FEATURE_REPLACED_KEYWORDS` 过滤）
 - **有纹理/模型/语言**：保留原 JAR 释放（资源保护原则）
 - **无开源仓库**：通过 libs 文件夹释放到 mods
 - **启动时自动清理**：删除已被源码替代的旧版残留 JAR
 - 自动去重、冲突检测、白名单管理
+
+### 开源依赖鸣谢
+
+本项目 `src/libs` 内嵌释放 115 个模组 JAR，其中 **107 个**拥有公开开源仓库。以下按字母序列出全部已核实的 GitHub 源码仓库，鸣谢原作者：
+
+| 模组 | GitHub 仓库 |
+|------|-----------|
+| Advanced Skills: Remastered | https://github.com/iMoonDay/AdvancedSkills |
+| Applied Energistics 2 | https://github.com/AppliedEnergistics/Applied-Energistics-2 |
+| Architectury | https://github.com/architectury/architectury |
+| Artifacts | https://github.com/ochotonida/artifacts |
+| Bad Packets | https://github.com/badasintended/badpackets |
+| Balm | https://github.com/TwelveIterations/Balm |
+| Better Combat | https://github.com/ZsoltMolnarrr/BetterCombat |
+| Blood Magic | https://github.com/WayofTime/BloodMagic |
+| Blueprint | https://github.com/team-abnormals/blueprint |
+| Bookshelf | https://github.com/Darkhax-Minecraft/Bookshelf |
+| Botania | https://github.com/VazkiiMods/Botania |
+| Cloth Config API | https://github.com/shedaniel/ClothConfig |
+| CoFH Core | https://github.com/CoFH/CoFHCore |
+| Collective | https://github.com/Serilum/Collective |
+| CorgiLib | https://github.com/CorgiTaco/CorgiLib |
+| Create | https://github.com/Creators-of-Create/Create |
+| CreativeCore | https://github.com/CreativeMD/CreativeCore |
+| CrashExploitFixer | https://github.com/DrexHD/CrashExploitFixer |
+| Crash Assistant | https://github.com/KostromDan/Crash-Assistant |
+| Curios API | https://github.com/TheIllusiveC4/Curios |
+| Data Anchor | https://github.com/CorgiTaco/Data-Anchor |
+| Drop the Meat | https://github.com/Moralle/DropTheMeat |
+| Embeddium | https://github.com/FiniteReality/embeddium |
+| Enhanced AI | https://github.com/Insane96/EnhancedAI |
+| Enhanced Celestials | https://github.com/CorgiTaco/Enhanced-Celestials |
+| Enchantment Descriptions | https://github.com/Darkhax-Minecraft/Enchantment-Descriptions |
+| Environmental | https://github.com/team-abnormals/environmental |
+| Ender IO | https://github.com/Team-EnderIO/EnderIO |
+| Entity Model Features | https://github.com/Traben-0/Entity_Model_Features |
+| Entity Texture Features | https://github.com/Traben-0/Entity_Texture_Features |
+| FastBoot | https://github.com/GUN2RAS/FastBoot |
+| Fast Workbench | https://github.com/Shadows-of-Fire/FastWorkbench |
+| Ferrite Core | https://github.com/malte0811/FerriteCore |
+| Footwork | https://github.com/Jackiecrazy/footwork |
+| Forge Config API Port | https://github.com/Fuzss/forgeconfigapiport |
+| Forge Config Screens | https://github.com/Fuzss/forgeconfigscreens |
+| Forestry (Community Ed.) | https://github.com/thedarkcolour/ForestryMC |
+| FTB Chunks | https://github.com/FTBTeam/FTB-Chunks |
+| FTB Library | https://github.com/FTBTeam/FTB-Library |
+| FTB Quests | https://github.com/FTBTeam/FTB-Quests |
+| FTB Teams | https://github.com/FTBTeam/FTB-Teams |
+| GeckoLib 4 | https://github.com/bernie-g/geckolib |
+| GlitchCore | https://github.com/Glitchfiend/GlitchCore |
+| GuideME | https://github.com/AppliedEnergistics/GuideME |
+| IMBlocker | https://github.com/reserveword/IMBlocker |
+| Immersive Engineering | https://github.com/BluSunrize/ImmersiveEngineering |
+| Infectious (Contagion) | https://github.com/MC-Mods-Pete/Contagion |
+| InsaneLib | https://github.com/Insane96/InsaneLib |
+| Iron Chests | https://github.com/ThatGravyBoat/Ironchests |
+| ItemPhysic | https://github.com/CreativeMD/ItemPhysic |
+| itemphysicguns | https://github.com/lavafrai/itemphysicguns |
+| Journeymap | https://github.com/TeamJM/journeymap |
+| Jython (standalone) | https://github.com/jython/jython |
+| Kleiders Custom Renderer | https://github.com/kleiders3010/KleidersCustomRenderer |
+| Kotlin for Forge | https://github.com/thedarkcolour/KotlinForForge |
+| KubeJS | https://github.com/KubeJS-Mods/KubeJS |
+| KubeJS Additions | https://github.com/Hunter19823/kubejsadditions |
+| LootJS | https://github.com/AlmostReliable/lootjs |
+| maid useful task | https://github.com/zxy19/maid_useful_task |
+| Mekanism | https://github.com/mekanism/Mekanism |
+| ModernFix | https://github.com/embeddedt/ModernFix |
+| Moonlight Library | https://github.com/MehVahdJukaar/Moonlight |
+| mrqx's Slashblade Core | https://github.com/mrqx0195/mrqx-s-Slashblade-Core |
+| mutil | https://github.com/mickelus/mutil |
+| Oculus | https://github.com/Asek3/Oculus |
+| Patchouli | https://github.com/VazkiiMods/Patchouli |
+| Placebo | https://github.com/Shadows-of-Fire/Placebo |
+| Player Animator | https://github.com/KosmX/minecraftPlayerAnimator |
+| Player2 NPC | https://github.com/shakey2/Player2NPC |
+| PlayerEngine | https://github.com/shakey2/PlayerEngine |
+| PlayerRevive | https://github.com/CreativeMD/PlayerRevive |
+| PneumaticCraft: Repressurized | https://github.com/TeamPneumatic/pnc-repressurized |
+| Puzzles Lib | https://github.com/Fuzss/puzzleslib |
+| Quark | https://github.com/VazkiiMods/Quark |
+| Quark Oddities | https://github.com/VazkiiMods/Quark (附属) |
+| Refined Storage | https://github.com/refinedmods/refinedstorage |
+| REI (Roughly Enough Items) | https://github.com/shedaniel/RoughlyEnoughItems |
+| Rhino | https://github.com/KubeJS-Mods/Rhino |
+| 3d-Skin-Layers | https://github.com/tr7zw/3d-skin-layers |
+| Simple Storage Network | https://github.com/Lothrazar/Storage-Network |
+| Slash Blade: Resharped | https://github.com/0999312/SlashBlade_Resharped |
+| Sodium Dynamic Lights | https://github.com/txnimc/SodiumDynamicLights |
+| Sodium Options API | https://github.com/txnimc/SodiumOptionsAPI |
+| Spartan Shields | https://github.com/ObliviousSpartan/SpartanShields |
+| Spartan Weaponry | https://github.com/ObliviousSpartan/SpartanWeaponry |
+| Spartan Weaponry Toolkit | https://github.com/KreloX/SpartanToolkit |
+| Starlight | https://github.com/PaperMC/Starlight |
+| Storage Drawers | https://github.com/jaquadro/StorageDrawers |
+| Superb Warfare | https://github.com/Mercurows/SuperbWarfare |
+| TACZ (Timeless & Classics Guns) | https://github.com/MCModderAnchor/TACZ |
+| TaCZ JS | https://github.com/gizmo-ds/taczjs-mod |
+| TAN+ | https://github.com/plus-rkwitt/TAN |
+| tetra | https://github.com/17cupsofcoffee/tetra |
+| Thermal Foundation | https://github.com/CoFH/ThermalFoundation |
+| Thirst was Taken | https://github.com/ghen-git/Thirst-Mod |
+| Tough As Nails | https://github.com/Glitchfiend/ToughAsNails |
+| Touhou Little Maid | https://github.com/TartaricAcid/TouhouLittleMaid |
+| Touhou Maid: Affection | https://github.com/yabo083/maid-affection |
+| Traveler's Titles | https://github.com/YUNG-GANG/Travelers-Titles |
+| True POWER | https://github.com/mrqx0195/true-power |
+| Uncrafting Table | https://github.com/Pitan76/uncraftingtable |
+| wthit | https://github.com/badasintended/wthit |
+| YUNG's API | https://github.com/YUNG-GANG/YUNGs-API |
+| Zeta | https://github.com/VazkiiMods/Zeta |
+| Zombie Survival Kit | https://github.com/Scarasol/Zombie-Survival-Kit |
+
+**无开源仓库（闭源/未验证，共 8 个）**：3D Armor、Fastload-Reforged、Zombie Island、Sona Survival 101、Yes Steve Model (ysm)、Dyairdrop、flib、Zombie Apocalypse Core (zac)。
 
 ---
 
@@ -372,6 +541,252 @@ src/main/java/com/qlm/zombie/
 └── zombie/                        # 僵尸进化
 ```
 ## Changelog
+
+### v2.10.0.rewrite.beta.build.47.0 — 2026-08-12
+
+**基于 117 开源仓库全面审查 + 核心库白名单 + GitHub 推送准备！**
+
+- **核心库白名单 KEEP_ALWAYS_KEYWORDS 扩充至 30 个关键字**（原有 6 个 → 新增 24 个）：
+  - **Kotlin / JS 语言运行时**：kotlinforforge、rhino、kubejs
+  - **大型综合库**：moonlight（MehVahdJukaar 全系列）、bookshelf（Darkhax 全系列）、puzzleslib（Fuzss 全系列）、placebo（Shadows 全系列）、corgilib（CorgiTaco 全系列）、yungsapi（YUNG 结构全系列）、balm（Twelve Iterations 全系列）、blueprint（Team Abnormals 全系列）、zeta（Vazkii 全系列）、glitchcore（Glitchfiend 全系列）、cofh_core（CoFH/Thermal 全系列）
+  - **单功能工具库**：geckolib（实体动画）、curios（饰品系统）、badpackets（网络传输）、mutil（Mickelus，tetra 等）、creativecore（CreativeMD）、insanelib（Insane96）
+  - 效果：`detectAndResolveConflicts()` 中重复 mod 删除、冲突组禁用都不会再误删这些核心依赖
+- **knownInternalJars 同步 src/libs 115+ JAR**：
+  - 补齐 **`lostcitytacz.jar`**（Lost Cities 结构 × TaCZ 枪械小联动 mod，70KB 纯逻辑）
+  - 修正 **`[旅行地图]`** 文件名：原 `journeymap-forge-1.20.1-5.10.3-forge.jar` → 改为匹配实际磁盘文件 `journeymap-1.20.1-5.10.3-forge.jar`
+  - **`[Python] jython-standalone-2.7.3.jar`（45.1MB）不通过 libs/ 内嵌**：由 build.gradle 中 `implementation 'org.python:jython-standalone:2.7.3'` 直接解压 class 并过滤冲突包（org.w3c.dom.* / netscape.* / org.antlr.* / com.ibm.icu.*），避免 build.30 时期发现的 JPMS 模块冲突（`org.w3c.dom.html` 与 JDK `jdk.xml.dom` 模块冲突）
+- **`.gitignore` 扩充（防大文件误传）**：
+  - 新增构建目录：`out/`、`exports/`、`dist/`、`eclipse/`、`projects/`（FG 用户缓存）
+  - 新增服务端目录：`world/`、`local/`、`server.properties`、`ops.json`、`whitelist.json`、`banned-*.json`
+  - 新增二进制：`*.db`、`*.sqlite`、`*.db-journal`、`*.pak`、`*.pk3`、`*.pk4`
+  - 保持 `src/libs/` 与 `*.jar` 忽略（JAR 不直接进 Git，避免单仓库超过 1GB）
+- **`.gitattributes` 重写（行尾规范化 + Git LFS 大文件追踪）**：
+  - 文本行尾：所有代码文件（*.java/gradle/md/toml/json/properties/py/sh）统一 `text eol=lf`；脚本（*.bat/cmd/ps1）保留 `crlf`
+  - Git LFS 追踪：`*.png/jpg/jpeg/webp/psd/ogg/wav/flac/mp3/obj/glb/gltf/fbx/stl/ttf/otf/woff/woff2/jar/zip/exe/dll/so/dylib/mca/nbt/db/sqlite/pak/pk3/pk4` 全部 `binary filter=lfs diff=lfs merge=lfs -text`（安装 Git LFS 后生效，未安装时自动降级为普通二进制标记，无副作用）
+- **开源清单审计（115 JAR × 117 条目对应）**：
+  - 基于 `有开源仓库的模组清单.md` 与 `src/libs/*.jar` 文件大小排序，确认 60+ 个 mod（<1MB 纯逻辑/库）适合源码替代（但 qlmzombie 当前已实现 7 个源码替代：Clumps/FastFurnace/FastSuite/AI-Improvements/NonConflictKeys/DropTheMeat/FastWorkbench，其余保留原 JAR 以纹理优先）
+  - 纹理/模型 mod（ysm 60MB、tacz 54MB、create 18MB 等 40+ 大型 mod）一律保留 JAR，不做源码替代（README 明确声明："含纹理/模型/语言资源的 mod 一律保留原 JAR 释放"）
+- **版本号升级**：`2.10.0.rewrite.beta.build.46.0` → `2.10.0.rewrite.beta.build.47.0`
+- **游戏公告双处更新**：QLMZombieMod.commonSetup() 追加 build.47 一行说明；mods.toml description 首行追加 b47 版本摘要
+
+**修改文件：**
+- `src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java` — KEEP_ALWAYS 扩充 / knownInternalJars 补齐 lostcitytacz、移除 jython(通过 Gradle implementation 替代) / 旅行地图文件名修正
+- `.gitignore` — 构建/服务端/二进制忽略规则扩充
+- `.gitattributes` — 行尾规范化 + Git LFS 大文件追踪配置
+- `gradle.properties` — 版本号 build.47.0
+- `src/main/java/com/qlm/zombie/QLMZombieMod.java` — MOD_VERSION + 游戏公告
+- `src/main/resources/META-INF/mods.toml` — description 首行
+- `README.md` — 版本号 + changelog
+- `build.gradle` — 原排除逻辑不变(已正确排除 jython/graal/polyglot/[Python])
+
+---
+
+### v2.10.0.rewrite.beta.build.46.0 — 2026-08-12
+
+**卡世界生成修复 + 奖励箱掉宝完善！**
+
+- **Oculus 光影 vs Embeddium Mixin 严重冲突修复**：
+  - `ModDependencyHandler` 新增 `BANNED_ALWAYS_KEYWORDS` 永久封禁列表（Oculus 光影无论客户端/服务端都不允许加载）
+  - 新增 `cleanupBannedAlwaysJars()` 在启动时扫描 mods 目录删除/禁用 Oculus JAR（以前只在服务端跳过释放，客户端仍然加载引发 Taint）
+  - 日志中原 MixinTaintDetector "Oculus modified embeddium internal class" 不再出现
+- **zombiekit 空投箱 loot 表解析失败修复**：
+  - 通过资源包优先级覆盖方式，在 `data/zombiekit/loot_tables/chests/` 创建两个同名 JSON
+  - 原版不存在的 `zombiekit:flare_gun` → 替换为 `minecraft:firework_rocket`（信号弹功能等价）
+  - 原版不存在的 `zombiekit:skiing_helmet` → 替换为 `minecraft:iron_helmet`（护甲功能等价）
+  - 并添加 qlmzombie 战术物资（医疗/品质/弹药）让空投箱奖励更贴合玩法
+- **网络版本检查全部禁用，消除启动时长瓶颈**：
+  - 在 `ModDependencyHandler` 静态初始化块（类加载即执行）设置 11 个系统属性：
+    - Forge：`forge.noverify=true` / `forge.updateChecker=false` / `forge.disableVersionCheck=true`
+    - Placebo：`disablePatreonFeatures=true` / `patreon.wings=false` / `patreon.trails=false`
+    - CorgiLib：`disableAnnouncements=true`（公告 SSL 握手失败）
+    - Immersive Engineering：`contributors=false`（贡献者 HTTP 超时）
+    - Moonlight：`hub=false`（Hub Fetcher URL 超时）
+    - Java 全局：`defaultConnectTimeout=5000` / `defaultReadTimeout=5000`（从无限缩短到 5 秒）
+  - 预计游戏启动时长从 87 秒降至 30 秒以内
+- **TaCZ 奖励箱掉落完善 + 工作台同宝箱仅刷新 1 次**：
+  - `building_tacz_spartan.json` 新增 `tacz:gun_bench` 稀有条目（权重 1，min/max 固定 1）
+  - `QLMGlobalLootModifiers.BuildingWeaponLootModifier` 新增：
+    - `isExcludedItem()` 排除 `gun_bench` / `weapon_bench` 关键字，防止动态扫描重复添加工作台
+    - `doApply()` 工作台物品去重：同一宝箱内工作台类物品在每次 roll 后检查，已存在即跳过
+    - 新增辅助方法 `isWorkbenchItem()`：识别 TaCZ 枪械工作台等物品
+- **自动释放模组规则完善**：
+  - `EXCLUDE_PATTERNS` 新增 `-fabric` / `fabric-`：任何 Fabric 版 JAR 都不会被释放（src/libs 中的 ForgeConfigAPIPort Fabric 版即被剔除）
+  - `FEATURE_REPLACED_KEYWORDS` 新增 dropthemeat（源码已有替代）、fastworkbench（工作台性能优化）、fastbench
+  - `CLIENT_SIDE_KEYWORDS` 新增 journeymap（旅行地图纯客户端）、itemphysic（物品物理掉落纯客户端）、crashassistant
+  - 前缀提取与冲突检测逻辑不变
+- **版本号升级**：`2.10.0.rewrite.beta.build.45.0` → `2.10.0.rewrite.beta.build.46.0`
+- **更新游戏公告**：`QLMZombieMod.commonSetup()` 与 `mods.toml` description 均追加 b46 更新说明
+
+**修改文件：**
+- `src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java` — 永久封禁 / 网络检查 / 源码替代 / 客户端 mod 列表
+- `src/main/java/com/qlm/zombie/loot/QLMGlobalLootModifiers.java` — 工作台去重逻辑 + isExcludedItem 排除 + isWorkbenchItem 判定
+- `src/main/resources/data/zombiekit/loot_tables/chests/weaponairdrop2.json` — 新建（资源覆盖）
+- `src/main/resources/data/zombiekit/loot_tables/chests/weaponairdrop3.json` — 新建（资源覆盖）
+- `src/main/resources/data/qlmzombie/loot_modifiers/building_tacz_spartan.json` — 新增 tacz:gun_bench
+- `src/main/resources/META-INF/mods.toml` — description 追加 b46
+- `src/main/java/com/qlm/zombie/QLMZombieMod.java` — 版本号 build.46.0 + 游戏公告
+- `gradle.properties` — 版本号 build.46.0
+- `README.md` — 版本号 + 源码替代表 + changelog
+
+---
+
+### v2.10.0.rewrite.beta.build.44.0 — 2026-08-12
+
+**日志与脚本兼容性修复！**
+
+- **KubeJS 脚本迁移至 KubeJS 6 语法**：
+  - `highrise_loot.js`：将 `java('net.minecraft.core.registries.BuiltInRegistries')` 改为 `Java.loadClass(...)`
+  - 修正 `itemRegistry.iterator()` 直接引用为 `itemRegistry.iterator()` 方法调用
+  - 添加异常捕获，注册表遍历失败时输出 `[loot]` 错误日志并优雅降级
+  - 模组物品数量为 0 时提前返回，避免空数组遍历报错
+- **外部模组日志分析**：
+  - `thirst:add_loot_table` 为 ThirstWasTaken 模组内部问题（缺少 ToughAsNails/BrewinAndChewin/Jade 依赖），非本模组 bug
+  - `zombiekit:flare_gun` 为 Zombie Island 模组内部物品引用错误，非本模组 bug
+  - `scroll` / `spellbook` Curios slot 错误为 Touhou Little Maid 等附属模组 slot 未注册导致
+  - Mixin `minVersion` 警告（crashexploitfixer/playerengine/player2npc）不影响运行
+- **建筑 POI 数据不一致（POI data mismatch）**：由 serveradmin 高楼/海底废墟在已有区块上重复生成导致，非 qlmzombie 代码 bug
+- **确认 qlmzombie 所有 loot_table/loot_modifiers JSON 语法正确**：`scanWeight/scanMinCount/scanMaxCount` 字段齐备，`enchant_randomly` 采用字符串列表（1.20.1 要求）
+
+**修改文件：**
+- `src/main/resources/META-INF/mods.toml` — description 追加 b44
+- `src/main/java/com/qlm/zombie/QLMZombieMod.java` — 版本号 build.44.0 + 游戏公告
+- `gradle.properties` — 版本号 build.44.0
+- `README.md` — 版本号 + changelog
+- `kubejs/server_scripts/highrise_loot.js` — 迁移 `java()` → `Java.loadClass()`
+
+---
+
+### v2.10.0.rewrite.beta.build.43.0 — 2026-08-11
+
+**品质装备系统修复 + 攻击加成优化！**
+
+- **修复盔甲生命上限/护甲加成不生效**：
+  - 旧方案：`setBaseValue()` 直接修改属性 → 被 Forge 属性重计算覆盖
+  - 新方案：使用 `AttributeInstance.addTransientModifier()` 持久化修饰符
+  - 固定 UUID 修饰符：`QUALITY_HEALTH_MODIFIER` + `QUALITY_ARMOR_MODIFIER`
+  - 装备变化时重新遍历所有盔甲槽，累计品质加成
+- **合并伤害事件处理器**：将 `onLivingHurt` 中两个处理逻辑（虚空保护 + 攻击加成）合并为单一处理器
+  - 神话武器：攻击力直接设为 99999（无视计算）
+  - 普通品质：`newAmount = (float) (event.getAmount() * attackMultiplier + bonusAttack)`
+- **玩家登录/重生自动重算品质属性**：监听 `PlayerLoggedInEvent` + `PlayerRespawnEvent`
+- **修复 Java 17 语法兼容性**：将 pattern matching `instanceof X x` 改为 `instanceof X` + 强制转换
+- **修复 EquipmentSlot 引用**：`EQUIPMENT_SLOT` / `MAIN_HAND` → `EQUIPMENT_SLOT` / `MAINHAND`
+
+**修改文件：**
+- `item/QualityEquipmentHandler.java` — 核心修复
+- `QLMZombieMod.java` — 版本号 build.43.0 + 游戏公告
+- `gradle.properties` — 版本号 build.43.0
+- `mods.toml` — description 追加 b43
+
+---
+
+### v2.10.0.rewrite.beta.build.42.0 — 2026-08-11
+
+**品质装备属性系统编译修复！**
+
+- 修复 `Attribute.setBaseValue()` 被 Forge 重计算覆盖问题
+- 改用 `AttributeInstance` + `AttributeModifier` 动态应用加成
+- 修复 UUID 格式错误
+- 添加玩家登录/重生事件处理
+- 清理未使用的 import
+
+**修改文件：**
+- `item/QualityEquipmentHandler.java` — AttributeInstance + 玩家事件
+- `QLMZombieMod.java` — 版本号 build.42.0
+- `gradle.properties` — 版本号 build.42.0
+- `mods.toml` — description 追加 b42
+
+---
+
+### v2.10.0.rewrite.beta.build.41.0 — 2026-08-10
+
+**建筑浮空修复 + 楼梯通行改进！**
+
+- **建筑防浮空**：
+  - **高楼**：扫描 13×9 覆盖区域所有列的 `Heightmap.WORLD_SURFACE`，取最低点作为建筑 Y 坐标
+  - **普通建筑**：小屋/瞭望塔/废墟生成前扫描覆盖区域，向下填充 5 格空气/水/岩浆为圆石地基
+  - **高楼地基**：向下填充 5 格空隙/水/岩浆为石砖，确保不浮空
+- **高楼梯子通行修复**：
+  - 旧方案：4 块螺旋阶梯，不连续无法走上去
+  - 新方案：2×2 梯子井（`x+5,z+4` 面东 + `x+6,z+3` 面西），从地板到天花板连续梯子
+  - 天花板在梯子井位置（`x+5~6, z+3~4`）开 2×2 孔洞，玩家可自由上下
+  - 水平分隔墙在梯子井位置留空，不阻挡通行
+
+**修改文件：**
+- `structure/HighriseBuildingGenerator.java` — `findMinGroundHeight()` + `flattenFoundation()` + 梯子井
+- `structure/RandomBuildingGenerator.java` — `flattenBuildingFoundation()` 普通建筑地基
+- `QLMZombieMod.java` — 版本号 build.41.0 + 游戏公告
+- `gradle.properties` — 版本号 build.41.0
+- `mods.toml` — description 追加 b41
+
+---
+
+### v2.10.0.rewrite.beta.build.40.0 — 2026-08-10
+
+**击杀掉落随机品质装备：10 级品质，神话攻击力 99999，可破坏基岩！**
+
+- **击杀掉落**：击杀除玩家/村民/铁傀儡外所有生物，30% 概率掉落随机品质装备
+  - 随机类型：武器（剑/弓弩/三叉戟/斧）、工具（镐/斧/铲/锄/钓竿/剪刀）、盔甲（铁/钻石/下界合金/锁链/金/皮/海龟）
+  - 随机品质：劣质(20%)/一般(20%)/普通(15%)/精良(12%)/高级(10%)/稀有(8%)/神器(6%)/传说(4%)/史诗(3%)/神话(2%)
+- **神话品质特殊属性**：
+  - 攻击力 99999（一刀秒杀）
+  - 无耐久消耗（Unbreakable）
+  - 可破坏基岩（左键基岩直接破坏+掉落）
+  - 虚空不掉生命值（穿戴任意神话品质盔甲时虚空伤害无效）
+- **盔甲生命上限机制**：
+  - 穿上品质盔甲 → 增加生命上限（不扣当前生命）
+  - 脱下品质盔甲 → 减少生命上限（如果当前生命超过新上限则减到新上限）
+- **镐子能力改进**：
+  - 合成镐子时仅随机赋予一个能力（不再叠加）
+  - 黑曜石破坏者 5% / 3×3 范围 3% / 5×5 范围 1%
+  - 品质越高的镐子（从击杀掉落获得）能力概率越高
+- **Tooltip 显示**：品质行 + 攻击力加成 + 生命上限加成 + 护甲加成 + 神话特殊属性标记
+
+**新增文件：**
+- `item/EquipmentQuality.java` — 10 级品质枚举（NBT 存储 + 随机 roll）
+- `item/RandomEquipmentDropHandler.java` — 击杀掉落处理器 + Tooltip 事件
+- `item/QualityEquipmentHandler.java` — 基岩破坏 + 盔甲生命上限 + 虚空保护 + 攻击力加成
+
+**修改文件：**
+- `item/PickaxeAbility.java` — 黑曜石破坏 15%→5%，仅随机一个能力
+- `QLMZombieMod.java` — 版本号 build.40.0 + 游戏公告
+- `gradle.properties` — 版本号 build.40.0
+- `mods.toml` — description 追加 b40
+- `lang/zh_cn.json` — 10 级品质翻译键
+- `lang/en_us.json` — 10 级品质翻译键
+
+---
+
+### v2.10.0.rewrite.beta.build.39.0 — 2026-08-10
+
+**建筑大改进 + 海底废墟系统：保底武器、螺旋楼梯、门洞、陆地检测、海底废墟！**
+
+- **保底武器**：所有建筑奖励箱（小屋/瞭望塔/废墟/高楼）保底一把武器 + 弹药
+  - 独立 pool rolls=1 必出：TaCZ 手枪/步枪/霰弹枪/狙击枪 + SpartanWeaponry 近战 + MC 弓弩
+  - 独立 pool rolls=1 必出：TaCZ 9mm/.45 ACP/5.56/7.62/12gauge + MC 箭
+- **高楼改进**：
+  - 螺旋楼梯：石砖阶梯旋转上升，不挡走廊通行，天花板开洞防撞头
+  - 外墙门洞：底层四面中央开门（2 格宽 × 2 格高），可进出
+  - 陆地检测：检查建筑区域 5 点（四角+中心）是否为陆地，非陆地取消生成
+- **海底废墟系统**：海洋区域 8% 概率生成海底废墟
+  - 7×7 × 5 格高，残破石砖墙 + 海泡菜/海灵灯笼装饰
+  - 2 个奖励箱，保底其他模组物品/武器（含三叉戟/海洋之心/鹦鹉螺壳）
+  - 海底废墟 loot 表含水下亲和分析附魔书
+
+**新增文件：**
+- `structure/OceanRuinGenerator.java` — 海底废墟生成器
+- `data/qlmzombie/loot_tables/chests/ocean_ruin.json` — 海底废墟 loot 表（3 pools）
+
+**修改文件：**
+- `structure/HighriseBuildingGenerator.java` — 螺旋楼梯 + 门洞 + 陆地检测
+- `structure/RandomBuildingGenerator.java` — 海底废墟 8% 生成概率
+- `loot_tables/chests/random_building.json` — 新增保底武器 pool + 弹药 pool
+- `loot_tables/chests/other_mod_building.json` — 新增保底武器 pool + 弹药 pool
+- `QLMZombieMod.java` — 版本号 build.39.0 + 游戏公告
+- `gradle.properties` — 版本号 build.39.0
+- `mods.toml` — description 追加 b39
+
+---
 
 ### v2.10.0.rewrite.beta.build.38.0 — 2026-08-10
 

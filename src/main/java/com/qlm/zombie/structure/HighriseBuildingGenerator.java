@@ -13,76 +13,137 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.material.FluidState;
 import org.slf4j.Logger;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 9 层高楼生成器 — 每层 5 个房间，每层 1 个奖励箱（在不同房间），15% 概率为其他模组 loot 箱。
- *
- * 建筑规格：13×9 外部，36 格高（9 层 × 4 格/层）
- * 每层布局：3 个前排房间(3×3) + 2 个后排房间(5×3) + 十字走廊
+ * 9 层高楼生成器 — 每层 5 个房间，每层 1 个奖励箱。
+ * 楼梯使用梯子通道（可通行），外墙带门洞，仅陆地生成，自动平整地基。
  */
 public class HighriseBuildingGenerator {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    /** 默认 loot 表 */
     private static final ResourceLocation DEFAULT_LOOT = ResourceLocation.parse("qlmzombie:chests/random_building");
-    /** 其他模组 loot 表（15% 概率使用） */
     private static final ResourceLocation OTHER_MOD_LOOT = ResourceLocation.parse("qlmzombie:chests/other_mod_building");
-    /** 其他模组 loot 概率 */
     private static final float OTHER_MOD_CHANCE = 0.15F;
 
-    /** 建筑尺寸 */
-    private static final int WIDTH = 13;   // 宽
-    private static final int DEPTH = 9;    // 深
-    private static final int FLOOR_HEIGHT = 4; // 每层高度
-    private static final int FLOORS = 9;   // 楼层数
+    private static final int WIDTH = 13;
+    private static final int DEPTH = 9;
+    private static final int FLOOR_HEIGHT = 4;
+    private static final int FLOORS = 9;
 
-    /** 已生成建筑的区块坐标集合（防重复） */
     private static final Set<Long> GENERATED_CHUNKS = ConcurrentHashMap.newKeySet();
 
-    /**
-     * 检查该区块是否已生成过建筑
-     */
     public static boolean isChunkGenerated(long chunkKey) {
         return GENERATED_CHUNKS.contains(chunkKey);
     }
 
-    /**
-     * 标记区块已生成建筑
-     */
     public static void markChunkGenerated(long chunkKey) {
         GENERATED_CHUNKS.add(chunkKey);
     }
 
     /**
+     * 检查目标区域是否为陆地（非水面/海底）
+     */
+    public static boolean isLandArea(WorldGenLevel level, BlockPos basePos) {
+        int x = basePos.getX();
+        int z = basePos.getZ();
+        int[][] checkPoints = {
+                {x, z}, {x + WIDTH - 1, z}, {x, z + DEPTH - 1},
+                {x + WIDTH - 1, z + DEPTH - 1}, {x + WIDTH / 2, z + DEPTH / 2}
+        };
+        for (int[] cp : checkPoints) {
+            BlockPos pos = new BlockPos(cp[0], basePos.getY(), cp[1]);
+            BlockState state = level.getBlockState(pos);
+            FluidState fluid = level.getFluidState(pos);
+            if (state.isAir() || !fluid.isEmpty() || state.is(Blocks.WATER) || state.is(Blocks.LAVA)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 扫描建筑覆盖区域，找到最低的实体地面高度（防浮空）
+     */
+    public static int findMinGroundHeight(WorldGenLevel level, BlockPos basePos) {
+        int minX = basePos.getX();
+        int minZ = basePos.getZ();
+        int minHeight = Integer.MAX_VALUE;
+        for (int dx = 0; dx < WIDTH; dx++) {
+            for (int dz = 0; dz < DEPTH; dz++) {
+                int h = level.getHeight(Heightmap.Types.WORLD_SURFACE, minX + dx, minZ + dz);
+                if (h < minHeight) minHeight = h;
+            }
+        }
+        return minHeight;
+    }
+
+    /**
+     * 平整地基：填充建筑区域下方的空隙（防浮空）
+     */
+    public static void flattenFoundation(WorldGenLevel level, BlockPos basePos, int groundY) {
+        int x = basePos.getX();
+        int z = basePos.getZ();
+        BlockState foundationMat = Blocks.STONE_BRICKS.defaultBlockState();
+
+        for (int dx = 0; dx < WIDTH; dx++) {
+            for (int dz = 0; dz < DEPTH; dz++) {
+                int colX = x + dx;
+                int colZ = z + dz;
+                // 从建筑底部向下扫描，填充空隙和水面
+                for (int dy = groundY - 1; dy >= groundY - 5; dy--) {
+                    BlockPos pos = new BlockPos(colX, dy, colZ);
+                    BlockState state = level.getBlockState(pos);
+                    FluidState fluid = level.getFluidState(pos);
+                    if (state.isAir() || !fluid.isEmpty() || state.is(Blocks.WATER) || state.is(Blocks.LAVA)) {
+                        level.setBlock(pos, foundationMat, 3);
+                    } else {
+                        break; // 遇到实体方块停止
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * 生成 9 层高楼
-     * @param level 世界
-     * @param basePos 地面位置（建筑左下角）
-     * @param random 随机源
      */
     public static void generate(WorldGenLevel level, BlockPos basePos, RandomSource random) {
         int x = basePos.getX();
-        int y = basePos.getY();
         int z = basePos.getZ();
 
-        // 材料随机选择
+        // 1. 找到建筑覆盖区域的最低地面高度（防浮空）
+        int minGroundY = findMinGroundHeight(level, basePos);
+
+        // 2. 检查是否为陆地
+        BlockPos adjustedPos = new BlockPos(x, minGroundY, z);
+        if (!isLandArea(level, adjustedPos)) {
+            LOGGER.info("[QLM Zombie] 高楼生成取消：目标区域非陆地 ({}, {}, {})", x, minGroundY, z);
+            return;
+        }
+
+        // 3. 平整地基
+        flattenFoundation(level, adjustedPos, minGroundY);
+
+        int y = minGroundY;
         BlockState wallMat = random.nextBoolean()
                 ? Blocks.STONE_BRICKS.defaultBlockState()
                 : Blocks.CRACKED_STONE_BRICKS.defaultBlockState();
         BlockState floorMat = Blocks.SMOOTH_STONE.defaultBlockState();
-        BlockState pillarMat = Blocks.POLISHED_ANDESITE.defaultBlockState();
 
-        // 逐层构建
+        // 4. 逐层构建
         for (int floor = 0; floor < FLOORS; floor++) {
             int floorY = y + floor * FLOOR_HEIGHT;
-            buildFloor(level, x, floorY, z, floor, wallMat, floorMat, pillarMat, random);
+            buildFloor(level, x, floorY, z, floor, wallMat, floorMat, random);
         }
 
-        // 屋顶
+        // 5. 屋顶
         int roofY = y + FLOORS * FLOOR_HEIGHT;
         buildRoof(level, x, roofY, z, random);
 
@@ -93,7 +154,7 @@ public class HighriseBuildingGenerator {
      * 构建单层
      */
     private static void buildFloor(WorldGenLevel level, int x, int y, int z, int floor,
-                                     BlockState wallMat, BlockState floorMat, BlockState pillarMat,
+                                     BlockState wallMat, BlockState floorMat,
                                      RandomSource random) {
         // 1. 地板
         for (int dx = 0; dx < WIDTH; dx++) {
@@ -102,80 +163,113 @@ public class HighriseBuildingGenerator {
             }
         }
 
-        // 2. 天花板（也是上层的地板）
+        // 2. 天花板（上层地板）— 楼梯井位置开洞
         int ceilingY = y + FLOOR_HEIGHT - 1;
         for (int dx = 0; dx < WIDTH; dx++) {
             for (int dz = 0; dz < DEPTH; dz++) {
-                level.setBlock(new BlockPos(x + dx, ceilingY, z + dz), floorMat, 3);
+                // 楼梯井位置 (x+6, z+4) 开洞，2×2
+                boolean isStairWell = (dx >= 5 && dx <= 6) && (dz >= 3 && dz <= 4);
+                if (floor < FLOORS - 1 && isStairWell) {
+                    level.setBlock(new BlockPos(x + dx, ceilingY, z + dz), Blocks.AIR.defaultBlockState(), 3);
+                } else {
+                    level.setBlock(new BlockPos(x + dx, ceilingY, z + dz), floorMat, 3);
+                }
             }
         }
 
-        // 3. 外墙（4面）
+        // 3. 外墙（4面）— 留门洞
         for (int dy = 0; dy < FLOOR_HEIGHT - 1; dy++) {
+            // 前墙 (z=0)
             for (int dx = 0; dx < WIDTH; dx++) {
-                setWall(level, new BlockPos(x + dx, y + dy, z), wallMat, random);
-                setWall(level, new BlockPos(x + dx, y + dy, z + DEPTH - 1), wallMat, random);
+                if (floor == 0 && dy <= 1 && dx >= 5 && dx <= 7) {
+                    level.setBlock(new BlockPos(x + dx, y + dy, z), Blocks.AIR.defaultBlockState(), 3);
+                } else {
+                    setWall(level, new BlockPos(x + dx, y + dy, z), wallMat, random);
+                }
             }
+            // 后墙 (z=DEPTH-1)
+            for (int dx = 0; dx < WIDTH; dx++) {
+                if (floor == 0 && dy <= 1 && dx >= 5 && dx <= 7) {
+                    level.setBlock(new BlockPos(x + dx, y + dy, z + DEPTH - 1), Blocks.AIR.defaultBlockState(), 3);
+                } else {
+                    setWall(level, new BlockPos(x + dx, y + dy, z + DEPTH - 1), wallMat, random);
+                }
+            }
+            // 左墙 (x=0)
             for (int dz = 0; dz < DEPTH; dz++) {
-                setWall(level, new BlockPos(x, y + dy, z + dz), wallMat, random);
-                setWall(level, new BlockPos(x + WIDTH - 1, y + dy, z + dz), wallMat, random);
+                if (floor == 0 && dy <= 1 && dz >= 3 && dz <= 5) {
+                    level.setBlock(new BlockPos(x, y + dy, z + dz), Blocks.AIR.defaultBlockState(), 3);
+                } else {
+                    setWall(level, new BlockPos(x, y + dy, z + dz), wallMat, random);
+                }
+            }
+            // 右墙 (x=WIDTH-1)
+            for (int dz = 0; dz < DEPTH; dz++) {
+                if (floor == 0 && dy <= 1 && dz >= 3 && dz <= 5) {
+                    level.setBlock(new BlockPos(x + WIDTH - 1, y + dy, z + dz), Blocks.AIR.defaultBlockState(), 3);
+                } else {
+                    setWall(level, new BlockPos(x + WIDTH - 1, y + dy, z + dz), wallMat, random);
+                }
             }
         }
 
-        // 4. 内部分隔墙 — 将每层分为 5 个房间
-        // 前排 3 个房间 (3×3): x=[1,3], [5,7], [9,11]; z=[1,3]
-        // 后排 2 个房间 (5×3): x=[1,5], [7,11]; z=[5,7]
-        // 走廊: x=4 (垂直), z=4 (水平)
+        // 4. 内部分隔墙 — 5 个房间 + 十字走廊
         for (int dy = 0; dy < FLOOR_HEIGHT - 1; dy++) {
-            // 垂直分隔墙 x=4（走廊左侧墙）
+            // 垂直分隔墙 x=4
             for (int dz = 1; dz < DEPTH - 1; dz++) {
-                if (dz == 4) continue; // 走廊交叉口留空
-                if (dy == 1 && (dz == 2 || dz == 6)) continue; // 门洞
+                if (dz == 4) continue; // 走廊口
+                if (dy == 1 && (dz == 2 || dz == 6)) continue; // 房间门洞
                 level.setBlock(new BlockPos(x + 4, y + dy, z + dz), wallMat, 3);
             }
-            // 垂直分隔墙 x=8（走廊右侧墙）
+            // 垂直分隔墙 x=8
             for (int dz = 1; dz < DEPTH - 1; dz++) {
                 if (dz == 4) continue;
                 if (dy == 1 && (dz == 2 || dz == 6)) continue;
                 level.setBlock(new BlockPos(x + 8, y + dy, z + dz), wallMat, 3);
             }
-            // 水平分隔墙 z=4（前后排分隔）
+            // 水平分隔墙 z=4
             for (int dx = 1; dx < WIDTH - 1; dx++) {
-                if (dx == 4 || dx == 8) continue; // 走廊交叉口
-                if (dy == 1 && (dx == 2 || dx == 6 || dx == 10)) continue; // 门洞
+                if (dx == 4 || dx == 8) continue; // 走廊口
+                // 楼梯井位置留空（x=5-6, z=3-4）
+                if (dx >= 5 && dx <= 6) continue;
+                if (dy == 1 && (dx == 2 || dx == 6 || dx == 10)) continue; // 房间门洞
                 level.setBlock(new BlockPos(x + dx, y + dy, z + 4), wallMat, 3);
             }
-            // 前排中间分隔墙 x=4（分 A/C 房间）— 已在上面处理
-            // 前排中间分隔墙 x=8（分 C/D 房间）— 已在上面处理
         }
 
-        // 5. 窗户（外墙上随机位置）
+        // 5. 窗户
         for (int dy = 1; dy < FLOOR_HEIGHT - 1; dy++) {
-            if (dy == 1 && floor == 0) continue; // 底层不留窗
-            // 前墙窗户
+            if (dy == 1 && floor == 0) continue;
             for (int dx = 2; dx < WIDTH - 1; dx += 3) {
                 if (random.nextFloat() > 0.4F) {
                     level.setBlock(new BlockPos(x + dx, y + dy, z), Blocks.GLASS_PANE.defaultBlockState(), 3);
-                }
-            }
-            // 后墙窗户
-            for (int dx = 2; dx < WIDTH - 1; dx += 3) {
-                if (random.nextFloat() > 0.4F) {
                     level.setBlock(new BlockPos(x + dx, y + dy, z + DEPTH - 1), Blocks.GLASS_PANE.defaultBlockState(), 3);
                 }
             }
         }
 
-        // 6. 楼梯（走廊交叉口 x=4, z=4）
+        // 6. 楼梯 — 使用梯子通道（2×3 井道，玩家可自由上下）
+        // 梯子位置：x+5~6, z+3~4（2×2 梯子井）
         if (floor < FLOORS - 1) {
-            for (int dy = 0; dy < FLOOR_HEIGHT - 1; dy++) {
-                level.setBlock(new BlockPos(x + 4, y + dy, z + 4),
+            // 放置梯子从地板到天花板
+            for (int dy = 0; dy < FLOOR_HEIGHT; dy++) {
+                // 梯子放在 x+5, z+4（面向东）
+                level.setBlock(new BlockPos(x + 5, y + dy, z + 4),
                         Blocks.LADDER.defaultBlockState()
                                 .setValue(net.minecraft.world.level.block.LadderBlock.FACING, Direction.EAST), 3);
+                // 梯子放在 x+6, z+3（面向西）
+                level.setBlock(new BlockPos(x + 6, y + dy, z + 3),
+                        Blocks.LADDER.defaultBlockState()
+                                .setValue(net.minecraft.world.level.block.LadderBlock.FACING, Direction.WEST), 3);
+            }
+            // 确保楼梯井空间为空气
+            for (int dy = 0; dy < FLOOR_HEIGHT; dy++) {
+                level.setBlock(new BlockPos(x + 5, y + dy, z + 3), Blocks.AIR.defaultBlockState(), 3);
+                level.setBlock(new BlockPos(x + 6, y + dy, z + 4), Blocks.AIR.defaultBlockState(), 3);
             }
         }
 
-        // 7. 火把（走廊照明）
+        // 7. 火把
         level.setBlock(new BlockPos(x + 4, y + 1, z + 1),
                 Blocks.WALL_TORCH.defaultBlockState()
                         .setValue(net.minecraft.world.level.block.WallTorchBlock.FACING, Direction.SOUTH), 3);
@@ -184,20 +278,13 @@ public class HighriseBuildingGenerator {
                         .setValue(net.minecraft.world.level.block.WallTorchBlock.FACING, Direction.SOUTH), 3);
 
         // 8. 奖励箱 — 每层 1 个，在不同房间
-        // 5 个房间位置（房间中心）：
-        // 房间 0: 左前 (x+2, z+2)
-        // 房间 1: 中前 (x+6, z+2)
-        // 房间 2: 右前 (x+10, z+2)
-        // 房间 3: 左后 (x+3, z+6)
-        // 房间 4: 右后 (x+9, z+6)
         int[][] roomCenters = {
-                {2, 2}, {6, 2}, {10, 2}, {3, 6}, {9, 6}
+                {2, 2}, {10, 2}, {2, 6}, {10, 6}, {6, 2}
         };
-        int roomIdx = floor % 5; // 每层在不同房间放奖励箱
+        int roomIdx = floor % 5;
         int chestX = x + roomCenters[roomIdx][0];
         int chestZ = z + roomCenters[roomIdx][1];
 
-        // 15% 概率使用其他模组 loot 表
         ResourceLocation lootTable = random.nextFloat() < OTHER_MOD_CHANCE
                 ? OTHER_MOD_LOOT : DEFAULT_LOOT;
 
@@ -211,13 +298,11 @@ public class HighriseBuildingGenerator {
      * 构建屋顶
      */
     private static void buildRoof(WorldGenLevel level, int x, int y, int z, RandomSource random) {
-        // 平顶 + 矮墙
         for (int dx = 0; dx < WIDTH; dx++) {
             for (int dz = 0; dz < DEPTH; dz++) {
                 level.setBlock(new BlockPos(x + dx, y, z + dz), Blocks.SMOOTH_STONE_SLAB.defaultBlockState(), 3);
             }
         }
-        // 矮墙
         for (int dx = 0; dx < WIDTH; dx++) {
             level.setBlock(new BlockPos(x + dx, y + 1, z), Blocks.STONE_BRICK_WALL.defaultBlockState(), 3);
             level.setBlock(new BlockPos(x + dx, y + 1, z + DEPTH - 1), Blocks.STONE_BRICK_WALL.defaultBlockState(), 3);
@@ -226,13 +311,9 @@ public class HighriseBuildingGenerator {
             level.setBlock(new BlockPos(x, y + 1, z + dz), Blocks.STONE_BRICK_WALL.defaultBlockState(), 3);
             level.setBlock(new BlockPos(x + WIDTH - 1, y + 1, z + dz), Blocks.STONE_BRICK_WALL.defaultBlockState(), 3);
         }
-        // 屋顶火把
         level.setBlock(new BlockPos(x + WIDTH / 2, y + 1, z + DEPTH / 2), Blocks.TORCH.defaultBlockState(), 3);
     }
 
-    /**
-     * 放置墙壁方块（随机加入裂纹效果）
-     */
     private static void setWall(WorldGenLevel level, BlockPos pos, BlockState wallMat, RandomSource random) {
         if (random.nextFloat() < 0.1F) {
             level.setBlock(pos, Blocks.CRACKED_STONE_BRICKS.defaultBlockState(), 3);
@@ -243,12 +324,8 @@ public class HighriseBuildingGenerator {
         }
     }
 
-    /**
-     * 放置奖励箱
-     */
     private static void placeChest(WorldGenLevel level, BlockPos pos, Direction facing,
                                      RandomSource random, ResourceLocation lootTable) {
-        // 确保下方有支撑
         if (level.getBlockState(pos.below()).isAir()) {
             level.setBlock(pos.below(), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
         }

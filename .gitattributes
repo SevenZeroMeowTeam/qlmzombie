@@ -1,5 +1,89 @@
-# Disable autocrlf on generated files, they always generate with LF
-# Add any extra files or paths here to make git stop saying they
-# are changed when only line endings change.
-src/generated/**/.cache/cache text eol=lf
-src/generated/**/*.json text eol=lf
+# ============================================================================
+# .gitattributes — qlmzombie 项目
+# 功能：
+#   1. 行尾规范化（避免 CRLF/LF 反复变更）
+#   2. 二进制标记（防止 Git 对图片/模型做 diff 导致速度慢）
+#   3. Git LFS 大文件追踪（启用 Git LFS 后自动生效；未启用时无害）
+# ============================================================================
+
+# --- 文本：强制 LF 行尾 ---------------------------------------------------
+*.java           text eol=lf
+*.gradle         text eol=lf
+*.kts            text eol=lf
+*.properties     text eol=lf
+*.md             text eol=lf
+*.toml           text eol=lf
+*.json           text eol=lf
+*.mcmeta         text eol=lf
+*.xml            text eol=lf
+*.yml            text eol=lf
+*.yaml           text eol=lf
+*.txt            text eol=lf
+*.py             text eol=lf
+*.js             text eol=lf
+*.ts             text eol=lf
+*.sh             text eol=lf
+*.bat            text eol=crlf
+*.cmd            text eol=crlf
+*.ps1            text eol=crlf
+.editorconfig     text eol=lf
+.gitignore       text eol=lf
+.gitattributes   text eol=lf
+
+# --- ForgeGradle 生成目录（禁用行尾自动转换） ------------------------------
+src/generated/**/.cache/cache  text eol=lf
+src/generated/**/*.json         text eol=lf
+
+# --- 资源：纹理/模型/音效 —— 二进制 + LFS（>2MB 的通常需要 LFS） -----------
+*.png            binary filter=lfs diff=lfs merge=lfs -text
+*.jpg            binary filter=lfs diff=lfs merge=lfs -text
+*.jpeg           binary filter=lfs diff=lfs merge=lfs -text
+*.gif            binary
+*.webp           binary filter=lfs diff=lfs merge=lfs -text
+*.bmp            binary
+*.tga            binary
+*.psd            binary filter=lfs diff=lfs merge=lfs -text
+
+# Minecraft 模型 / 方块状态（纯 JSON 已在上文处理，不用再设）
+
+# 音效（OGG 通常几百 KB ~ 几 MB，LFS 管理更好）
+*.ogg            binary filter=lfs diff=lfs merge=lfs -text
+*.wav            binary filter=lfs diff=lfs merge=lfs -text
+*.flac           binary filter=lfs diff=lfs merge=lfs -text
+*.mp3            binary filter=lfs diff=lfs merge=lfs -text
+
+# 3D 模型
+*.obj            binary filter=lfs diff=lfs merge=lfs -text
+*.glb            binary filter=lfs diff=lfs merge=lfs -text
+*.gltf           binary filter=lfs diff=lfs merge=lfs -text
+*.fbx            binary filter=lfs diff=lfs merge=lfs -text
+*.stl            binary filter=lfs diff=lfs merge=lfs -text
+
+# 字体
+*.ttf            binary filter=lfs diff=lfs merge=lfs -text
+*.otf            binary filter=lfs diff=lfs merge=lfs -text
+*.woff           binary filter=lfs diff=lfs merge=lfs -text
+*.woff2          binary filter=lfs diff=lfs merge=lfs -text
+
+# 数据包/资源包 zip
+*.jar            binary filter=lfs diff=lfs merge=lfs -text
+*.zip            binary filter=lfs diff=lfs merge=lfs -text
+
+# 可执行文件 / 动态库
+*.exe            binary filter=lfs diff=lfs merge=lfs -text
+*.dll            binary filter=lfs diff=lfs merge=lfs -text
+*.so             binary filter=lfs diff=lfs merge=lfs -text
+*.dylib          binary filter=lfs diff=lfs merge=lfs -text
+*.a              binary
+*.lib            binary
+*.class          binary
+
+# 数据文件
+*.mca            binary filter=lfs diff=lfs merge=lfs -text
+*.dat            binary
+*.nbt            binary filter=lfs diff=lfs merge=lfs -text
+*.db             binary filter=lfs diff=lfs merge=lfs -text
+*.sqlite         binary filter=lfs diff=lfs merge=lfs -text
+*.pak            binary filter=lfs diff=lfs merge=lfs -text
+*.pk3            binary filter=lfs diff=lfs merge=lfs -text
+*.pk4            binary filter=lfs diff=lfs merge=lfs -text

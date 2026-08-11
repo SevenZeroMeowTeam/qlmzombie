@@ -1,4 +1,4 @@
-模组名列表（共 117 个）
+模组名列表（共 119 个）
 目录: C:\Users\Administrator\Desktop\qlmzombie-main\src\libs
 ================================================================================
   1. 3D Armor
@@ -49,61 +49,61 @@
      文件: ForgeConfigScreens-v8.0.2-1.20.1-Forge.jar
      大小: 0.2 MB
 
- 13. Immersive Engineering
+ 13. GlitchCore
+     文件: GlitchCore-forge-1.20.1-0.0.1.1.jar
+     大小: 0.1 MB
+
+ 14. Immersive Engineering
      文件: ImmersiveEngineering-1.20.1-10.2.0-183.jar
      大小: 11.6 MB
 
- 14. Infectious
+ 15. Infectious
      文件: Infectious-forge-1.20.1-1.7.jar
      大小: 8.0 MB
 
- 15. Mekanism
+ 16. Mekanism
      文件: Mekanism-1.20.1-10.4.16.80.jar
      大小: 12.0 MB
 
- 16. Patchouli
+ 17. Patchouli
      文件: Patchouli-1.20.1-85-FORGE.jar
      大小: 0.6 MB
 
- 17. Placebo
+ 18. Placebo
      文件: Placebo-1.20.1-8.6.3.jar
      大小: 0.3 MB
 
- 18. Puzzles Lib
+ 19. Puzzles Lib
      文件: PuzzlesLib-v8.1.33-1.20.1-Forge.jar
      大小: 1.3 MB
 
- 19. Quark
+ 20. Quark
      文件: Quark-4.0-462.jar
      大小: 14.2 MB
 
- 20. Simple Storage Network
+ 21. Simple Storage Network
      文件: SimpleStorageNetwork-1.20.1-1.11.3.jar
      大小: 0.5 MB
 
- 21. Storage Drawers
+ 22. Storage Drawers
      文件: StorageDrawers-forge-1.20.1-12.14.3.jar
      大小: 1.1 MB
 
- 22. YUNG's API
+ 23. YUNG's API
      文件: YungsApi-1.20-Forge-4.0.6.jar
      大小: 0.4 MB
 
- 23. Zeta
+ 24. Zeta
      文件: Zeta-1.0-31.jar
      大小: 1.0 MB
 
- 24. Zombie_Island
+ 25. Zombie_Island
      文件: Zombie Island 1.20.1 0.1.3.5.jar
      大小: 0.8 MB
 
- 25. 3d-Skin-Layers
+ 26. 3d-Skin-Layers
      文件: [3D 皮肤层] skinlayers3d-forge-1.11.2-mc1.20.1.jar
      大小: 2.1 MB
-
- 26. AI-Improvements
-     文件: [AI改进] AI-Improvements-1.20-0.5.2.jar
-     大小: 0.0 MB
 
  27. FTB Quests
      文件: [FTB 任务] ftb-quests-forge-2001.4.22.jar
@@ -113,13 +113,13 @@
      文件: [FTB 团队] ftb-teams-forge-2001.3.2.jar
      大小: 0.2 MB
 
- 29. Roughly Enough Items (REI)
+ 29. Jython fat jar with stdlib
+     文件: [Python] jython-standalone-2.7.3.jar
+     大小: 45.1 MB
+
+ 30. Roughly Enough Items (REI)
      文件: [REI物品管理器] RoughlyEnoughItems-12.1.785-forge.jar
      大小: 2.3 MB
-
- 30. NonConflictKeys
-     文件: [全键无冲] NonConflictKeys-Forge-1.19.X-1.20-1.0.0.jar
-     大小: 0.0 MB
 
  31. Farmer's Delight
      文件: [农夫乐事] FarmersDelight-1.20.1-1.3.2.jar
@@ -129,121 +129,121 @@
      文件: [卓越前线] superbwarfare-0.8.9-final-mc1.20.1-6effe4385-all.jar
      大小: 30.2 MB
 
- 33. AlwaysEat
-     文件: [吃不停] AlwaysEat-5.2.jar
-     大小: 0.0 MB
+ 33. Thirst was Taken
+     文件: [口渴] ThirstWasTaken-1.20.1-1.4.0.jar
+     大小: 0.2 MB
 
- 34. Quark Oddities
+ 34. Sona Survival 101
+     文件: [唢呐生存指南] Sona-1.20.1-forge-1.5.1.jar
+     大小: 1.2 MB
+
+ 35. Quark Oddities
      文件: [夸克-奇思妙想] QuarkOddities-1.20.1.jar
      大小: 0.0 MB
 
- 35. maid useful task
+ 36. maid useful task
      文件: [女仆实用任务] 1.20.1-maid_useful_task-1.4.2.jar
      大小: 0.2 MB
 
- 36. Entity Model Features
+ 37. Entity Model Features
      文件: [实体模型特性] entity_model_features-3.2.4-1.20.1-forge.jar
      大小: 0.7 MB
 
- 37. Entity Texture Features
+ 38. Entity Texture Features
      文件: [实体纹理特性] entity_texture_features_1.20.1-forge-7.1.jar
      大小: 0.9 MB
 
- 38. Crash Assistant
+ 39. Crash Assistant
      文件: [崩溃助手] CrashAssistant-forge-1.19-1.20.1-1.11.10.jar
      大小: 3.0 MB
 
- 39. CrashExploitFixer
+ 40. CrashExploitFixer
      文件: [崩溃漏洞修复] crashexploitfixer-forge-1.1.0+1.20.1.jar
      大小: 0.7 MB
 
- 40. Fast Workbench
+ 41. Fast Workbench
      文件: [工作台性能优化] FastWorkbench-1.20.1-8.0.4.jar
      大小: 0.0 MB
 
- 41. 拆解台
+ 42. Tough As Nails
+     文件: [意志坚定] ToughAsNails-forge-1.20.1-9.2.0.171.jar
+     大小: 0.4 MB
+
+ 43. 拆解台
      文件: [拆解台] uncrafting_table-1.20.1-forge-1.1.0.jar
      大小: 0.1 MB
 
- 42. Slash Blade:Resharped
+ 44. Slash Blade:Resharped
      文件: [拔刀剑：重锋] SlashBladeResharped-1.20.1-1.9.65.jar
      大小: 3.7 MB
 
- 43. Spartan Shields
+ 45. Spartan Shields
      文件: [斯巴达之盾] SpartanShields-1.20.1-forge-3.1.1.jar
      大小: 0.5 MB
 
- 44. Spartan Weaponry
+ 46. Spartan Weaponry
      文件: [斯巴达的武器] SpartanWeaponry-1.20.1-forge-3.2.1-all.jar
      大小: 2.7 MB
 
- 45. Traveler's Titles
+ 47. Traveler's Titles
      文件: [旅人标题] TravelersTitles-1.20-Forge-4.0.2.jar
      大小: 0.2 MB
 
- 46. Journeymap
+ 48. Journeymap
      文件: [旅行地图] journeymap-1.20.1-5.10.3-forge.jar
      大小: 6.8 MB
 
- 47. Starlight
+ 49. Starlight
      文件: [星光] starlight-1.1.2+forge.1cda73c.jar
      大小: 0.1 MB
 
- 48. Yes Steve Model
+ 50. Yes Steve Model
      文件: [是，史蒂夫模型] ysm-2.6.5-forge+mc1.20.1-release.jar
      大小: 60.3 MB
 
- 49. FastFurnace
-     文件: [熔炉性能优化] FastFurnace-1.20.1-8.0.2.jar
-     大小: 0.0 MB
+ 51. Zombie Survival Kit
+     文件: [末日生存工具包] Zombie Survival Kit-1.20.1-forge-2.1.8.jar
+     大小: 4.5 MB
 
- 50. ItemPhysic
+ 52. ItemPhysic
      文件: [物品物理掉落] ItemPhysic_FORGE_v1.8.13_mc1.20.1.jar
      大小: 0.1 MB
 
- 51. PlayerRevive
+ 53. PlayerRevive
      文件: [玩家救援] PlayerRevive_FORGE_v2.0.31_mc1.20.1.jar
      大小: 5.1 MB
 
- 52. ModernFix
+ 54. ModernFix
      文件: [现代化修复] modernfix-forge-5.27.58+mc1.20.1.jar
      大小: 0.9 MB
 
- 53. True POWER
+ 55. True POWER
      文件: [真正的力量] True_POWER-1.20.1-1.1.8.jar
      大小: 0.7 MB
 
- 54. Sophisticated Core
+ 56. Sophisticated Core
      文件: [精妙核心] sophisticatedcore-1.20.1-1.3.65.2126.jar
      大小: 1.5 MB
 
- 55. Sophisticated Backpacks
+ 57. Sophisticated Backpacks
      文件: [精妙背包] sophisticatedbackpacks-1.20.1-3.24.59.1960.jar
      大小: 1.1 MB
 
- 56. Clumps
-     文件: [经验机制改革] Clumps-forge-1.20.1-12.0.0.4.jar
-     大小: 0.0 MB
-
- 57. Drop the Meat
+ 58. Drop the Meat
      文件: [肉多多] dropthemeat-1.7.1.jar
      大小: 0.1 MB
 
- 58. Touhou Little Maid
+ 59. Touhou Little Maid
      文件: [车万女仆] touhoulittlemaid-1.5.3-forge+mc1.20.1.jar
      大小: 23.3 MB
 
- 59. Touhou Maid: Affection
+ 60. Touhou Maid: Affection
      文件: [车万女仆附属：爱恋] touhou-maid-affection-1.7.2.2.jar
      大小: 0.7 MB
 
- 60. IMBlocker
+ 61. IMBlocker
      文件: [输入法冲突修复] IMBlocker-5.5.4-forge+1.17-1.20.4.jar
      大小: 0.2 MB
-
- 61. Fast Suite
-     文件: [配方性能优化] FastSuite-1.20.1-5.1.2.jar
-     大小: 0.0 MB
 
  62. Sodium Dynamic Lights
      文件: [钠／Embeddium：动态光源] sodiumdynamiclights-forge-1.0.10-1.20.1.jar
@@ -257,161 +257,161 @@
      文件: [附魔描述] EnchantmentDescriptions-Forge-1.20.1-17.1.21.jar
      大小: 0.1 MB
 
- 65. Skeleton AI Fix
-     文件: [骷髅 AI 修复] SkeletonAIFix-v20.1.1-1.20.1-Forge.jar
-     大小: 0.0 MB
-
- 66. Applied Energistics 2
+ 65. Applied Energistics 2
      文件: appliedenergistics2-forge-15.4.10.jar
      大小: 8.1 MB
 
- 67. Architectury
+ 66. Architectury
      文件: architectury-9.2.14-forge.jar
      大小: 0.6 MB
 
- 68. Artifacts
+ 67. Artifacts
      文件: artifacts-forge-9.5.19.jar
      大小: 0.8 MB
 
- 69. Bad Packets
+ 68. Bad Packets
      文件: badpackets-forge-0.4.3.jar
      大小: 0.0 MB
 
- 70. Balm
+ 69. Balm
      文件: balm-forge-1.20.1-7.3.39-all.jar
      大小: 0.6 MB
 
- 71. Better Combat
+ 70. Better Combat
      文件: bettercombat-forge-1.9.0+1.20.1.jar
      大小: 1.0 MB
 
- 72. Blood Magic
+ 71. Blood Magic
      文件: bloodmagic-1.20.1-3.3.7-49.jar
      大小: 14.4 MB
 
- 73. Blueprint
+ 72. Blueprint
      文件: blueprint-1.20.1-7.1.4.jar
      大小: 1.1 MB
 
- 74. Cloth Config v10 API
+ 73. Cloth Config v10 API
      文件: cloth-config-11.1.136-forge.jar
      大小: 1.1 MB
 
- 75. CoFH Core
+ 74. CoFH Core
      文件: cofh_core-1.20.1-11.0.2.56.jar
      大小: 1.4 MB
 
- 76. Collective
+ 75. Collective
      文件: collective-1.20.1-8.39.jar
      大小: 0.7 MB
 
- 77. Create
+ 76. Create
      文件: create-1.20.1-6.0.8.jar
      大小: 18.3 MB
 
- 78. Curios API
+ 77. Curios API
      文件: curios-forge-5.14.1+1.20.1.jar
      大小: 0.4 MB
 
- 79. Dyairdrop
+ 78. Dyairdrop
      文件: dyairdrop-1.1.0-1.20.1-beta.jar
      大小: 1.3 MB
 
- 80. Embeddium
+ 79. Embeddium
      文件: embeddium-0.3.31+mc1.20.1.jar
      大小: 1.3 MB
 
- 81. Enhanced AI
+ 80. Enhanced AI
      文件: enhancedai-3.3.7.3.jar
      大小: 1.3 MB
 
- 82. Environmental
+ 81. Environmental
      文件: environmental-1.20.1-4.1.2.jar
      大小: 7.7 MB
 
- 83. FastBoot
+ 82. FastBoot
      文件: fastboot-1.20.x-1.2.jar
      大小: 0.0 MB
 
- 84. flib
+ 83. flib
      文件: flib-1.20.1-0.0.14.jar
      大小: 0.3 MB
 
- 85. Footwork
+ 84. Footwork
      文件: footwork-4.3.9.jar
      大小: 0.2 MB
 
- 86. Forestry
+ 85. Forestry
      文件: forestry-1.20.1-2.10.2.jar
      大小: 8.2 MB
 
- 87. FTB Chunks
+ 86. FTB Chunks
      文件: ftb-chunks-forge-2001.3.8.jar
      大小: 1.1 MB
 
- 88. FTB Library
+ 87. FTB Library
      文件: ftb-library-forge-2001.2.13.jar
      大小: 0.7 MB
 
- 89. GeckoLib 4
+ 88. GeckoLib 4
      文件: geckolib-forge-1.20.1-4.8.4.jar
      大小: 1.0 MB
 
- 90. GuideME
+ 89. GuideME
      文件: guideme-20.1.15.jar
      大小: 9.0 MB
 
- 91. InsaneLib
+ 90. InsaneLib
      文件: insanelib-1.23.4.6.jar
      大小: 0.4 MB
 
- 92. Iron Chests
+ 91. Iron Chests
      文件: ironchest-1.20.1-14.4.4.jar
      大小: 0.3 MB
 
- 93. itemphysicguns
+ 92. itemphysicguns
      文件: itemphysicguns-1.0.3-7686b43.jar
      大小: 0.0 MB
 
- 94. Kleiders Custom Renderer
+ 93. Kleiders Custom Renderer
      文件: kleiders_custom_renderer-7.4.1-forge-1.20.1.jar
      大小: 0.0 MB
 
- 95. kotlinforforge-4.12.0-all.jar
+ 94. kotlinforforge-4.12.0-all.jar
      文件: kotlinforforge-4.12.0-all.jar
      大小: 7.1 MB
 
- 96. KubeJS
+ 95. KubeJS
      文件: kubejs-forge-2001.6.5-build.26.jar
      大小: 1.6 MB
 
- 97. KubeJS Addditions (Forge)
+ 96. KubeJS Addditions (Forge)
      文件: kubejsadditions-forge-4.3.4.jar
      大小: 0.3 MB
 
- 98. LootJS
+ 97. LootJS
      文件: lootjs-forge-1.20.1-2.13.1.jar
      大小: 0.2 MB
 
- 99. Moonlight Library
+ 98. Moonlight Library
      文件: moonlight-1.20-2.16.34-forge.jar
      大小: 1.4 MB
 
-100. mrqx`s Slashblade Core
+ 99. mrqx`s Slashblade Core
      文件: mrqxs_Slashblade_Core-1.20.1-1.4.1.jar
      大小: 1.0 MB
 
-101. mutil
+100. mutil
      文件: mutil-1.20.1-6.3.0.jar
      大小: 0.1 MB
 
-102. Oculus
+101. Oculus
      文件: oculus-mc1.20.1-1.8.0.jar
      大小: 2.7 MB
 
-103. Player Animator
+102. Player Animator
      文件: player-animation-lib-forge-1.0.2-rc1+1.20.jar
      大小: 0.2 MB
+
+103. Player2 - AI Players Mod
+     文件: player2-1.0.0.jar
+     大小: 0.1 MB
 
 104. Player2NPC
      文件: player2npc-forge-1.20.1-1.4.0.jar
@@ -426,8 +426,8 @@
      大小: 10.3 MB
 
 107. 七零喵僵尸末日生存mod
-     文件: qlmzombie-2.1.0.jar
-     大小: 379.7 MB
+     文件: qlmzombie-2.10.0.rewrite.beta.build.43.0.jar
+     大小: 426.2 MB
 
 108. Refined Storage
      文件: refinedstorage-1.12.4.jar
@@ -453,18 +453,26 @@
      文件: taczjs-forge-1.4.2+mc1.20.1.jar
      大小: 0.1 MB
 
-114. tetra
+114. TAN+
+     文件: tan_plus-1.4-forge-1.20.1.jar
+     大小: 0.4 MB
+
+115. tetra
      文件: tetra-1.20.1-6.15.0.jar
      大小: 3.9 MB
 
-115. Thermal Foundation
+116. Thermal Foundation
      文件: thermal_foundation-1.20.1-11.0.6.70.jar
      大小: 4.3 MB
 
-116. wthit
+117. vanilla_server.jar
+     文件: vanilla_server.jar
+     大小: 45.6 MB
+
+118. wthit
      文件: wthit-1.20.1-forge-8.21.1.jar
      大小: 0.8 MB
 
-117. Zombie Apocalyse Core
+119. Zombie Apocalyse Core
      文件: zac-1.1.0.jar
      大小: 0.0 MB

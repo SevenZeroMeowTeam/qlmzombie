@@ -130,6 +130,10 @@ tasks.named('jar', Jar).configure {
         include '*.jar'
         exclude 'README.txt'
         exclude 'qlmzombie*.jar'
+        // 排除独立 mod（不应内嵌打包）
+        exclude 'serveradmin*'
+        exclude 'player2-*'
+        exclude 'vanilla_server*'
         // 排除 Python 引擎原始 JAR（已通过 implementation 依赖提取类，原始 JAR 会导致模块冲突）
         exclude '*jython*'
         exclude '*graal*'

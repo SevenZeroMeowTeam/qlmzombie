@@ -44,7 +44,7 @@ public class QLMZombieMod {
 
     public static final String MOD_ID = "qlmzombie";
     public static final Logger LOGGER = LogUtils.getLogger();
-    public static final String MOD_VERSION = "2.10.0.rewrite.beta.build.38.0";
+    public static final String MOD_VERSION = "2.10.0.rewrite.beta.build.47.0";
 
     public static boolean needsRestart = false;
 
@@ -131,6 +131,12 @@ public class QLMZombieMod {
             LOGGER.info("[QLM Zombie] Crafting Dead 模块内容：医疗8物、枪械AK47/M4A1/MP5/M1014/DesertEagle/Glock17/BarrettM82/AWM、4镜3握3枪管3弹匣、战斗刀/博伊刀/撬棍、破片/闪光/燃烧弹、防弹衣/头盔/背心/靴子、军人/科学家/平民僵尸、医疗补给箱/弹药箱方块");
             LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.37.0 镐子随机能力系统：合成镐子有概率获得黑曜石破坏者(15%)/3x3范围挖掘(10%)/5x5范围挖掘(5%)，可叠加，NBT bitmask存储");
             LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.38.0 9层高楼建筑系统：13×9高楼/5房间每层/每层奖励箱，15%概率注入其他模组物品，建筑不重复（区块坐标去重）");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.39.0 建筑改进+海底废墟：保底武器(tacz+弹药)、螺旋楼梯不挡路、外墙门洞、高楼仅陆地、海底废墟(其他模组物品)");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.40.0 击杀掉落随机品质装备：10级品质(劣质→神话)，神话攻击力99999/无耐久/可破坏基岩/虚空不掉生命，盔甲穿上加生命上限脱下扣，镐子随机一个能力5%概率黑曜石破坏");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.41.0 建筑修复：自动检测地形最低点+平整地基防浮空，高楼梯子改为2×2梯子井可通行");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.45.0 开源依赖整理：knownInternalJars与src/libs同步（115个JAR），CloudAI WebSocket专用线程池+指数退避，loot表移除tacz物品引用（改由loot modifier注入），README新增107个开源仓库鸣谢列表");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.46.0 卡世界生成修复+奖励箱完善：(1)Oculus光影vs Embeddium Mixin冲突永久封禁+客户端/服务端双端清理；(2)zombiekit空投箱loot表无效物品(flare_gun/skiing_helmet)资源覆盖，无解析报错；(3)Forge/Patreon/CorgiLib/Moonlight网络版本检查全部禁用+HTTP超时缩短至5秒（启动时长显著缩短）；(4)TaCZ武器/子弹/配件奖励箱掉落JSON扩充，枪械工作台同宝箱仅刷新1次（isWorkbenchItem去重）；(5)ModDependencyHandler新增dropthemeat/FastWorkbench源码替代+journeymap/ItemPhysic客户端跳过+Fabric版JAR剔除");
+            LOGGER.info("[QLM Zombie] v2.10.0.rewrite.beta.build.47.0 基于117开源仓库全面审查+核心库白名单+GitHub推送：(1)KEEP_ALWAYS_KEYWORDS扩充23个核心库(kotlinforforge/rhino/kubejs/moonlight/bookshelf/puzzleslib/placebo/corgilib/yungsapi/balm/blueprint/zeta/glitchcore/geckolib/curios/badpackets/mutil/creativecore/insanelib/cofh_core)，避免重复删除误删依赖；(2)knownInternalJars补齐lostcitytacz(Lost Cities x TaCZ联动)，修正[旅行地图]文件名匹配实际src/libs，[Python]jython-standalone改为通过Gradle implementation解压class(过滤冲突包)而非libs释放；(3).gitignore扩充(out/exports/dist/world/server.properties等)+.gitattributes新增Git LFS大文件追踪(png/jpg/ogg/glb/jar/dll/so/mca)+行尾规范化(LF/bat=crlf)；(4)版本号升至b47，同步README/git提交推送");
 
             if (Player2APIService.isPlayer2Available()) {
                 LOGGER.info("[QLM Zombie] Player2 MCP API 服务已连接，AI玩家可通过远程API执行智能任务");
@@ -176,7 +182,23 @@ public class QLMZombieMod {
             event.getEntity().sendSystemMessage(Component.literal(msg));
         }
 
-        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §b9层高楼建筑系统上线！13×9高楼，5房间每层，每层奖励箱"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §a品质装备系统修复+攻击加成优化！"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §b修复盔甲生命上限/护甲加成不生效：改用AttributeModifier持久化修饰符"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §d合并伤害事件处理器：神话武器攻击力99999一刀秒杀，伤害计算=倍率+加成"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a玩家登录/重生自动重算品质属性，虚空不掉生命，基岩可破坏"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §a建筑浮空修复+楼梯通行改进！"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §b自动检测地形最低点，平整地基填充下方空隙，建筑不再浮空"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a高楼梯子改为2×2梯子井，天花板开洞，玩家可自由上下通行"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §d击杀掉落随机品质装备系统上线！"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §7击杀除玩家/村民/铁傀儡外所有生物，30%概率掉落随机品质装备"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a10级品质：§7劣质§f/一般§a/普通§b/精良§c/高级§d/稀有§6/神器§c/传说§4/史诗§5/神话"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §5神话品质：§c攻击力99999 §6无耐久 §d可破坏基岩 §b虚空不掉生命值"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a盔甲穿上加生命上限(不扣)，脱下扣生命上限，镐子随机一个能力(5%黑曜石/3%3x3/1%5x5)"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §b建筑大改进+海底废墟系统上线！"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a所有建筑奖励箱保底一把武器：§dTaCZ手枪/步枪/霰弹枪/狙击枪 + 对应弹药"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §b高楼改进：螺旋楼梯不挡路、外墙门洞可进出、仅陆地生成"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §9海底废墟：海洋区域8%概率生成，2个奖励箱保底其他模组物品/武器"));
+            event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §b9层高楼建筑系统上线！13×9高楼，5房间每层，每层奖励箱"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §515%概率奖励箱注入其他模组物品：§bTaCZ枪械/SpartanWeaponry近战/Create/Mekanism/Botania等29个模组"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §a建筑不重复：区块坐标去重，每层奖励箱在不同房间循环放置，动态扫描模组命名空间"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §a镐子随机能力系统上线！合成镐子有概率获得特殊能力"));
@@ -215,6 +237,8 @@ public class QLMZombieMod {
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §bLLM大模型：§b!ai <自然语言> 让AI理解指令(\"帮我建房子\"→任务链)，Mod内部AI也支持聊天自然语言指令"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §bAI自动搭建：§b高处物品/方块→自动搭方块柱上去收集/挖掘，背包需有可搭建方块"));
             event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §bAI修复：§bNavigator/FSMBrain原地打转修复，脱困机制(跳跃+侧向移动)，寻路失败自动重建路径"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] v" + MOD_VERSION + " §a开源依赖整理：115个JAR同步+CloudAI线程池修复+loot表修复+107个开源仓库鸣谢"));
+        event.getEntity().sendSystemMessage(Component.literal("§6[七零喵僵尸末日] §bCloudAI修复：§7WebSocket改用专用线程池+指数退避，不再阻塞世界生成"));
     }
 
     private void onAddReloadListener(AddReloadListenerEvent event) {

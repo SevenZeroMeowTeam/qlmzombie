@@ -11,6 +11,9 @@
 # === Gradle ===
 .gradle/
 build/
+out/
+exports/
+dist/
 !gradle/wrapper/gradle-wrapper.jar
 bin/
 
@@ -25,6 +28,9 @@ bin/
 .classpath
 .settings/
 .factorypath
+# eclipse buildship
+.apt_generated/
+.factorypath
 
 # === 系统文件 ===
 .DS_Store
@@ -38,6 +44,14 @@ run/
 logs/
 crash-reports/
 saves/
+local/
+# Forge 默认 server 目录
+world/
+server.properties
+ops.json
+whitelist.json
+banned-ips.json
+banned-players.json
 
 # === 第三方依赖 JAR（src/libs/ 和 src/main/libs/ 数百 MB） ===
 src/libs/
@@ -72,8 +86,18 @@ options.txt
 usercache.json
 usernamecache.json
 mcp/
+# Forgedev 自动生成
+eclipse/
+# FG 用户缓存
+projects/
 
-# === 大文件清单（防误传） ===
+# === 大文件清单（防误传，单个 GitHub 硬限制 100MB） ===
 *.mca
 *.dat
 *.lock
+*.db
+*.sqlite
+*.db-journal
+*.pak
+*.pk3
+*.pk4

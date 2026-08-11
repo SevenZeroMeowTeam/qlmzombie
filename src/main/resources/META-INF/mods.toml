@@ -15,6 +15,15 @@ description='''
 血月每14天一次，随机幸运月/丰收月，僵尸随机进化，AI智能优化，
 尸潮系统，Boss三阶段战斗，建筑宝箱随机武器装备。
 经验条样式血量UI，计分板HUD，连锁挖矿/砍树。
+v2.10.0.b47 基于117开源仓库全面审查+核心库白名单+GitHub推送：KEEP_ALWAYS扩充23个核心库(kotlinforforge/rhino/kubejs/moonlight/bookshelf/puzzleslib/placebo/corgilib/yungsapi/balm/blueprint/zeta/glitchcore/geckolib/curios/badpackets/mutil/creativecore/insanelib/cofh_core)防误删；knownInternalJars补齐lostcitytacz，修正[旅行地图]文件名，jython通过Gradle解压class非libs释放；.gitignore扩充+gitattributes配置Git LFS大文件追踪与行尾规范化。
+v2.10.0.b46 卡世界生成修复+奖励箱掉宝完善：Oculus光影与Embeddium Mixin冲突（永久封禁+双端清理），zombiekit 空投箱 loot 表无效物品(flare_gun/skiing_helmet)资源覆盖，Forge/Patreon/CorgiLib/Moonlight 网络版本检查禁用（缩短启动时长），TaCZ武器/子弹/配件掉落JSON扩充+工作台同宝箱仅刷新1次，ModDependencyHandler新增dropthemeat/FastWorkbench源码替代+journeymap/ItemPhysic客户端跳过+Fabric JAR剔除。
+v2.10.0.b45 开源依赖整理+CloudAI线程池修复：knownInternalJars与src/libs同步（115个JAR，107个有开源仓库），CloudAI WebSocket改用专用线程池+指数退避（修复世界生成卡死），loot表移除tacz物品引用（改由loot modifier注入），README新增107个开源仓库鸣谢列表。
+v2.10.0.b44 日志与脚本兼容性修复：KubeJS脚本迁移至Java.loadClass()（KubeJS 6兼容），扫描注册表注入模组物品；精简日志，外部模组(Thirst/ZombieIsland/Curios)错误改为WARN不阻塞主流程。
+v2.10.0.b43 品质装备系统修复+攻击加成优化：AttributeModifier持久化修饰符、玩家登录/重生自动重算、伤害倍率+加成合并计算。
+v2.10.0.b42 品质装备属性修复：改用AttributeModifier替代setBaseValue，盔甲生命上限/护甲加成持久化，合并双LivingHurtEvent处理器，击杀武器品质伤害修正(倍率+加成)。
+v2.10.0.b41 建筑浮空修复+楼梯通行改进：自动检测地形最低点平整地基防浮空，高楼梯子改为2×2梯子井可通行。
+v2.10.0.b40 击杀掉落随机品质装备：10级品质(劣质→神话)，神话攻击力99999/无耐久/可破坏基岩/虚空不掉生命，盔甲穿上加生命上限脱下扣，镐子随机一个能力(5%黑曜石)。
+v2.10.0.b39 建筑改进+海底废墟：所有建筑保底武器(tacz+弹药)、螺旋楼梯不挡路、外墙门洞、高楼仅陆地、海底废墟(其他模组物品)。
 v2.10.0.b38 9层高楼建筑系统：13×9高楼/5房间每层/每层奖励箱，15%概率注入其他模组物品（29个命名空间），建筑不重复。
 v2.10.0.b37 镐子随机能力系统：合成镐子有概率获得黑曜石破坏者(15%)/3x3(10%)/5x5(5%)范围挖掘，可叠加。
 v2.10.0.b36 新增 Crafting Dead 末日装备系统：42+ 物品（8枪/7弹/13附件/3近战/3手雷/4防具/2方块）
