@@ -42,3 +42,4 @@ config/*.bak
 *.log
 日志.txt
 crash-reports/
+.trae/

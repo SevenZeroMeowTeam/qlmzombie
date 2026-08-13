@@ -4,7 +4,7 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build19-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build21-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build20` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build20.jar` |
+| **当前版本** | `3.0.0.beta.build21` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build21.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -754,6 +754,33 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build21 (2026-08-13)
+
+#### 新功能：睡袋系统
+
+**实现**：新增睡袋方块（`qlmzombie:sleeping_bag`），3 个羊毛横排合成。
+
+**核心特性**：
+- **不重置出生点**：使用 `LivingEntity.startSleeping()` 而非 `Player.startSleepInBed()`，睡觉不会改变玩家出生点
+- **夜晚随时放随时睡**：夜晚右键放置后再次右键即可入睡
+- **白天自动收起**：通过 `randomTick` 检测白天自动破坏并掉落物品，也可白天右键手动收起
+- **可捡起来**：破坏方块后掉落为睡袋物品，可重复使用
+- **无碰撞箱**：高度 2 像素，类似地毯，不阻挡移动
+
+**修改文件**：
+| 文件 | 说明 |
+|:-----|:-----|
+| [SleepingBagBlock.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/block/SleepingBagBlock.java) | 睡袋方块核心逻辑 |
+| [QLMBlocks.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/block/QLMBlocks.kt) | 方块注册 |
+| [QLMItems.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/item/QLMItems.kt) | 移除原 Item 注册（改由 BlockItem 管理） |
+| [qlmzombie_scripts.js](file:///D:/mcmod/src/main/kubejs/qlmzombie_scripts.js) | KubeJS 合成配方 |
+| [zh_cn.json](file:///D:/mcmod/src/main/resources/assets/qlmzombie/lang/zh_cn.json) | 中文翻译 |
+| [blockstates/sleeping_bag.json](file:///D:/mcmod/src/main/resources/assets/qlmzombie/blockstates/sleeping_bag.json) | 方块状态 |
+| [models/block/sleeping_bag.json](file:///D:/mcmod/src/main/resources/assets/qlmzombie/models/block/sleeping_bag.json) | 方块模型 |
+| [models/item/sleeping_bag.json](file:///D:/mcmod/src/main/resources/assets/qlmzombie/models/item/sleeping_bag.json) | 物品模型 |
+| [textures/block/sleeping_bag.png](file:///D:/mcmod/src/main/resources/assets/qlmzombie/textures/block/sleeping_bag.png) | 方块贴图 |
+| [loot_tables/blocks/sleeping_bag.json](file:///D:/mcmod/src/main/resources/data/qlmzombie/loot_tables/blocks/sleeping_bag.json) | 掉落表 |
 
 ### 3.0.0.beta.build20 (2026-08-13)
 
@@ -1767,4 +1794,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build20` · 构建日期：2026-08-13 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build21` · 构建日期：2026-08-13 · Minecraft 1.20.1

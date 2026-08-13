@@ -154,6 +154,11 @@ onEvent('recipes', event => {
         'minecraft:water_bucket'
     ]);
 
+    // Sleeping Bag - 3 wool in a row
+    event.shaped('qlmzombie:sleeping_bag', ['WWW'], {
+        W: '#minecraft:wool'
+    });
+
     // --- AI Helper Items ---
 
     // AI Caller

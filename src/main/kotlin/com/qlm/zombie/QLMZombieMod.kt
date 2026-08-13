@@ -2,6 +2,7 @@ package com.qlm.zombie
 
 import com.mojang.logging.LogUtils
 import com.qlm.zombie.ai.Player2APIService
+import com.qlm.zombie.block.QLMBlocks
 import com.qlm.zombie.config.QLMConfig
 import com.qlm.zombie.craftingdead.block.CDBlocks
 import com.qlm.zombie.craftingdead.effect.CDEffects
@@ -39,6 +40,7 @@ class QLMZombieMod {
 
         // Core registrations
         QLMItems.register(modEventBus)
+        QLMBlocks.register(modEventBus)
         QLMTabs.register(modEventBus)
         QLMSounds.register(modEventBus)
         QLMEffects.register(modEventBus)
@@ -165,6 +167,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7昼夜行为：僵尸/骷髅白天不主动不燃烧，晚上加速，被攻击才反击"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊骷髅（7种）：远程（凋零/剧毒/爆破/铁甲）×近战（剑士/狂战士/守卫）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊僵尸（16种）：巨人/木桶/召唤/烈焰/剧毒/铁甲/跳跃/投掷/吐息/爆破/投手TNT/自爆/弓箭手"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7睡袋系统：3羊毛合成，夜晚可入睡不重置出生点，白天自动收起可拾取"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：移除旧版红色经验条血量条，仅保留绿色血量条+护甲/饱食度文字"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备全部无限耐久：铁剑/斧/镐/锹/锄+弓+全套铁盔甲（Unbreakable）+隐藏附魔/耐久显示"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7配置文件已修复：62项配置含完整中文说明，游戏启动不再崩溃"))
@@ -200,7 +203,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build20"
+        const val MOD_VERSION = "3.0.0.beta.build21"
 
         @JvmField
         @Volatile
