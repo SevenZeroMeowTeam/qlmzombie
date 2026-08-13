@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:iron_sword"
+    },
+    "title": { "translate": "advancements.qlmzombie.ai_taming_master.title" },
+    "description": { "translate": "advancements.qlmzombie.ai_taming_master.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:ai_player/tame_1",
+  "criteria": {
+    "tame_master": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["tame_master"]
+  ]
+}

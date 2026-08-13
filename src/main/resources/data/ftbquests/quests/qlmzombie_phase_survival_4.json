@@ -1,0 +1,86 @@
+{
+  "id": "qlmzombie:phase_survival_4",
+  "title": {
+    "zh_cn": "魔法与钢铁",
+    "en_us": "Magic and Steel"
+  },
+  "description": {
+    "zh_cn": "这个阶段结合了科技与魔法。获得斯巴达钻石武器和TACZ现代武器，对抗越来越强大的敌人。",
+    "en_us": "This phase combines technology and magic. Obtain Spartan diamond weapons and TACZ modern weapons to fight increasingly powerful enemies."
+  },
+  "icon": {
+    "item": "minecraft:diamond_sword"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭75个僵尸",
+        "en_us": "Kill 75 Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 75
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_diamonds",
+      "title": {
+        "zh_cn": "收集钻石",
+        "en_us": "Collect Diamonds"
+      },
+      "item": "minecraft:diamond",
+      "count": 5
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "spartanweaponry:diamond_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "minecraft:diamond_helmet",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "minecraft:diamond_chestplate",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "minecraft:diamond_leggings",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "minecraft:diamond_boots",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "farmersdelight:cooked_rice",
+      "count": 8
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "qlmzombie:infected_essence",
+      "count": 3
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:phase_survival_3",
+    "children": [
+      "qlmzombie:phase_survival_5"
+    ]
+  }
+}

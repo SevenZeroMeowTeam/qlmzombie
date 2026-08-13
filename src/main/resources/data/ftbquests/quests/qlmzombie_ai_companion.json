@@ -1,0 +1,59 @@
+{
+  "id": "qlmzombie:ai_companion",
+  "title": {
+    "zh_cn": "AI伙伴",
+    "en_us": "AI Companion"
+  },
+  "description": {
+    "zh_cn": "孤独的生存是困难的。驯服一个AI玩家成为你的伙伴，它会帮你砍树、挖矿、建造和战斗。用骨头或食物右键AI玩家来驯服它。",
+    "en_us": "Solo survival is hard. Tame an AI Player as your companion. It will help you chop, mine, build and fight. Right-click an AI Player with bones or food to tame it."
+  },
+  "icon": {
+    "item": "qlmzombie:fake_player_spawn_egg"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "tame_ai",
+      "title": {
+        "zh_cn": "驯服AI玩家",
+        "en_us": "Tame an AI Player"
+      },
+      "entity": "qlmzombie:fake_player",
+      "count": 1
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "qlmzombie:fake_player_spawn_egg",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "qlmzombie:medical_supply",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "minecraft:iron_helmet",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "minecraft:iron_chestplate",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:gathering_resources",
+    "children": [
+      "qlmzombie:building_shelter",
+      "qlmzombie:zombie_hunter"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:enchanted_golden_apple"
+    },
+    "title": { "translate": "advancements.qlmzombie.survivor.title" },
+    "description": { "translate": "advancements.qlmzombie.survivor.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:root",
+  "criteria": {
+    "survivor": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["survivor"]
+  ]
+}

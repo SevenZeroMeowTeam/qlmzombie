@@ -1,0 +1,105 @@
+{
+  "id": "qlmzombie:phase_survival_5",
+  "title": {
+    "zh_cn": "末日王者",
+    "en_us": "Apocalypse King"
+  },
+  "description": {
+    "zh_cn": "你已经成为末日中真正的王者。完成此终极任务来获得最强大的装备，包括下界合金装备、拔刀剑、血魔法物品和丰厚奖励。",
+    "en_us": "You have become a true king of the apocalypse. Complete this ultimate quest to obtain the most powerful equipment, including netherite gear, SlashBlades, Blood Magic items and rich rewards."
+  },
+  "icon": {
+    "item": "minecraft:netherite_sword"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭150个僵尸",
+        "en_us": "Kill 150 Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 150
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_ancient_debris",
+      "title": {
+        "zh_cn": "收集远古残骸",
+        "en_us": "Collect Ancient Debris"
+      },
+      "item": "minecraft:ancient_debris",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_cores",
+      "title": {
+        "zh_cn": "收集僵尸核心",
+        "en_us": "Collect Zombie Cores"
+      },
+      "item": "qlmzombie:zombie_core",
+      "count": 8
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "minecraft:netherite_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "minecraft:netherite_helmet",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "minecraft:netherite_chestplate",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "minecraft:netherite_leggings",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "minecraft:netherite_boots",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "spartanweaponry:netherite_sword",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "qlmzombie:biohazard_sample",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_8",
+      "item": "qlmzombie:tactical_ammo",
+      "count": 48
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_9",
+      "item": "minecraft:enchanted_golden_apple",
+      "count": 10
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:phase_survival_4"
+  }
+}

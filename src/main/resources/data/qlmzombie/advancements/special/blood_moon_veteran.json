@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:tnt"
+    },
+    "title": { "translate": "advancements.qlmzombie.blood_moon_survivor.title" },
+    "description": { "translate": "advancements.qlmzombie.blood_moon_survivor.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:blood_moon/survive_3",
+  "criteria": {
+    "blood_moon_survivor": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["blood_moon_survivor"]
+  ]
+}

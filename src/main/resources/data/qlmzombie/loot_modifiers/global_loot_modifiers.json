@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "entries": [
+    "qlmzombie:building_weapon_inject",
+    "qlmzombie:building_tacz_spartan",
+    "qlmzombie:building_minecraft_gear",
+    "qlmzombie:abandoned_shop_loot",
+    "qlmzombie:random_building_loot",
+    "qlmzombie:other_mod_building_loot",
+    "qlmzombie:drop_the_meat"
+  ]
+}

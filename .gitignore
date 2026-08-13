@@ -1,0 +1,42 @@
+# ==================== 编译产物 ====================
+build/
+out/
+bin/
+*.class
+
+# ==================== Gradle ====================
+.gradle/
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+
+# ==================== 依赖大文件（超过 GitHub 限制） ====================
+# libs 目录下的依赖 jar 文件不纳入版本控制
+# clone 后需手动下载依赖到 src/main/libs/ 目录
+src/main/libs/*.jar
+
+# ==================== IDE 文件 ====================
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# ==================== 操作系统文件 ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================== Minecraft 运行时文件 ====================
+run/
+logs/
+crash-reports/
+saves/
+config/*.bak
+
+# ==================== 其他临时文件 ====================
+*.tmp
+*.temp
+*.log

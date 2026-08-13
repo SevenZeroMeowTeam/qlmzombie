@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:diamond_pickaxe"
+    },
+    "title": { "translate": "advancements.qlmzombie.ai_mine_master.title" },
+    "description": { "translate": "advancements.qlmzombie.ai_mine_master.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:ai_player/mine_100",
+  "criteria": {
+    "mine_master": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["mine_master"]
+  ]
+}

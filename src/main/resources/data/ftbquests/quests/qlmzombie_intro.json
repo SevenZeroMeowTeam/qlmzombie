@@ -1,0 +1,21 @@
+{
+  "id": "qlmzombie:intro",
+  "title": {
+    "zh_cn": "末日求生指南",
+    "en_us": "Apocalypse Survival Guide"
+  },
+  "description": {
+    "zh_cn": "欢迎来到僵尸末日。这里是你生存的起点。完成任务链来解锁更多内容，获得稀有物资和强大的装备。\n\n📖 任务线：\n• 第一滴血 → 资源收集 → AI伙伴\n• AI伙伴 → 建造庇护所 / 僵尸猎手\n• 建造庇护所 + 僵尸猎手 → 血月幸存者\n• 血月幸存者 → 末日幸存者\n\n💡 提示：空手右键AI玩家可打开背包GUI管理物资",
+    "en_us": "Welcome to the zombie apocalypse. This is your starting point for survival. Complete quest chains to unlock more content and get rare materials and powerful equipment.\n\n📖 Quest Line:\n• First Blood → Gathering Resources → AI Companion\n• AI Companion → Building Shelter / Zombie Hunter\n• Building Shelter + Zombie Hunter → Blood Moon Survivor\n• Blood Moon Survivor → Apocalypse Survivor\n\n💡 Tip: Right-click AI Player with empty hand to open inventory GUI"
+  },
+  "icon": {
+    "item": "minecraft:book"
+  },
+  "tasks": [],
+  "rewards": [],
+  "relations": {
+    "children": [
+      "qlmzombie:first_blood"
+    ]
+  }
+}

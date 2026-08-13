@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:red_dye"
+    },
+    "title": { "translate": "advancements.qlmzombie.blood_moon.title" },
+    "description": { "translate": "advancements.qlmzombie.blood_moon.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:blood_moon/survive_3",
+  "criteria": {
+    "survive_10": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["survive_10"]
+  ]
+}

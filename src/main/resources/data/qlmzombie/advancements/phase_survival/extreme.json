@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:beacon"
+    },
+    "title": { "translate": "advancements.qlmzombie.phase_survival.title" },
+    "description": { "translate": "advancements.qlmzombie.phase_survival.description" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:phase_survival/hard",
+  "criteria": {
+    "extreme": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["extreme"]
+  ]
+}

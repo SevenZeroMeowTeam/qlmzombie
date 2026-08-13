@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "player2": {
+      "url": "https://api.player2.game/api/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer p2_D_FP66wl-SznulcNpYGdPA"
+      }
+    }
+  }
+}

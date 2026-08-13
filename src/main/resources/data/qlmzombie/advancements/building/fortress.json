@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:iron_block"
+    },
+    "title": { "translate": "advancements.qlmzombie.build_fortress.title" },
+    "description": { "translate": "advancements.qlmzombie.build_fortress.description" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "parent": "qlmzombie:building/first_house",
+  "criteria": {
+    "fortress": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    ["fortress"]
+  ]
+}
