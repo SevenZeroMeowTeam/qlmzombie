@@ -5,16 +5,7 @@ import net.minecraftforge.common.ForgeConfigSpec
 object QLMConfig {
     private val builder = ForgeConfigSpec.Builder()
 
-    init {
-        builder.comment("========================================================")
-        builder.comment("        七零喵僵尸末日生存 Mod - 配置文件")
-        builder.comment("        版本: 3.0.0.beta.build16")
-        builder.comment("        Minecraft 1.20.1 · Forge 47.4.22")
-        builder.comment("========================================================")
-        builder.comment("")
-        builder.comment("【基础设置】控制模组核心功能的开关与基础参数")
-    }
-
+    // ==================== 基础设置 ====================
     private val enableThirstConfig = builder
         .comment("是否启用口渴系统", "  true  - 开启口渴值管理，脱水会导致虚弱与死亡", "  false - 关闭口渴值管理", "  默认: true")
         .define("enableThirst", true)
@@ -44,11 +35,7 @@ object QLMConfig {
         .defineInRange("apiPort", 18921, 1024, 65535)
 
     // ==================== AI 优化 ====================
-    init {
-        builder.comment("")
-        builder.comment("【AI 优化】控制僵尸/骷髅等敌对生物的智能行为")
-        builder.push("ai")
-    }
+    init { builder.push("ai") }
 
     @JvmField val ENABLE_AI_OPTIMIZATION = builder
         .comment("是否启用 AI 优化系统", "  true  - 启用增强 AI（更聪明的寻路/目标选择）", "  false - 使用原版 AI", "  默认: true")
@@ -107,11 +94,6 @@ object QLMConfig {
         .defineInRange("mobAiKnockbackResistance", 0.1, 0.0, 1.0)
 
     // ---------------- 特殊僵尸 ----------------
-    init {
-        builder.comment("")
-        builder.comment("  —— 特殊僵尸生成概率 ——")
-    }
-
     @JvmField val SUICIDE_ZOMBIE_CHANCE = builder
         .comment("自爆僵尸生成概率", "  靠近玩家自爆，破坏地形", "  默认: 0.05 (5%)", "  范围: 0.0 ~ 1.0")
         .defineInRange("suicideZombieChance", 0.05, 0.0, 1.0)
@@ -141,11 +123,6 @@ object QLMConfig {
         .defineInRange("summonerZombieSpawnInterval", 200, 1, 10000)
 
     // ---------------- 骷髅 ----------------
-    init {
-        builder.comment("")
-        builder.comment("  —— 骷髅 AI ——")
-    }
-
     @JvmField val SKELETON_PERFECT_SHOT_CHANCE = builder
         .comment("骷髅完美射击概率", "  完美射击具有更高命中率", "  默认: 0.1 (10%)", "  范围: 0.0 ~ 1.0")
         .defineInRange("skeletonPerfectShotChance", 0.1, 0.0, 1.0)
@@ -167,11 +144,6 @@ object QLMConfig {
         .define("skeletonInfiniteArrows", true)
 
     // ---------------- 村民 ----------------
-    init {
-        builder.comment("")
-        builder.comment("  —— 村民 AI ——")
-    }
-
     @JvmField val VILLAGER_FLEE_RADIUS = builder
         .comment("村民逃离敌对生物的半径（单位: 格）", "  默认: 8", "  范围: 1 ~ 64")
         .defineInRange("villagerFleeRadius", 8, 1, 64)
@@ -189,11 +161,6 @@ object QLMConfig {
         .defineInRange("villagerGuardianModWeaponChance", 0.2, 0.0, 1.0)
 
     // ---------------- AI 算法 ----------------
-    init {
-        builder.comment("")
-        builder.comment("  —— AI 算法（Q-Learning 强化学习） ——")
-    }
-
     @JvmField val AI_ALGORITHM_ENABLED = builder
         .comment("是否启用 AI 算法系统", "  true  - 怪物会学习并适应玩家行为", "  默认: true")
         .define("algorithmEnabled", true)
@@ -218,16 +185,10 @@ object QLMConfig {
         .comment("AI 算法默认模式", "  可选: AUTO / MANUAL / DISABLED", "  默认: AUTO")
         .define("algorithmDefaultMode", "AUTO")
 
-    init {
-        builder.pop()
-    }
+    init { builder.pop() }
 
     // ==================== LLM 大语言模型 ====================
-    init {
-        builder.comment("")
-        builder.comment("【LLM 大语言模型】配置 AI 玩家的对话与决策后端")
-        builder.push("llm")
-    }
+    init { builder.push("llm") }
 
     @JvmField val ENABLE_LLM = builder
         .comment("是否启用 LLM 集成", "  true  - AI 玩家使用大语言模型生成对话", "  false - 使用预设回复", "  默认: false")
@@ -253,17 +214,10 @@ object QLMConfig {
         .comment("请求超时时间（单位: 毫秒）", "  默认: 30000 (30 秒)", "  范围: 1000 ~ 120000")
         .defineInRange("timeout", 30000, 1000, 120000)
 
-    init {
-        builder.pop()
-    }
+    init { builder.pop() }
 
     // ==================== 昼夜阶段阈值 ====================
-    init {
-        builder.comment("")
-        builder.comment("【昼夜阶段】控制 8 个难度阶段的切换天数阈值")
-        builder.comment("  阶段顺序: 和平 → 简单 → 普通 → 困难 → 极限 → 锁定")
-        builder.push("dayPhase")
-    }
+    init { builder.push("dayPhase") }
 
     @JvmField val PEACEFUL_DAYS = builder
         .comment("和平阶段持续天数（前 N 天不生成敌对生物）", "  默认: 24", "  范围: 0 ~ 365")
@@ -281,16 +235,10 @@ object QLMConfig {
         .comment("困难→极限阶段的切换天数", "  默认: 149", "  范围: 0 ~ 365")
         .defineInRange("extremeDays", 149, 0, 365)
 
-    init {
-        builder.pop()
-    }
+    init { builder.pop() }
 
     // ==================== Player2 MCP ====================
-    init {
-        builder.comment("")
-        builder.comment("【Player2 MCP】外部 AI 集成接口")
-        builder.push("player2")
-    }
+    init { builder.push("player2") }
 
     @JvmField val ENABLE_PLAYER2_MCP = builder
         .comment("是否启用 Player2 MCP 集成", "  允许外部 AI 通过 MCP 协议控制游戏", "  默认: false")
@@ -308,16 +256,10 @@ object QLMConfig {
         .comment("MCP 请求超时（单位: 毫秒）", "  默认: 30000 (30 秒)", "  范围: 1000 ~ 120000")
         .defineInRange("mcpTimeout", 30000, 1000, 120000)
 
-    init {
-        builder.pop()
-    }
+    init { builder.pop() }
 
     // ==================== 连锁挖掘 ====================
-    init {
-        builder.comment("")
-        builder.comment("【连锁挖掘】砍树/连锁挖矿功能配置")
-        builder.push("mining")
-    }
+    init { builder.push("mining") }
 
     @JvmField val ENABLE_CHAIN_MINING = builder
         .comment("是否启用连锁挖矿", "  true  - 挖矿时连锁破坏相同方块", "  默认: true")
@@ -359,16 +301,10 @@ object QLMConfig {
         .comment("铲子是否启用连锁挖矿", "  默认: true")
         .define("chainMiningShovelEnabled", true)
 
-    init {
-        builder.pop()
-    }
+    init { builder.pop() }
 
     // ==================== AI 玩家生成 ====================
-    init {
-        builder.comment("")
-        builder.comment("【AI 玩家】自动生成 AI 伴侣玩家的配置")
-        builder.push("aiPlayer")
-    }
+    init { builder.push("aiPlayer") }
 
     @JvmField val ENABLE_AI_PLAYER_SPAWN = builder
         .comment("是否启用 AI 玩家自动生成", "  默认: true")
@@ -390,16 +326,10 @@ object QLMConfig {
         .comment("AI 玩家生成半径（单位: 格）", "  默认: 48", "  范围: 8 ~ 256")
         .defineInRange("spawnRadius", 48, 8, 256)
 
-    init {
-        builder.pop()
-    }
+    init { builder.pop() }
 
     // ==================== 血量条 UI ====================
-    init {
-        builder.comment("")
-        builder.comment("【血量条 UI】自定义血量条显示配置")
-        builder.push("ui")
-    }
+    init { builder.push("ui") }
 
     @JvmField val HIDE_VANILLA_HEALTH = builder
         .comment("是否隐藏原版心形血量条", "  true  - 隐藏原版红心，使用自定义绿色血量条", "  false - 同时显示原版心形和自定义血量条", "  默认: false")
@@ -421,15 +351,7 @@ object QLMConfig {
         .comment("血量条 Y 轴位置（距屏幕底部偏移）", "  默认: 30", "  范围: 0 ~ 1080")
         .defineInRange("healthBarPositionY", 30, 0, 1080)
 
-    init {
-        builder.pop()
-        builder.comment("")
-        builder.comment("========================================================")
-        builder.comment("  配置文件由七零喵僵尸末日生存 Mod 自动生成")
-        builder.comment("  修改后需重启游戏生效")
-        builder.comment("  GitHub: https://github.com/SevenZeroMeowTeam/qlmzombie")
-        builder.comment("========================================================")
-    }
+    init { builder.pop() }
 
     val SPEC: ForgeConfigSpec = builder.build()
 

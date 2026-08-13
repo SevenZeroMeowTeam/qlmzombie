@@ -40,3 +40,5 @@ config/*.bak
 *.tmp
 *.temp
 *.log
+日志.txt
+crash-reports/

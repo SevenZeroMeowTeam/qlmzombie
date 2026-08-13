@@ -167,6 +167,8 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊僵尸（16种）：巨人/木桶/召唤/烈焰/剧毒/铁甲/跳跃/投掷/吐息/爆破/投手TNT/自爆/弓箭手"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：移除旧版红色经验条血量条，仅保留绿色血量条+护甲/饱食度文字"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备全部无限耐久：铁剑/斧/镐/锹/锄+弓+全套铁盔甲（Unbreakable）+隐藏附魔/耐久显示"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7配置文件已修复：62项配置含完整中文说明，游戏启动不再崩溃"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7反射字段已修复：骷髅AI/经验球合并/AI节流功能恢复正常"))
         entity.sendSystemMessage(Component.literal("§6[七零喵] §a输入 §b/qlm help§a 查看命令列表，§b/qlm stats§a 查看永久属性"))
     }
 
@@ -198,7 +200,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build18"
+        const val MOD_VERSION = "3.0.0.beta.build20"
 
         @JvmField
         @Volatile

@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build18-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build19-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD18%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD19%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build18` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build18.jar` |
+| **当前版本** | `3.0.0.beta.build20` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build20.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -754,6 +754,39 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build20 (2026-08-13)
+
+#### 修复：反射字段名映射问题
+
+**问题**：游戏启动时出现 5 条反射警告，导致骷髅AI修复、经验球合并、AI节流等功能失效。
+
+**根本原因**：`SkeletonAIFixFeature`、`ClumpsFeature`、`AIImprovementsFeature` 使用 `getDeclaredField("mojangName")` 查找字段，但 Forge 1.20.1 运行时 Minecraft 类字段使用 SRG 名称（如 `f_257247_`），导致 `NoSuchFieldException`。
+
+**修复**：新增 [ReflectionHelper.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/util/ReflectionHelper.java) 工具类，采用三级降级策略查找字段：
+1. 尝试 Mojang mappings 名称（开发环境）
+2. 尝试 SRG 名称（生产环境）
+3. 按**字段类型**遍历匹配（终极降级，不依赖名称）
+
+| 修复文件 | 反射字段 | 降级方式 |
+|:---------|:---------|:---------|
+| SkeletonAIFixFeature | `RangedAttackGoal.attackIntervalMax` | Mojang→SRG→跳过 |
+| SkeletonAIFixFeature | `GoalSelector.availableGoals` | Mojang→SRG→Set类型匹配 |
+| ClumpsFeature | `ExperienceOrb.value` | Mojang→SRG→int类型排除法 |
+| AIImprovementsFeature | `GoalSelector.availableGoals` | Mojang→SRG→Set类型匹配 |
+| AIImprovementsFeature | `WrappedGoal.goal` | Mojang→SRG→Goal类型匹配 |
+
+### 3.0.0.beta.build19 (2026-08-13)
+
+#### 修复：配置文件加载崩溃
+
+**问题**：游戏启动时模组加载失败，报错 `ExceptionInInitializerError`，导致整个客户端进入"broken mod state"。
+
+**根本原因**：`QLMConfig.kt` 中通过 `builder.comment()` 添加的分组标题注释（如"【AI 优化】"、"【LLM】"等）未被任何 `define()` 方法消耗。ForgeConfigSpec 在 `builder.build()` 时验证根上下文是否有未消耗注释，抛出 `IllegalStateException: Non-empty comment when empty expected`。
+
+**修复**：重写 [QLMConfig.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/config/QLMConfig.kt)，移除所有独立的 `builder.comment()` 调用，只保留与 `define()` 链式调用的 `.comment()`（这些会被 `define()` 自动消耗）。
+
+**影响**：TOML 配置文件中不再有分组标题注释，但每个配置项仍有完整的中文说明。62 项配置功能完全保留。
 
 ### 3.0.0.beta.build18 (2026-08-13)
 
@@ -1734,4 +1767,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build18` · 构建日期：2026-08-13 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build20` · 构建日期：2026-08-13 · Minecraft 1.20.1

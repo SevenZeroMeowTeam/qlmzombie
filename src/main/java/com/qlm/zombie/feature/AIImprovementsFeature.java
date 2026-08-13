@@ -18,6 +18,7 @@
 package com.qlm.zombie.feature;
 
 import com.qlm.zombie.QLMZombieMod;
+import com.qlm.zombie.util.ReflectionHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -45,27 +46,26 @@ public class AIImprovementsFeature {
 
     private AIImprovementsFeature() {}
 
-    // ------------------------- 反射字段 -------------------------
-    /** GoalSelector.availableGoals (SRG: goals) */
     private static final Field GS_AVAILABLE;
-    /** WrappedGoal.goal (SRG: goal) */
     private static final Field WG_GOAL;
 
     static {
-        // Forge 1.20.1 生产环境使用 Mojang 官方映射（MojMaps）
-        Field gsa = null, wgg = null;
-        try {
-            gsa = GoalSelector.class.getDeclaredField("availableGoals");
-            gsa.setAccessible(true);
-        } catch (Exception e) {
-            QLMZombieMod.LOGGER.warn("[AIImprovements] GoalSelector.availableGoals 反射失败：{}", e.getMessage());
+        Field gsa = ReflectionHelper.findField(GoalSelector.class, "availableGoals", "f_257247_");
+        if (gsa == null) {
+            gsa = ReflectionHelper.findFieldByAssignableType(GoalSelector.class, Set.class);
         }
-        try {
-            wgg = WrappedGoal.class.getDeclaredField("goal");
-            wgg.setAccessible(true);
-        } catch (Exception e) {
-            QLMZombieMod.LOGGER.warn("[AIImprovements] WrappedGoal.goal 反射失败：{}", e.getMessage());
+        if (gsa == null) {
+            QLMZombieMod.LOGGER.warn("[AIImprovements] GoalSelector.availableGoals 反射失败，反射降级");
         }
+
+        Field wgg = ReflectionHelper.findField(WrappedGoal.class, "goal", "f_25723_");
+        if (wgg == null) {
+            wgg = ReflectionHelper.findFieldByAssignableType(WrappedGoal.class, Goal.class);
+        }
+        if (wgg == null) {
+            QLMZombieMod.LOGGER.warn("[AIImprovements] WrappedGoal.goal 反射失败，反射降级");
+        }
+
         GS_AVAILABLE = gsa;
         WG_GOAL = wgg;
     }

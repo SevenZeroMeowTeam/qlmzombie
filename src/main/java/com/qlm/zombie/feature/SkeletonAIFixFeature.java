@@ -14,6 +14,7 @@
 package com.qlm.zombie.feature;
 
 import com.qlm.zombie.QLMZombieMod;
+import com.qlm.zombie.util.ReflectionHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.RangedAttackGoal;
@@ -32,24 +33,21 @@ public class SkeletonAIFixFeature {
 
     private SkeletonAIFixFeature() {}
 
-    // RangedAttackGoal 内部 attackIntervalMax（攻击冷却时间，原版 60 tick 太长）
     private static Field ATTACK_INTERVAL_FIELD = null;
     private static Field GOAL_SELECTOR_GOALS_FIELD = null;
 
     static {
-        // Forge 1.20.1 生产环境使用 Mojang 官方映射（MojMaps），字段名 = Mojang 名
-        // 不使用 ObfuscationReflectionHelper.findField（SRG 名在生产环境无效）
-        try {
-            ATTACK_INTERVAL_FIELD = RangedAttackGoal.class.getDeclaredField("attackIntervalMax");
-            ATTACK_INTERVAL_FIELD.setAccessible(true);
-        } catch (Exception e) {
-            QLMZombieMod.LOGGER.warn("[SkeletonAIFix] 未找到 RangedAttackGoal.attackIntervalMax 字段: {}", e.getMessage());
+        ATTACK_INTERVAL_FIELD = ReflectionHelper.findField(RangedAttackGoal.class, "attackIntervalMax", "f_257245_");
+        if (ATTACK_INTERVAL_FIELD == null) {
+            QLMZombieMod.LOGGER.warn("[SkeletonAIFix] 未找到 RangedAttackGoal.attackIntervalMax 字段，反射降级");
         }
-        try {
-            GOAL_SELECTOR_GOALS_FIELD = GoalSelector.class.getDeclaredField("availableGoals");
-            GOAL_SELECTOR_GOALS_FIELD.setAccessible(true);
-        } catch (Exception e) {
-            QLMZombieMod.LOGGER.warn("[SkeletonAIFix] 未找到 GoalSelector.availableGoals 字段: {}", e.getMessage());
+
+        GOAL_SELECTOR_GOALS_FIELD = ReflectionHelper.findField(GoalSelector.class, "availableGoals", "f_257247_");
+        if (GOAL_SELECTOR_GOALS_FIELD == null) {
+            GOAL_SELECTOR_GOALS_FIELD = ReflectionHelper.findFieldByAssignableType(GoalSelector.class, Set.class);
+        }
+        if (GOAL_SELECTOR_GOALS_FIELD == null) {
+            QLMZombieMod.LOGGER.warn("[SkeletonAIFix] 未找到 GoalSelector.availableGoals 字段，反射降级");
         }
     }
 

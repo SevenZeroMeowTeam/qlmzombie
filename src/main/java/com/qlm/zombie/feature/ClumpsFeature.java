@@ -14,6 +14,7 @@
 package com.qlm.zombie.feature;
 
 import com.qlm.zombie.QLMZombieMod;
+import com.qlm.zombie.util.ReflectionHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.level.Level;
@@ -30,22 +31,19 @@ public class ClumpsFeature {
 
     private ClumpsFeature() {}
 
-    /** 搜索半径（方块距离）：在 N x N x N 邻域内合并 orb */
     private static final double MERGE_RADIUS = 8.0;
-    /** 单个 orb 合并上限（防止 value 过大溢出 / XP 奖励异常） */
     private static final int MAX_VALUE_PER_ORB = Short.MAX_VALUE / 4;
 
-    /** ExperienceOrb.value 字段（SRG: f_20785_） */
     private static final Field XP_VALUE_FIELD;
 
     static {
-        // Forge 1.20.1 生产环境使用 Mojang 官方映射，字段名 = "value"
-        Field f = null;
-        try {
-            f = ExperienceOrb.class.getDeclaredField("value");
-            f.setAccessible(true);
-        } catch (Exception e) {
-            QLMZombieMod.LOGGER.warn("[Clumps] 未找到 ExperienceOrb.value 字段：{}", e.getMessage());
+        Field f = ReflectionHelper.findField(ExperienceOrb.class, "value", "f_20803_");
+        if (f == null) {
+            f = ReflectionHelper.findFieldByTypeExcluding(
+                ExperienceOrb.class, int.class, "throwTime", "ollow");
+        }
+        if (f == null) {
+            QLMZombieMod.LOGGER.warn("[Clumps] 未找到 ExperienceOrb.value 字段，反射降级");
         }
         XP_VALUE_FIELD = f;
     }
