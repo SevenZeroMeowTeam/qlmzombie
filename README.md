@@ -510,6 +510,55 @@ MAX_THIRST = 20 (与饥饿值一致)
 | 内存 | ≥ 3GB (`-Xmx3G` 默认配置) |
 | 磁盘 | ≥ 10GB (Forge 依赖 + 本地 libs) |
 
+### ⚠ 依赖文件下载（重要）
+
+由于 `src/main/libs/` 目录下的 110 个依赖 jar 文件总计约 **407MB**，超过 GitHub 文件大小限制，**未纳入版本控制**。Clone 仓库后需要手动下载依赖才能编译。
+
+#### 第一步：查看依赖列表
+
+完整的依赖文件名列表在 [scripts/libs-list.txt](file:///D:/mcmod/scripts/libs-list.txt) 中，共 110 个 jar 文件。
+
+#### 第二步：下载依赖
+
+从以下网站搜索并下载对应版本的 jar 文件：
+
+| 下载源 | 网址 | 说明 |
+|:------:|:-----|:-----|
+| CurseForge | https://www.curseforge.com/minecraft/mc-mods | 最全的 MC 模组仓库 |
+| Modrinth | https://modrinth.com/mods | 新兴模组仓库，下载速度快 |
+| GitHub | 各模组的 GitHub Releases | 部分模组的官方发布页 |
+
+将下载的所有 jar 文件放入 `src/main/libs/` 目录。
+
+#### 第三步：验证依赖完整性
+
+```powershell
+# Windows (PowerShell)
+.\scripts\check-libs.ps1
+
+# Linux / macOS / Git Bash
+./scripts/check-libs.sh
+```
+
+脚本会检查 `src/main/libs/` 目录中是否包含所有 110 个必需依赖，并列出缺失的文件。
+
+```
+✅ 输出示例（依赖完整）:
+========================================
+  依赖检查 - 七零喵僵尸末日生存 Mod
+========================================
+需要依赖文件总数: 110
+[OK] 所有 110 个依赖文件均已存在 (110/110)
+可以正常编译: .\gradlew.bat build
+
+❌ 输出示例（缺少依赖）:
+[MISSING] 缺少 3 个依赖文件 (107/110)
+缺少的文件:
+  - create-1.20.1-6.0.8.jar
+  - Mekanism-1.20.1-10.4.16.80.jar
+  - Botania-1.20.1-454-FORGE.jar
+```
+
 ### 构建命令
 
 ```powershell
@@ -648,6 +697,31 @@ QLM Zombie 完全开源 (MIT License)，欢迎贡献代码：
 - Java 文件：遵循 Google Java Style，`@NotNull` / `@Nullable` 显式标注
 - KubeJS：JS 脚本使用 ES6+ 语法，`const` 优先于 `let`
 - 所有注册类必须使用 `DeferredRegister`，禁止直接 `Registry.register()` 调用
+
+### 🤖 GitHub Actions CI
+
+每次推送代码或提交 PR 时，GitHub Actions 会自动触发以下检查：
+
+| 检查项 | 说明 |
+|:------:|:-----|
+| 变更通知 | 记录提交信息、作者、变更文件数、分支 |
+| 版本号一致性 | 检查 `gradle.properties`、`QLMZombieMod.kt`、`README.md` 三处版本号是否一致 |
+| 文件结构 | 验证关键文件（构建脚本、模组入口、配置文件）是否存在 |
+| 依赖列表 | 检查 `scripts/libs-list.txt` 是否完整 |
+| 大文件检查 | 确保没有超过 50MB 的文件或 jar 文件被提交 |
+
+CI 配置文件：[.github/workflows/ci.yml](file:///D:/mcmod/.github/workflows/ci.yml)
+
+### 🔄 自动推送
+
+本地配置了 `post-commit` Git Hook，每次 `git commit` 后会自动推送到 GitHub：
+
+```sh
+# 提交后自动推送（无需手动 git push）
+git commit -m "feat: 新功能描述"
+# → [auto-push] 正在推送 dev 分支到 GitHub...
+# → [auto-push] 推送成功 ✓
+```
 
 ---
 
