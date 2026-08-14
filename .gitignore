@@ -43,3 +43,7 @@ config/*.bak
 日志.txt
 crash-reports/
 .trae/
+
+# ==================== 部署工具包（与 mod 源码无关） ====================
+SeverMod/
+SeverMod.zip

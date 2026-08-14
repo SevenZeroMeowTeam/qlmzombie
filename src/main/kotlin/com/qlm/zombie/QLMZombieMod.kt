@@ -69,6 +69,8 @@ class QLMZombieMod {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, QLMConfig.SPEC, "qlmzombie-common.toml")
 
         // Auto-release internal mods (extracts embedded jars to mods/ directory)
+        // 白名单源：mod JAR 内 libs/ 目录（由 build.gradle.kts 从 src/main/libs/ 打包）
+        // 重写版策略：精确白名单 + 自动恢复误禁用 + 保守禁用（仅 DEFAULT_DISABLED_PREFIXES）
         ModDependencyHandler.initializeFromLibs()
 
         // Check if optional dependencies are present after extraction.
@@ -96,6 +98,9 @@ class QLMZombieMod {
             missing.add("cloth-config (配置界面)")
         }
 
+        val restoredCount = ModDependencyHandler.getRestoredCount()
+        val restoredMods = ModDependencyHandler.getRestoredMods()
+
         if (missing.isNotEmpty()) {
             LOGGER.warn("[QLM Zombie] ====== 缺少可选依赖模组 ======")
             LOGGER.warn("[QLM Zombie] 缺少 {} 个可选依赖: {}", missing.size, missing.joinToString(", "))
@@ -106,6 +111,14 @@ class QLMZombieMod {
             needsRestart = true
         } else {
             LOGGER.info("[QLM Zombie] 所有可选依赖均已加载 ✓")
+        }
+
+        if (restoredCount > 0) {
+            LOGGER.warn("[QLM Zombie] ====== 自动恢复了被误禁用的模组 ======")
+            LOGGER.warn("[QLM Zombie] 恢复 {} 个: {}", restoredCount, restoredMods.joinToString(", "))
+            LOGGER.warn("[QLM Zombie] 这些模组已从 .disabled 状态恢复，请重启游戏以加载它们")
+            LOGGER.warn("[QLM Zombie] ========================================")
+            needsRestart = true
         }
     }
 
@@ -132,12 +145,22 @@ class QLMZombieMod {
         val entity = event.entity ?: return
 
         if (needsRestart) {
-            val msg1 = "§c[七零喵] 检测到首次安装！内嵌依赖已释放到 mods/ 目录"
-            val msg2 = "§c[七零喵] 请重启游戏以加载 kotlinforforge / kubejs / cloth-config"
-            val msg3 = "§e[七零喵] 本次启动核心功能 (物品/方块/实体/AI) 仍可使用"
-            entity.sendSystemMessage(Component.literal(msg1))
-            entity.sendSystemMessage(Component.literal(msg2))
-            entity.sendSystemMessage(Component.literal(msg3))
+            val restoredCount = ModDependencyHandler.getRestoredCount()
+            if (restoredCount > 0) {
+                val msg1 = "§c[七零喵] 检测到有 ${restoredCount} 个依赖模组被误禁用，已自动恢复！"
+                val msg2 = "§c[七零喵] 请重启游戏以加载 kotlinforforge / kubejs / cloth-config 等依赖"
+                val msg3 = "§e[七零喵] 本次启动核心功能 (物品/方块/实体/AI) 仍可使用"
+                entity.sendSystemMessage(Component.literal(msg1))
+                entity.sendSystemMessage(Component.literal(msg2))
+                entity.sendSystemMessage(Component.literal(msg3))
+            } else {
+                val msg1 = "§c[七零喵] 检测到首次安装！内嵌依赖已释放到 mods/ 目录"
+                val msg2 = "§c[七零喵] 请重启游戏以加载 kotlinforforge / kubejs / cloth-config 等依赖"
+                val msg3 = "§e[七零喵] 本次启动核心功能 (物品/方块/实体/AI) 仍可使用"
+                entity.sendSystemMessage(Component.literal(msg1))
+                entity.sendSystemMessage(Component.literal(msg2))
+                entity.sendSystemMessage(Component.literal(msg3))
+            }
         }
 
         // 游戏公告
@@ -149,6 +172,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7镐子能力：3×3~11×11范围挖掘，可破坏黑曜石/哭泣黑曜石/基岩"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7击杀敌对生物（除玩家/村民/铁傀儡）获得永久随机生命上限和攻击力上限"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备：铁质全套+5附魔+弓满附魔+64附魔金苹果+64面包"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备全部无限耐久：铁剑/斧/镐/锹/锄+弓+全套铁盔甲（Unbreakable）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7铁剑§c999§7/铁斧§c55§7/铁镐§c44§7/常规合成即可获得品质属性"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7合成时材料+月相影响品质；所有常规材料均有概率获得特殊属性"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量低于5%时自动触发生命恢复 III（60秒，冷却5分钟）"))
@@ -158,9 +182,9 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7新手保护：前25天不生成敌对生物，安心发育"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7村民守卫：5%概率村民变守卫（100血/25攻），不逃跑+铁傀儡协助"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7自动扫描：每2秒扫描附近20格，僵尸按强度发光标记"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7成就系统：10项任务解锁成就，只有击杀敌对生物计数，获得技能点奖励"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7技能点：初始5点，成就奖励更多，使用 /qlm skill 查看"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7AI玩家背包：使用 /qlm backpack 打开背包（数据持久化）"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7成就系统：10项任务解锁成就，仅击杀敌对生物计数，奖励技能点"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7技能点：初始5点，成就奖励更多，使用 §b/qlm skill§r 查看"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7AI玩家背包：使用 §b/qlm backpack§r 打开背包（数据持久化）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7Boss死亡掉落宝箱：含原版稀有物品+其他模组随机物品"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸方块破坏/搭建：僵尸可破坏方块+搭建追击玩家"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸双手持物：25%概率手持物品，40%副手持有"))
@@ -168,13 +192,9 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊骷髅（7种）：远程（凋零/剧毒/爆破/铁甲）×近战（剑士/狂战士/守卫）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊僵尸（16种）：巨人/木桶/召唤/烈焰/剧毒/铁甲/跳跃/投掷/吐息/爆破/投手TNT/自爆/弓箭手"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7睡袋系统：3羊毛合成，夜晚可入睡不重置出生点，白天自动收起可拾取"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：移除旧版红色经验条血量条，仅保留绿色血量条+护甲/饱食度文字"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备全部无限耐久：铁剑/斧/镐/锹/锄+弓+全套铁盔甲（Unbreakable）+隐藏附魔/耐久显示"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7配置文件已修复：62项配置含完整中文说明，游戏启动不再崩溃"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7反射字段已修复：骷髅AI/经验球合并/AI节流功能恢复正常"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7KubeJS脚本已修复：7/7脚本全部加载成功，事件API迁移至KubeJS 6"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7口渴模组兼容修复：自动禁用ToughAsNails，修复创造模式翻页崩溃+净化水瓶反射"))
-        entity.sendSystemMessage(Component.literal("§6[七零喵] §a输入 §b/qlm help§a 查看命令列表，§b/qlm stats§a 查看永久属性"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：仅保留自定义绿色血量条+护甲/饱食度数值，原版心形隐藏"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖白名单：§r§7首次启动自动释放100+内嵌模组，误禁用的依赖会自动恢复，防止误删"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7输入 §a/qlm help§r 查看命令列表，§b/qlm mods§r 查看内嵌模组状态，§b/qlm download§r 强制重新释放"))
     }
 
     private fun onAddReloadListener(event: AddReloadListenerEvent) {
@@ -205,7 +225,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build24"
+        const val MOD_VERSION = "3.0.0.beta.build25"
 
         @JvmField
         @Volatile

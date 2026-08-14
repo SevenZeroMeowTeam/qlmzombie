@@ -17,46 +17,60 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/**
+ * 模组依赖自动释放处理器（重写版）。
+ *
+ * <h3>设计原则</h3>
+ * <ul>
+ *   <li><b>白名单源</b>：mod JAR 内 {@code libs/} 目录下所有 {@code *.jar}（由
+ *       {@code build.gradle.kts} 从 {@code src/main/libs/} 打包而来），可选
+ *       {@code libs/manifest.txt} 作为权威清单。白名单中的 JAR 永远不会被本处理器删除或禁用。</li>
+ *   <li><b>禁用策略</b>：保守模式。只禁用 {@link #DEFAULT_DISABLED_PREFIXES}
+ *       精确前缀匹配的"已知问题模组"（如 ToughAsNails/ThirstWasTaken，与项目"口渴"系统冲突），
+ *       不再用模糊关键字扫描 mods 目录，避免误伤 create/refinedstorage/crafting-dead 等依赖。</li>
+ *   <li><b>恢复策略</b>：如果 mods 目录中存在 {@code .disabled} 文件，且文件名在白名单中、
+ *       不在 DEFAULT_DISABLED 列表中，则自动恢复（取消禁用）。这样即便外部脚本误禁用
+ *       kotlinforforge/kubejs/cloth-config，下次启动也会自动恢复。</li>
+ *   <li><b>重复处理</b>：白名单中的 JAR 优先保留，仅删除非白名单的重复版本。</li>
+ * </ul>
+ *
+ * <h3>公共 API 兼容性</h3>
+ * 所有原公共方法签名保持不变，仅新增 {@link #getRestoredCount()} / {@link #getRestoredMods()}。
+ */
 public class ModDependencyHandler {
 
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final String MOD_ID = "qlmzombie";
     public static final String DISABLED_MARKER = ".disabled";
     private static final String TRACKING_FILE = "qlmzombie_disabled_tracker.txt";
+    private static final String MANIFEST_ENTRY = "libs/manifest.txt";
+    private static final String LIBS_DIR_IN_JAR = "libs/";
 
-    private static final List<String> DEFAULT_DISABLED_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
-            "thirstmod", "thirstcanteen", "thirstwastaken",
-            "toughasnails", "tough_as_nails", "tough-as-nails"
-    ));
-
-    private static final List<String> CONFLICT_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
-            "thirstmod", "thirstcanteen", "thirstwastaken",
-            "toughasnails", "tough_as_nails", "tough-as-nails",
-            "thirst", "drink", "hydration",
-            "dayphase", "day-night", "day/night",
-            "zombie-overhaul", "zombieapocalypse",
-            "craftingdead", "crafting-dead"
-    ));
-
-    private static final List<String> KEEP_ALWAYS_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
-            "kotlin", "cloth", "kubejs", "forge", "minecraft",
-            "qlmzombie", "craftingdead", "dayphase",
-            "lib", "library", "api", "core", "common",
-            "fabric", "architectury", "puzzleslib",
-            "jython", "graal", "polyglot"
+    /**
+     * 已知问题模组前缀（精确前缀匹配，非模糊关键字）。
+     * 仅 ToughAsNails / ThirstWasTaken 系列，因为它们与项目"口渴"系统冲突。
+     * 用户可手动启用（手动启用后会被加入 tracker，不再被自动禁用）。
+     */
+    private static final List<String> DEFAULT_DISABLED_PREFIXES = Collections.unmodifiableList(Arrays.asList(
+            "toughasnails",
+            "thirstwastaken",
+            "thirstmod",
+            "thirstcanteen"
     ));
 
     private static int releasedCount;
     private static int skippedCount;
     private static int failedCount;
+    private static int restoredCount;
     private static boolean hasConflicts;
     private static boolean hasDuplicates;
-    private static List<String> disabledMods = new ArrayList<>();
-    private static List<String> releasedMods = new ArrayList<>();
-    private static List<String> failedMods = new ArrayList<>();
-    private static List<String> skippedMods = new ArrayList<>();
-    private static List<String> detectedConflicts = new ArrayList<>();
-    private static List<String> deletedDuplicates = new ArrayList<>();
+    private static final List<String> disabledMods = new ArrayList<>();
+    private static final List<String> releasedMods = new ArrayList<>();
+    private static final List<String> failedMods = new ArrayList<>();
+    private static final List<String> skippedMods = new ArrayList<>();
+    private static final List<String> restoredMods = new ArrayList<>();
+    private static final List<String> detectedConflicts = new ArrayList<>();
+    private static final List<String> deletedDuplicates = new ArrayList<>();
     private static int totalLibsCount;
     private static boolean initialized;
 
@@ -88,7 +102,6 @@ public class ModDependencyHandler {
             Path modJarPath = getModJarPath();
             if (modJarPath == null) {
                 LOGGER.warn("[QLM Zombie] 无法获取 mod JAR 路径，跳过依赖释放（开发环境？）");
-                scanAndHandleConflicts(modsDir, trackedDisabled);
                 saveTrackedDisabled(gameDir, trackedDisabled);
                 logSummary();
                 return;
@@ -98,13 +111,31 @@ public class ModDependencyHandler {
 
             List<EmbeddedJar> embeddedJars = readEmbeddedJars(modJarPath);
             totalLibsCount = embeddedJars.size();
-            LOGGER.info("[QLM Zombie] 发现 {} 个内部嵌入 JAR", totalLibsCount);
+            LOGGER.info("[QLM Zombie] 发现 {} 个内部嵌入 JAR（精确白名单源）", totalLibsCount);
 
+            if (embeddedJars.isEmpty()) {
+                LOGGER.warn("[QLM Zombie] 未发现任何嵌入 JAR！请检查 build.gradle.kts 是否将 src/main/libs/*.jar 打包到 libs/ 目录");
+                saveTrackedDisabled(gameDir, trackedDisabled);
+                logSummary();
+                return;
+            }
+
+            Set<String> whiteList = buildWhiteList(embeddedJars);
+
+            // 阶段 1：释放白名单 JAR 到 mods 目录
             for (EmbeddedJar embeddedJar : embeddedJars) {
                 releaseJar(embeddedJar, modsDir, trackedDisabled);
             }
 
-            scanAndHandleConflicts(modsDir, trackedDisabled);
+            // 阶段 2：恢复被误禁用的白名单 JAR（核心修复）
+            restoreMistakenlyDisabled(whiteList, modsDir, trackedDisabled);
+
+            // 阶段 3：禁用 DEFAULT_DISABLED_PREFIXES 中的已知问题模组
+            disableKnownProblemMods(modsDir, trackedDisabled);
+
+            // 阶段 4：检测重复 JAR（仅删除非白名单的重复项）
+            detectAndRemoveDuplicates(modsDir, whiteList);
+
             saveTrackedDisabled(gameDir, trackedDisabled);
             logSummary();
 
@@ -140,8 +171,8 @@ public class ModDependencyHandler {
             // 处理 union URI 格式: union:/C:/path/to/jar#174!/
             if (uriStr.startsWith("union:") || uriStr.contains("#")) {
                 String filePath = uriStr
-                    .replace("union:/", "")
-                    .replace("union:", "");
+                        .replace("union:/", "")
+                        .replace("union:", "");
                 int hashIdx = filePath.indexOf('#');
                 if (hashIdx > 0) {
                     filePath = filePath.substring(0, hashIdx);
@@ -174,24 +205,34 @@ public class ModDependencyHandler {
 
     private static List<EmbeddedJar> readEmbeddedJars(Path modJarPath) {
         List<EmbeddedJar> result = new ArrayList<>();
+        Set<String> manifestNames = readManifest(modJarPath);
 
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(modJarPath))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 String name = entry.getName();
-                if (name.startsWith("libs/") && name.endsWith(".jar") && !entry.isDirectory()) {
-                    String fileName = name.substring(name.lastIndexOf('/') + 1);
-
-                    if (shouldSkipEmbeddedJar(fileName)) {
-                        LOGGER.debug("[QLM Zombie] 跳过被排除的 JAR: {}", fileName);
-                        zis.closeEntry();
-                        continue;
-                    }
-
-                    byte[] content = zis.readAllBytes();
-                    result.add(new EmbeddedJar(fileName, content));
-                    LOGGER.debug("[QLM Zombie] 发现嵌入 JAR: {} ({} 字节)", fileName, content.length);
+                if (!name.startsWith(LIBS_DIR_IN_JAR) || !name.endsWith(".jar") || entry.isDirectory()) {
+                    zis.closeEntry();
+                    continue;
                 }
+                String fileName = name.substring(name.lastIndexOf('/') + 1);
+
+                if (shouldSkipEmbeddedJar(fileName)) {
+                    LOGGER.debug("[QLM Zombie] 跳过被排除的 JAR: {}", fileName);
+                    zis.closeEntry();
+                    continue;
+                }
+
+                // 如果存在 manifest，仅释放 manifest 中列出的 JAR
+                if (!manifestNames.isEmpty() && !manifestNames.contains(fileName.toLowerCase(Locale.ROOT))) {
+                    LOGGER.debug("[QLM Zombie] JAR 不在 manifest 白名单中，跳过: {}", fileName);
+                    zis.closeEntry();
+                    continue;
+                }
+
+                byte[] content = zis.readAllBytes();
+                result.add(new EmbeddedJar(fileName, content));
+                LOGGER.debug("[QLM Zombie] 发现嵌入 JAR: {} ({} 字节)", fileName, content.length);
                 zis.closeEntry();
             }
         } catch (IOException e) {
@@ -199,6 +240,35 @@ public class ModDependencyHandler {
         }
 
         return result;
+    }
+
+    /**
+     * 读取 mod JAR 内的 {@code libs/manifest.txt}（构建时生成）。
+     * 每行一个文件名，# 开头为注释。返回小写文件名集合。
+     * 如果 manifest 不存在，返回空集合（回退到"扫描所有 libs/*.jar"模式）。
+     */
+    private static Set<String> readManifest(Path modJarPath) {
+        Set<String> names = new HashSet<>();
+        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(modJarPath))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (MANIFEST_ENTRY.equals(entry.getName()) && !entry.isDirectory()) {
+                    byte[] content = zis.readAllBytes();
+                    String text = new String(content, java.nio.charset.StandardCharsets.UTF_8);
+                    for (String line : text.split("\\r?\\n")) {
+                        String trimmed = line.trim();
+                        if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
+                        names.add(trimmed.toLowerCase(Locale.ROOT));
+                    }
+                    LOGGER.info("[QLM Zombie] 已加载 libs/manifest.txt，共 {} 个白名单条目", names.size());
+                    break;
+                }
+                zis.closeEntry();
+            }
+        } catch (IOException e) {
+            LOGGER.warn("[QLM Zombie] 读取 manifest 失败，将回退到扫描 libs/*.jar 模式: {}", e.getMessage());
+        }
+        return names;
     }
 
     private static boolean shouldSkipEmbeddedJar(String fileName) {
@@ -214,45 +284,61 @@ public class ModDependencyHandler {
         return false;
     }
 
+    private static Set<String> buildWhiteList(List<EmbeddedJar> embeddedJars) {
+        Set<String> whiteList = new HashSet<>();
+        for (EmbeddedJar jar : embeddedJars) {
+            whiteList.add(jar.fileName.toLowerCase(Locale.ROOT));
+        }
+        return whiteList;
+    }
+
     private static void releaseJar(EmbeddedJar embeddedJar, Path modsDir, Set<String> trackedDisabled) {
         try {
             String fileName = embeddedJar.fileName;
             Path targetPath = modsDir.resolve(fileName);
-            String lowerName = fileName.toLowerCase(Locale.ROOT);
+            Path disabledPath = modsDir.resolve(fileName + DISABLED_MARKER);
 
-            if (containsAny(lowerName, KEEP_ALWAYS_KEYWORDS)) {
-                LOGGER.debug("[QLM Zombie] 核心库模组，跳过禁用检查: {}", fileName);
-            }
-
-            if (Files.exists(targetPath)) {
-                Path disabledPath = modsDir.resolve(fileName + DISABLED_MARKER);
-                if (Files.exists(disabledPath)) {
-                    LOGGER.debug("[QLM Zombie] 模组已存在且被禁用 (.disabled): {}", fileName);
-                    skippedCount++;
-                    skippedMods.add(fileName);
-                    return;
+            // 情况 1：用户已手动禁用（.disabled 存在且 .jar 不存在）
+            if (Files.exists(disabledPath) && !Files.exists(targetPath)) {
+                if (isDefaultDisabled(fileName)) {
+                    LOGGER.debug("[QLM Zombie] 已知问题模组，保持禁用: {}", fileName);
+                } else {
+                    LOGGER.debug("[QLM Zombie] 用户已禁用此模组，跳过释放: {}", fileName);
                 }
-                LOGGER.debug("[QLM Zombie] 模组已存在，跳过释放: {}", fileName);
                 skippedCount++;
                 skippedMods.add(fileName);
                 return;
             }
 
-            Files.write(targetPath, embeddedJar.content,
-                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-
-            releasedMods.add(fileName);
-            releasedCount++;
-            LOGGER.info("[QLM Zombie] 释放模组: {} ({} 字节)", fileName, embeddedJar.content.length);
-
-            if (containsAny(lowerName, DEFAULT_DISABLED_KEYWORDS)
-                    && !containsAny(lowerName, KEEP_ALWAYS_KEYWORDS)) {
-                if (!trackedDisabled.contains(fileName)) {
-                    disableMod(targetPath, "DEFAULT_DISABLED: " + matchKeyword(lowerName, DEFAULT_DISABLED_KEYWORDS));
-                    trackedDisabled.add(fileName);
+            // 情况 2：JAR 已存在且大小相同 → 跳过
+            if (Files.exists(targetPath)) {
+                long existingSize = Files.size(targetPath);
+                if (existingSize == embeddedJar.content.length) {
+                    LOGGER.debug("[QLM Zombie] 模组已存在且大小一致，跳过: {}", fileName);
+                    skippedCount++;
+                    skippedMods.add(fileName);
                 } else {
-                    LOGGER.debug("[QLM Zombie] 用户已手动启用模组，跳过默认禁用: {}", fileName);
+                    // 大小不同 → 视为版本不同，覆盖
+                    LOGGER.info("[QLM Zombie] 模组已存在但大小不同 ({} -> {}), 覆盖: {}",
+                            existingSize, embeddedJar.content.length, fileName);
+                    Files.write(targetPath, embeddedJar.content,
+                            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                    releasedMods.add(fileName);
+                    releasedCount++;
                 }
+            } else {
+                // 情况 3：JAR 不存在 → 释放
+                Files.write(targetPath, embeddedJar.content,
+                        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                releasedMods.add(fileName);
+                releasedCount++;
+                LOGGER.info("[QLM Zombie] 释放模组: {} ({} 字节)", fileName, embeddedJar.content.length);
+            }
+
+            // 如果是 DEFAULT_DISABLED，禁用它（除非用户手动启用过）
+            if (isDefaultDisabled(fileName) && !trackedDisabled.contains(fileName)) {
+                disableMod(targetPath, "DEFAULT_DISABLED");
+                trackedDisabled.add(fileName);
             }
 
         } catch (IOException e) {
@@ -262,30 +348,123 @@ public class ModDependencyHandler {
         }
     }
 
-    private static void scanAndHandleConflicts(Path modsDir, Set<String> trackedDisabled) {
+    /**
+     * 恢复被误禁用的白名单 JAR。
+     * 如果 mods 目录中存在 .disabled 文件，且文件名在白名单中、不是 DEFAULT_DISABLED、
+     * 未被用户主动追踪禁用，则自动恢复（取消禁用），保证项目依赖可用。
+     *
+     * 这是修复"kotlinforforge/kubejs/cloth-config 被外部脚本误禁用"的关键机制。
+     */
+    private static void restoreMistakenlyDisabled(Set<String> whiteList, Path modsDir, Set<String> trackedDisabled) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*" + DISABLED_MARKER)) {
+            for (Path disabledFile : stream) {
+                String disabledName = disabledFile.getFileName().toString();
+                if (!disabledName.endsWith(DISABLED_MARKER)) continue;
+                String jarName = disabledName.substring(0, disabledName.length() - DISABLED_MARKER.length());
+                String lowerJar = jarName.toLowerCase(Locale.ROOT);
+
+                if (!whiteList.contains(lowerJar)) continue;
+                if (isDefaultDisabled(jarName)) continue;
+                if (trackedDisabled.contains(jarName)) {
+                    LOGGER.debug("[QLM Zombie] 用户已主动追踪禁用，不恢复: {}", jarName);
+                    continue;
+                }
+
+                Path jarPath = modsDir.resolve(jarName);
+                try {
+                    if (Files.exists(jarPath)) {
+                        Files.deleteIfExists(disabledFile);
+                    } else {
+                        Files.move(disabledFile, jarPath, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    restoredMods.add(jarName);
+                    restoredCount++;
+                    LOGGER.info("[QLM Zombie] 自动恢复被误禁用的白名单模组: {}", jarName);
+                } catch (IOException ex) {
+                    LOGGER.warn("[QLM Zombie] 恢复模组失败: {}", jarName, ex);
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("[QLM Zombie] 扫描 .disabled 文件时出错", e);
+        }
+    }
+
+    /**
+     * 禁用 DEFAULT_DISABLED_PREFIXES 中的已知问题模组。
+     * 使用精确前缀匹配，不扫描整个 mods 目录的关键字。
+     */
+    private static void disableKnownProblemMods(Path modsDir, Set<String> trackedDisabled) {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
             for (Path modFile : stream) {
                 String fileName = modFile.getFileName().toString();
-                String lowerName = fileName.toLowerCase(Locale.ROOT);
+                if (!isDefaultDisabled(fileName)) continue;
+                if (trackedDisabled.contains(fileName)) continue;
 
-                if (containsAny(lowerName, KEEP_ALWAYS_KEYWORDS)) {
-                    continue;
-                }
+                Path disabledPath = modFile.resolveSibling(fileName + DISABLED_MARKER);
+                if (Files.exists(disabledPath)) continue;
 
-                if (!containsAny(lowerName, CONFLICT_KEYWORDS)) {
-                    continue;
-                }
-
-                if (trackedDisabled.contains(fileName)) {
-                    LOGGER.debug("[QLM Zombie] 用户已手动启用模组，跳过冲突禁用: {}", fileName);
-                    continue;
-                }
-
-                disableMod(modFile, "CONFLICT: " + matchKeyword(lowerName, CONFLICT_KEYWORDS));
+                disableMod(modFile, "DEFAULT_DISABLED");
                 trackedDisabled.add(fileName);
             }
         } catch (IOException e) {
-            LOGGER.error("[QLM Zombie] 扫描冲突模组时出错", e);
+            LOGGER.error("[QLM Zombie] 扫描已知问题模组时出错", e);
+        }
+    }
+
+    /**
+     * 检测并删除 mods 目录中的重复 JAR。
+     * 优先保留白名单中的版本，删除非白名单的重复项。
+     * 白名单中的 JAR 永远不会被删除。
+     */
+    private static void detectAndRemoveDuplicates(Path modsDir, Set<String> whiteList) {
+        try {
+            Map<String, List<Path>> modBaseNames = new HashMap<>();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
+                for (Path modFile : stream) {
+                    String fileName = modFile.getFileName().toString();
+                    String baseName = stripVersion(fileName);
+                    modBaseNames.computeIfAbsent(baseName, k -> new ArrayList<>()).add(modFile);
+                }
+            }
+
+            for (Map.Entry<String, List<Path>> entry : modBaseNames.entrySet()) {
+                if (entry.getValue().size() <= 1) continue;
+
+                List<Path> dups = entry.getValue();
+                // 排序：白名单优先，然后按文件名排序
+                dups.sort((a, b) -> {
+                    String aName = a.getFileName().toString().toLowerCase(Locale.ROOT);
+                    String bName = b.getFileName().toString().toLowerCase(Locale.ROOT);
+                    boolean aWhite = whiteList.contains(aName);
+                    boolean bWhite = whiteList.contains(bName);
+                    if (aWhite != bWhite) return aWhite ? -1 : 1;
+                    return aName.compareTo(bName);
+                });
+
+                Path keep = dups.get(0);
+                hasDuplicates = true;
+                String conflictName = entry.getKey() + " (保留: " + keep.getFileName() + ")";
+                detectedConflicts.add(conflictName);
+
+                for (int i = 1; i < dups.size(); i++) {
+                    Path toDelete = dups.get(i);
+                    String fileName = toDelete.getFileName().toString();
+                    // 白名单中的 JAR 绝对不删除
+                    if (whiteList.contains(fileName.toLowerCase(Locale.ROOT))) {
+                        LOGGER.info("[QLM Zombie] 重复但属于白名单，保留: {}", fileName);
+                        continue;
+                    }
+                    try {
+                        Files.deleteIfExists(toDelete);
+                        deletedDuplicates.add(fileName);
+                        LOGGER.info("[QLM Zombie] 删除重复 mod: {}", fileName);
+                    } catch (IOException ex) {
+                        LOGGER.warn("[QLM Zombie] 删除重复 mod 失败: {}", fileName, ex);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("[QLM Zombie] 重复检测失败", e);
         }
     }
 
@@ -335,10 +514,13 @@ public class ModDependencyHandler {
     private static void saveTrackedDisabled(Path gameDir, Set<String> trackedDisabled) {
         Path trackingPath = gameDir.resolve(TRACKING_FILE);
         try {
-            List<String> lines = new ArrayList<>(trackedDisabled);
-            lines.add(0, "# QLM Zombie Dependency Handler - Disabled Mod Tracking");
-            lines.add(1, "# This file tracks mods that were automatically disabled.");
-            lines.add(2, "# If you manually enable a mod, it will NOT be re-disabled.");
+            List<String> lines = new ArrayList<>();
+            lines.add("# QLM Zombie Dependency Handler - Disabled Mod Tracking");
+            lines.add("# This file tracks mods that were automatically disabled by DEFAULT_DISABLED policy.");
+            lines.add("# If you manually enable a mod listed here, it will NOT be re-disabled.");
+            lines.add("# Whitelist mods (embedded in mod JAR) are auto-restored even if .disabled exists,");
+            lines.add("# unless they match DEFAULT_DISABLED_PREFIXES (e.g. ToughAsNails/ThirstWasTaken).");
+            lines.addAll(trackedDisabled);
             Files.write(trackingPath, lines,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             LOGGER.debug("[QLM Zombie] 保存追踪文件: {} 条记录", trackedDisabled.size());
@@ -347,38 +529,45 @@ public class ModDependencyHandler {
         }
     }
 
-    private static boolean containsAny(String source, List<String> keywords) {
-        for (String keyword : keywords) {
-            if (source.contains(keyword.toLowerCase(Locale.ROOT))) {
-                return true;
-            }
+    private static boolean isDefaultDisabled(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        for (String prefix : DEFAULT_DISABLED_PREFIXES) {
+            if (lower.startsWith(prefix)) return true;
         }
         return false;
     }
 
-    private static String matchKeyword(String source, List<String> keywords) {
-        for (String keyword : keywords) {
-            if (source.contains(keyword.toLowerCase(Locale.ROOT))) {
-                return keyword;
-            }
+    private static String stripVersion(String fileName) {
+        String name = fileName.toLowerCase(Locale.ROOT);
+        if (name.endsWith(".jar")) {
+            name = name.substring(0, name.length() - 4);
         }
-        return "unknown";
+        name = name.replaceAll("-\\d+.*$", "");
+        name = name.replaceAll("_\\d+.*$", "");
+        return name;
     }
 
     private static void logSummary() {
         hasConflicts = !disabledMods.isEmpty();
         LOGGER.info("[QLM Zombie] ====== 依赖释放汇总 ======");
-        LOGGER.info("[QLM Zombie] 嵌入 JAR 总数: {}", totalLibsCount);
+        LOGGER.info("[QLM Zombie] 嵌入 JAR 总数（白名单）: {}", totalLibsCount);
         LOGGER.info("[QLM Zombie] 成功释放: {}", releasedCount);
-        LOGGER.info("[QLM Zombie] 跳过: {}", skippedCount);
+        LOGGER.info("[QLM Zombie] 跳过(已存在): {}", skippedCount);
+        LOGGER.info("[QLM Zombie] 自动恢复(误禁用): {}", restoredCount);
         LOGGER.info("[QLM Zombie] 失败: {}", failedCount);
-        LOGGER.info("[QLM Zombie] 自动禁用: {}", disabledMods.size());
+        LOGGER.info("[QLM Zombie] 自动禁用(已知问题): {}", disabledMods.size());
         if (!disabledMods.isEmpty()) {
             LOGGER.info("[QLM Zombie] 禁用列表: {}", String.join(", ", disabledMods));
         }
-        LOGGER.info("[QLM Zombie] 冲突检测: {}", hasConflicts ? "检测到冲突" : "无冲突");
+        if (!restoredMods.isEmpty()) {
+            LOGGER.info("[QLM Zombie] 恢复列表: {}", String.join(", ", restoredMods));
+        }
+        LOGGER.info("[QLM Zombie] 重复检测: {}", hasDuplicates ? "检测到重复" : "无重复");
+        LOGGER.info("[QLM Zombie] 冲突检测: {}", hasConflicts ? "存在禁用项" : "无冲突");
         LOGGER.info("[QLM Zombie] =============================");
     }
+
+    // ============ 公共 API ============
 
     public static int getTotalLibsCount() {
         return totalLibsCount;
@@ -396,6 +585,10 @@ public class ModDependencyHandler {
         return failedCount;
     }
 
+    public static int getRestoredCount() {
+        return restoredCount;
+    }
+
     public static List<String> getDisabledMods() {
         return Collections.unmodifiableList(disabledMods);
     }
@@ -410,6 +603,10 @@ public class ModDependencyHandler {
 
     public static List<String> getSkippedMods() {
         return Collections.unmodifiableList(skippedMods);
+    }
+
+    public static List<String> getRestoredMods() {
+        return Collections.unmodifiableList(restoredMods);
     }
 
     public static boolean hasConflicts() {
@@ -495,6 +692,8 @@ public class ModDependencyHandler {
 
     /**
      * Detect and resolve conflicts among mods in the given directory.
+     * Kept for backward compatibility with QLMCommands. Uses the new conservative
+     * policy: only disable DEFAULT_DISABLED_PREFIXES mods, never delete whitelist mods.
      */
     public static void detectAndResolveConflicts(Path modsDir, List<String> internalLibs) {
         detectedConflicts.clear();
@@ -507,10 +706,18 @@ public class ModDependencyHandler {
             return;
         }
 
+        Set<String> whiteList = new HashSet<>();
+        if (internalLibs != null) {
+            for (String name : internalLibs) {
+                whiteList.add(name.toLowerCase(Locale.ROOT));
+            }
+        }
+
         Set<String> trackedDisabled = new HashSet<>();
+
         try {
             // Detect duplicates: same mod file appearing multiple times with different versions
-            java.util.Map<String, List<Path>> modBaseNames = new java.util.HashMap<>();
+            Map<String, List<Path>> modBaseNames = new HashMap<>();
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
                 for (Path modFile : stream) {
                     String fileName = modFile.getFileName().toString();
@@ -519,18 +726,27 @@ public class ModDependencyHandler {
                 }
             }
 
-            for (java.util.Map.Entry<String, List<Path>> entry : modBaseNames.entrySet()) {
+            for (Map.Entry<String, List<Path>> entry : modBaseNames.entrySet()) {
                 if (entry.getValue().size() > 1) {
                     hasDuplicates = true;
                     List<Path> dups = entry.getValue();
-                    // Sort by file name to keep the first one deterministically
-                    dups.sort(java.util.Comparator.comparing(p -> p.getFileName().toString()));
+                    dups.sort((a, b) -> {
+                        String aName = a.getFileName().toString().toLowerCase(Locale.ROOT);
+                        String bName = b.getFileName().toString().toLowerCase(Locale.ROOT);
+                        boolean aWhite = whiteList.contains(aName);
+                        boolean bWhite = whiteList.contains(bName);
+                        if (aWhite != bWhite) return aWhite ? -1 : 1;
+                        return aName.compareTo(bName);
+                    });
                     Path keep = dups.get(0);
                     String conflictName = entry.getKey() + " (保留: " + keep.getFileName() + ")";
                     detectedConflicts.add(conflictName);
                     for (int i = 1; i < dups.size(); i++) {
                         Path toDelete = dups.get(i);
                         String fileName = toDelete.getFileName().toString();
+                        if (whiteList.contains(fileName.toLowerCase(Locale.ROOT))) {
+                            continue;
+                        }
                         try {
                             Files.deleteIfExists(toDelete);
                             deletedDuplicates.add(fileName);
@@ -542,35 +758,24 @@ public class ModDependencyHandler {
                 }
             }
 
-            // Detect conflicts by keyword
-            scanAndHandleConflicts(modsDir, trackedDisabled);
-            hasConflicts = !disabledMods.isEmpty();
-
-            // Populate conflict descriptions
-            for (String disabled : disabledMods) {
-                String lower = disabled.toLowerCase(Locale.ROOT);
-                String keyword = matchKeyword(lower, CONFLICT_KEYWORDS);
-                if (!"unknown".equals(keyword)) {
-                    detectedConflicts.add(disabled + " (冲突: " + keyword + ")");
+            // Disable DEFAULT_DISABLED mods only (no more keyword scanning)
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
+                for (Path modFile : stream) {
+                    String fileName = modFile.getFileName().toString();
+                    if (!isDefaultDisabled(fileName)) continue;
+                    if (trackedDisabled.contains(fileName)) continue;
+                    Path disabledPath = modFile.resolveSibling(fileName + DISABLED_MARKER);
+                    if (Files.exists(disabledPath)) continue;
+                    disableMod(modFile, "DEFAULT_DISABLED");
+                    trackedDisabled.add(fileName);
+                    detectedConflicts.add(fileName + " (禁用: DEFAULT_DISABLED)");
                 }
             }
+            hasConflicts = !disabledMods.isEmpty();
 
         } catch (IOException e) {
             LOGGER.error("[QLM Zombie] 冲突检测失败", e);
         }
-    }
-
-    private static String stripVersion(String fileName) {
-        // Strip version numbers and suffixes to identify the same mod
-        String name = fileName.toLowerCase(Locale.ROOT);
-        // Remove .jar extension
-        if (name.endsWith(".jar")) {
-            name = name.substring(0, name.length() - 4);
-        }
-        // Remove version patterns like -1.0.0, -1.20.1, etc.
-        name = name.replaceAll("-\\d+.*$", "");
-        name = name.replaceAll("_\\d+.*$", "");
-        return name;
     }
 
     private static class EmbeddedJar {

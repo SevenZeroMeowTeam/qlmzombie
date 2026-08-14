@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build24-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build25-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD19%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD25%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -42,7 +42,7 @@ QLM Zombie 是一个深度整合的 Minecraft 末日生存模组，基于 **Kotl
 - 🏗️ **随机建筑生成**：废弃商店、9 层高楼、海底遗迹、随机小屋自然生成
 - 🔫 **Crafting Dead 装备体系**：武器、弹药、护甲、医疗用品完整复刻
 - 📦 **战利品注入**：全球战利品修改器 + KubeJS 脚本双重注入机制
-- 🔧 **自动依赖释放**：JAR 内嵌 100+ 开源模组自动释放到 mods 目录并处理冲突
+- 🔧 **自动依赖释放**：JAR 内嵌 100+ 开源模组自动释放到 mods 目录，采用精确白名单+自动恢复误禁用机制，零误伤
 
 ---
 
@@ -359,30 +359,38 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 ## 🧩 自动依赖释放系统
 
-### 工作原理
+### 工作原理（build25 重写版）
 
-`ModDependencyHandler.java` 是模组启动时运行的核心基础设施：
+`ModDependencyHandler.java` 是模组启动时运行的核心基础设施，采用 **精确白名单 + 保守禁用 + 自动恢复** 三层设计：
 
-1. **启动触发**：模组 `@Mod` 构造器调用 `initializeFromLibs()`
-2. **开发环境检测**：若 classpath 为目录模式则跳过释放 (不覆盖开发者 mods)
-3. **读取内嵌 JAR**：从自身 JAR 内 `libs/*.jar` 路径读取 100+ 字节数组
-4. **释放到 mods 目录**：写入 `游戏目录/mods/<文件名>.jar` (已存在则跳过)
-5. **默认禁用冲突模组**：匹配 `thirstmod / thirstwastaken` 关键词自动 `.disabled` 重命名
-6. **冲突扫描**：扫描现有 mods 目录，匹配 35+ 冲突关键词自动禁用
-7. **追踪保护**：写入 `qlmzombie_disabled_tracker.txt` — 若用户手动启用 (.disabled 被删除)，下次启动不会重复禁用
-8. **排除名单**：含 `lib / core / api / kotlin / cloth / kubejs / architectury` 的 JAR 永不禁用
+1. **白名单源**：mod JAR 内 `libs/` 目录下所有 JAR（由 `build.gradle.kts` 从 `src/main/libs/` 打包而来）。构建时 `generateLibsManifest` 任务会生成权威清单 `libs/manifest.txt`，每个 JAR 文件名一行。
+2. **阶段 1：释放**：白名单 JAR 逐个写入 `mods/<文件名>.jar`；已存在且大小一致则跳过，不一致则覆盖。
+3. **阶段 2：自动恢复误禁用**：扫描 mods 目录中所有 `.disabled` 文件 → 若文件名在白名单中且不在 `DEFAULT_DISABLED_PREFIXES` 列表中 → 自动恢复为 `.jar`（取消禁用），保证项目依赖不被外部脚本误删。
+4. **阶段 3：保守禁用**：**仅**对精确前缀匹配的"已知问题模组"（`toughasnails`、`thirstwastaken` 等，与内置口渴系统冲突）自动禁用，不再模糊扫描整个 mods 目录。
+5. **阶段 4：去重**：检测重复 JAR，白名单中的 JAR 优先保留，仅删除非白名单的重复版本。
+6. **追踪保护**：`qlmzombie_disabled_tracker.txt` 记录用户手动启用的模组，下次启动不会再自动禁用。
 
-### 关键词列表
+### 核心改动 vs 旧版（build24 及之前）
 
-| 类别 | 关键词 |
-|------|--------|
-| **默认禁用** | `thirstmod` `thirstcanteen` `thirstwastaken` |
-| **冲突检测** | `thirst` `drink` `hydration` `dayphase` `zombie-overhaul` `zombieapocalypse` `craftingdead` |
-| **永不禁用** | `kotlin` `cloth` `kubejs` `forge` `qlmzombie` `craftingdead` `lib` `library` `api` `core` `architectury` `puzzleslib` |
+| 维度 | 旧版（build24-） | 新版（build25+） |
+|------|------------------|------------------|
+| 冲突匹配 | 35+ 模糊关键字 `contains` 扫描整个 mods 目录 | 仅 `DEFAULT_DISABLED_PREFIXES`（4项）精确前缀匹配 |
+| 保留策略 | `KEEP_ALWAYS_KEYWORDS` 模糊关键字（无法匹配连字符如 `crafting-dead`） | 嵌入 JAR 文件名 = 精确白名单，100% 保留 |
+| 误禁用恢复 | 无 | `restoreMistakenlyDisabled()` 自动恢复白名单中的 `.disabled` |
+| 重复删除 | 无白名单保护，排序后随机保留 | 白名单优先保留，非白名单重复项才删 |
+| 清单验证 | 无 | `libs/manifest.txt` 构建时生成，可校验 JAR 文件名权威清单 |
+
+**已知问题模组**（启动时自动禁用，除非用户手动启用过）：
+
+| 前缀 | 模组 | 原因 |
+|------|------|------|
+| `toughasnails` | Tough As Nails (意志坚定) | 与内置口渴系统冲突，会导致双重扣水 + 创造模式翻页崩溃 |
+| `thirstwastaken` | Thirst Was Taken | 同上，口渴功能完全由 `ThirstFeature` 接管 |
+| `thirstmod` / `thirstcanteen` | 其它口渴模组 | 避免重复口渴系统 |
 
 ### 释放输出 JAR 统计
 
-成功构建后，最终 `qlmzombie-3.0.0.beta.build1.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR。
+成功构建后，`qlmzombie-3.0.0.beta.build25.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
 
 ---
 
@@ -593,8 +601,8 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build1.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/)
-└── qlmzombie-3.0.0.beta.build1-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build25.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
+└── qlmzombie-3.0.0.beta.build25-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -604,10 +612,11 @@ D:\mcmod\build\libs\
 ### 方法 A：玩家正常使用 (推荐)
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
-2. 将 `qlmzombie-3.0.0.beta.build1.jar` 放入 `.minecraft/mods/` 目录
+2. 将 `qlmzombie-3.0.0.beta.build25.jar` 放入 `.minecraft/mods/` 目录
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
-   - 冲突的口渴模组 (如 ThirstWasTaken) 会被重命名为 `.disabled`
+   - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
+   - 冲突的口渴模组 (如 ThirstWasTaken / ToughAsNails) 会被重命名为 `.disabled`
 4. 再次启动游戏即可游玩
 
 ### 方法 B：开发者安装 (从源码构建)
@@ -674,7 +683,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.buildN` (精确到 build)
+1. **版本号**：`3.0.0.beta.build25` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -754,6 +763,35 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build25 (2026-08-14)
+
+#### 重写：ModDependencyHandler 自动依赖释放系统（精确白名单 + 自动恢复）
+
+**问题根因**（build24 日志多次出现 `kotlinforforge/kubejs/cloth 缺失` 循环报错）：
+
+旧版 `ModDependencyHandler.java` 使用 35+ 模糊关键字 `contains` 扫描整个 mods 目录并禁用冲突项，但存在两处致命缺陷：
+1. `KEEP_ALWAYS_KEYWORDS` 中写了 `craftingdead`，而实际文件是 `crafting-dead-xxx.jar`（带连字符），`contains("craftingdead")` 永远匹配不到，导致 `KEEP_ALWAYS` 保护失效，`crafting-dead-core`、`crafting-dead-decoration` 等被误禁用。
+2. 没有"误禁用恢复"机制，外部脚本若把 `kotlinforforge-4.12.0-all.jar.disabled` 放到 mods 目录，旧版不会恢复。
+
+**修复方案（四层设计）**：
+
+| 改动 | 文件 | 说明 |
+|:-----|:-----|:-----|
+| 新增精确白名单 | [ModDependencyHandler.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java) | 白名单源 = mod JAR 内 `libs/` 目录全部文件名，永不删除或禁用 |
+| 新增自动恢复 | `restoreMistakenlyDisabled()` | 扫描 `.disabled` 文件，若在白名单中且非已知问题模组 → 自动恢复为 `.jar` |
+| 移除模糊扫描 | 删除 `CONFLICT_KEYWORDS` / `KEEP_ALWAYS_KEYWORDS` / `scanAndHandleConflicts()` | 不再用 35+ 关键字误伤依赖 |
+| 保守禁用 | `DEFAULT_DISABLED_PREFIXES`（4项精确前缀） | 仅禁用 `toughasnails / thirstwastaken / thirstmod / thirstcanteen` |
+| 去重保护 | `detectAndRemoveDuplicates()` | 白名单优先保留，仅删除非白名单重复项 |
+| 构建清单 | [build.gradle.kts](file:///D:/mcmod/build.gradle.kts) | 新增 `generateLibsManifest` 任务，构建时生成 `libs/manifest.txt` 并打包进 JAR |
+
+#### 更新：版本号 + 游戏公告 + README
+
+| 改动 | 文件 | 说明 |
+|:-----|:-----|:-----|
+| 版本号 build25 | [gradle.properties](file:///D:/mcmod/gradle.properties)、[QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt)、[README.md](file:///D:/mcmod/README.md) | 3 处同步到 `3.0.0.beta.build25` |
+| 登录提示优化 | `QLMZombieMod.onPlayerLogin()` | `needsRestart` 消息新增"误禁用 N 个，已自动恢复"分支 |
+| 公告精简 | 同上 | 将旧版逐 build 修复公告替换为功能描述 + 依赖白名单说明 + `/qlm mods`/`download` 命令提示 |
 
 ### 3.0.0.beta.build24 (2026-08-14)
 
