@@ -1,3 +1,4 @@
+(() => {
 const MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
 const ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
 const RandomSource = Java.loadClass('net.minecraft.util.RandomSource')
@@ -634,3 +635,4 @@ LevelEvents.tick('minecraft:overworld', event => {
         })
     }
 })
+})()

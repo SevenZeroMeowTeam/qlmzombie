@@ -25,11 +25,13 @@ public class ModDependencyHandler {
     private static final String TRACKING_FILE = "qlmzombie_disabled_tracker.txt";
 
     private static final List<String> DEFAULT_DISABLED_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
-            "thirstmod", "thirstcanteen", "thirstwastaken"
+            "thirstmod", "thirstcanteen", "thirstwastaken",
+            "toughasnails", "tough_as_nails", "tough-as-nails"
     ));
 
     private static final List<String> CONFLICT_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
             "thirstmod", "thirstcanteen", "thirstwastaken",
+            "toughasnails", "tough_as_nails", "tough-as-nails",
             "thirst", "drink", "hydration",
             "dayphase", "day-night", "day/night",
             "zombie-overhaul", "zombieapocalypse",

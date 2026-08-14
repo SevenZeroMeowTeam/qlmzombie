@@ -16,29 +16,33 @@ import java.util.concurrent.ConcurrentHashMap
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = [Dist.DEDICATED_SERVER])
 object RandomBuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.05
-    private const val MIN_SPACING = 5
+    private const val SPAWN_CHANCE = 0.15
+    private const val MIN_SPACING = 3
     private const val HUT_SIZE = 5
 
     private val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
 
-    private val lootItems = listOf(
-        QLMItems.ZOMBIE_CORE.get(),
-        QLMItems.INFECTED_ESSENCE.get(),
-        QLMItems.SURVIVAL_KIT.get(),
-        QLMItems.ANTIDOTE.get(),
-        QLMItems.MEDICAL_SUPPLY.get(),
-        QLMItems.REINFORCED_PARTS.get(),
-        QLMItems.BIOHAZARD_SAMPLE.get(),
-        QLMItems.EMERGENCY_RATION.get(),
-        QLMItems.TACTICAL_AMMO.get(),
-        CDItems.BANDAGE.get(),
-        CDItems.FIRST_AID_KIT.get(),
-        CDItems.RIFLE_AMMO.get(),
-        CDItems.PISTOL_AMMO.get(),
-        CDItems.SHOTGUN_SHELL.get(),
-        CDItems.SURGICAL_SCISSORS.get(),
-    )
+    // 延迟初始化：RegistryObject.get() 必须在注册表完成注册后调用，
+    // 类静态初始化时（CONSTRUCT 阶段）调用会抛出 NPE。
+    private val lootItems by lazy {
+        listOf(
+            QLMItems.ZOMBIE_CORE.get(),
+            QLMItems.INFECTED_ESSENCE.get(),
+            QLMItems.SURVIVAL_KIT.get(),
+            QLMItems.ANTIDOTE.get(),
+            QLMItems.MEDICAL_SUPPLY.get(),
+            QLMItems.REINFORCED_PARTS.get(),
+            QLMItems.BIOHAZARD_SAMPLE.get(),
+            QLMItems.EMERGENCY_RATION.get(),
+            QLMItems.TACTICAL_AMMO.get(),
+            CDItems.BANDAGE.get(),
+            CDItems.FIRST_AID_KIT.get(),
+            CDItems.RIFLE_AMMO.get(),
+            CDItems.PISTOL_AMMO.get(),
+            CDItems.SHOTGUN_SHELL.get(),
+            CDItems.SURGICAL_SCISSORS.get(),
+        )
+    }
 
     @SubscribeEvent
     fun onChunkLoad(event: ChunkEvent.Load) {

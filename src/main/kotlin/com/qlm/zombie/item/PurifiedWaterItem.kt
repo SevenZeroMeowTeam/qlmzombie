@@ -1,5 +1,6 @@
 package com.qlm.zombie.item
 
+import com.qlm.zombie.feature.ThirstFeature
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.LivingEntity
@@ -33,9 +34,7 @@ class PurifiedWaterItem(properties: Item.Properties) : Item(properties.food(
 
         if (!level.isClientSide) {
             runCatching {
-                val thirstClass = Class.forName("com.qlm.zombie.craftingdead.feature.ThirstFeature")
-                val method = thirstClass.getDeclaredMethod("restoreThirst", LivingEntity::class.java, Int::class.javaPrimitiveType)
-                method.invoke(null, livingEntity, 8)
+                ThirstFeature.restoreThirst(livingEntity, 8)
             }
         }
 

@@ -3,6 +3,7 @@
 // 非血月夜 7% 概率幸运月；7% 概率丰收月
 // 通过调用本 mod 的 MoonHelper 间接操作 Enhanced Celestials
 
+(() => {
 const MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
 const ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
 const QLMConfig = Java.loadClass('com.qlm.zombie.config.QLMConfig')
@@ -24,7 +25,6 @@ LevelEvents.tick('minecraft:overworld', event => {
   if (++tickCounter < THROTTLE_TICKS) return
   tickCounter = 0
 
-  // 仅在黄昏（约 13000 tick）触发调度
   const dayTime = MoonHelper.getDayTime(level)
   const timeOfDay = dayTime % DAY_LENGTH
   if (timeOfDay < DUSK_START || timeOfDay > DUSK_END) return
@@ -33,18 +33,15 @@ LevelEvents.tick('minecraft:overworld', event => {
   const pd = event.server.persistentData
   const lastScheduledDay = pd.getLong('qlmzombie.lastScheduledDay')
 
-  // 当天已调度过则跳过
   if (lastScheduledDay === day) return
 
   const currentMoon = MoonHelper.getCurrentMoonId(level)
-  // 如果 EC 已经分配了一个非默认月相，不要覆盖
   if (currentMoon !== 'enhancedcelestials:default' && currentMoon !== 'none') {
     pd.putLong('qlmzombie.lastScheduledDay', day)
     return
   }
 
   let scheduled = false
-  // 安全日期间(1-14天)不触发血月，安全日过后(第15天起)才触发血月
   if (day > SAFE_DAYS_END && day % BLOOD_MOON_INTERVAL === 0) {
     scheduled = MoonHelper.forceBloodMoon(level)
     console.log(`[QLM] Day ${day} -> Blood Moon (forced)`)
@@ -63,3 +60,4 @@ LevelEvents.tick('minecraft:overworld', event => {
     pd.putLong('qlmzombie.lastScheduledDay', day)
   }
 })
+})()

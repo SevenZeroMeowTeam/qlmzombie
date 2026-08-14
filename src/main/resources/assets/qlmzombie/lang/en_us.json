@@ -86,5 +86,7 @@
   "item.qlmzombie.ai_recover": "AI Recovery Potion",
   "item.qlmzombie.mode_switch": "AI Mode Switcher",
   "item.qlmzombie.ai_speed_pill": "AI Speed Pill",
-  "item.qlmzombie.ai_shield": "AI Shield Charm"
+  "item.qlmzombie.ai_shield": "AI Shield Charm",
+  "item.qlmzombie.sleeping_bag": "Sleeping Bag",
+  "block.qlmzombie.sleeping_bag": "Sleeping Bag"
 }

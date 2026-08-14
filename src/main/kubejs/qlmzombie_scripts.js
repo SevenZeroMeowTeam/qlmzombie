@@ -64,7 +64,7 @@ global.QLM_RECIPES = {
     }
 };
 
-onEvent('recipes', event => {
+ServerEvents.recipes(event => {
     // --- QLM Item Crafting Recipes ---
     
     // Zombie Core
@@ -154,10 +154,12 @@ onEvent('recipes', event => {
         'minecraft:water_bucket'
     ]);
 
-    // Sleeping Bag - 3 wool in a row
-    event.shaped('qlmzombie:sleeping_bag', ['WWW'], {
-        W: '#minecraft:wool'
-    });
+    // Sleeping Bag - 3 wool in a row (only if item is registered)
+    if (Ingredient.of('qlmzombie:sleeping_bag').itemIds.length > 0) {
+        event.shaped('qlmzombie:sleeping_bag', ['WWW'], {
+            W: '#minecraft:wool'
+        });
+    }
 
     // --- AI Helper Items ---
 
@@ -322,7 +324,7 @@ onEvent('recipes', event => {
 });
 
 // --- Tag Modifications ---
-onEvent('tags', event => {
+ServerEvents.tags('item', event => {
     // Add QLM items to forge tags
     event.add('forge:ingots', 'qlmzombie:zombie_core');
     event.add('forge:ingots/infected', 'qlmzombie:infected_essence');
@@ -354,15 +356,8 @@ onEvent('tags', event => {
 });
 
 // --- Crafting Dead Integration ---
-onEvent('recipes', event => {
-    // Crafting Dead - Custom gun ammo crafting
+ServerEvents.recipes(event => {
     if (Platform.isLoaded('craftingdead')) {
-        event.shaped('craftingdead:bullet', ['III', 'GCG', 'III'], {
-            I: '#forge:ingots/iron',
-            G: '#forge:gunpowder',
-            C: '#forge:ingots/copper'
-        });
-
         // Crafting Dead - Custom melee weapon crafting
         event.shaped('qlmzombie:infected_essence', ['IRI', 'RFR', 'IRI'], {
             I: '#forge:ingots/infected',
@@ -373,7 +368,7 @@ onEvent('recipes', event => {
 });
 
 // --- Player Login Messages ---
-onEvent('player.logged_in', event => {
+PlayerEvents.loggedIn(event => {
     const player = event.player;
     if (!player.stage.getPersistentData().getBoolean('qlm_welcomed')) {
         player.stage.getPersistentData().putBoolean('qlm_welcomed', true);

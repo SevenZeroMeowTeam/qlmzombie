@@ -4,7 +4,7 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build21-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build24-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build21` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build21.jar` |
+| **当前版本** | `3.0.0.beta.build24` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build24.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -754,6 +754,87 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build24 (2026-08-14)
+
+#### 修复：口渴模组兼容性 + 创造模式翻页崩溃
+
+**问题 1：创造模式物品栏翻页到第 5 页崩溃**
+
+**根因**：`ToughAsNails`（意志坚定）模组在客户端加载后，其创造模式标签页翻页时触发崩溃。`ModDependencyHandler` 之前只禁用了 `ThirstWasTaken`（文件名含 "thirst" 关键字），但 `ToughAsNails` 文件名不含 "thirst"，未被自动禁用。
+
+**修复**：将 `toughasnails`、`tough_as_nails`、`tough-as-nails` 加入 `DEFAULT_DISABLED_KEYWORDS` 和 `CONFLICT_KEYWORDS`，`ModDependencyHandler` 启动时自动禁用 ToughAsNails（重命名为 `.disabled`），口渴系统完全由 mod 内置 `ThirstFeature` 接管。
+
+| 文件 | 修复内容 |
+|:-----|:---------|
+| [ModDependencyHandler.java#L27-L39](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L27-L39) | `DEFAULT_DISABLED_KEYWORDS` + `CONFLICT_KEYWORDS` 新增 ToughAsNails 关键字 |
+
+**问题 2：净化水瓶恢复口渴值失效**
+
+**根因**：`PurifiedWaterItem.kt` 使用反射调用 `com.qlm.zombie.craftingdead.feature.ThirstFeature`，但实际类路径为 `com.qlm.zombie.feature.ThirstFeature`，`ClassNotFoundException` 导致口渴值无法恢复（`runCatching` 吞掉了异常）。
+
+**修复**：移除反射，改为直接调用 `ThirstFeature.restoreThirst()`。
+
+| 文件 | 修复内容 |
+|:-----|:---------|
+| [PurifiedWaterItem.kt#L3-L12](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/item/PurifiedWaterItem.kt#L3-L12) | 添加 `ThirstFeature` import，移除反射 |
+| [PurifiedWaterItem.kt#L34-L38](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/item/PurifiedWaterItem.kt#L34-L38) | 直接调用 `ThirstFeature.restoreThirst(livingEntity, 8)` |
+
+### 3.0.0.beta.build23 (2026-08-13)
+
+#### 修复：KubeJS 脚本全面修复（第二轮）
+
+**问题**：根据服务器日志，修复 KubeJS 6 兼容性剩余 4 个错误。
+
+**修复内容**：
+
+| 问题 | 文件 | 修复方案 |
+|:-----|:-----|:---------|
+| `BlockEvents.randomTick` 不存在 | [harvest_moon_growth.js](file:///D:/mcmod/src/main/kubejs/harvest_moon_growth.js) | 改用 `LevelEvents.tick`，每 200 tick 遍历玩家附近 8 格催熟作物 |
+| `PlayerEvents.logged_in` 不存在 | [qlmzombie_scripts.js](file:///D:/mcmod/src/main/kubejs/qlmzombie_scripts.js) | KubeJS 6 驼峰命名：`logged_in` → `loggedIn` |
+| `LootJS.addTableModifier` 不存在 | [qlmzombie_loot.js](file:///D:/mcmod/src/main/kubejs/qlmzombie_loot.js) | 改用 1.20.1 版本 API `addLootTypeModifier` |
+| `craftingdead:bullet` 物品不存在 | [qlmzombie_scripts.js](file:///D:/mcmod/src/main/kubejs/qlmzombie_scripts.js) | 移除该合成配方 |
+| `sleeping_bag` 合成配方 result 为空 | [qlmzombie_scripts.js](file:///D:/mcmod/src/main/kubejs/qlmzombie_scripts.js) | 添加 `Ingredient.of().itemIds.length` 物品存在检查 |
+
+#### 修复：语言文件缺失
+
+| 文件 | 修复内容 |
+|:-----|:---------|
+| [zh_cn.json](file:///D:/mcmod/src/main/resources/assets/qlmzombie/lang/zh_cn.json) | 添加 `block.qlmzombie.sleeping_bag` 条目（BlockItem 翻译键来自 Block） |
+| [en_us.json](file:///D:/mcmod/src/main/resources/assets/qlmzombie/lang/en_us.json) | 添加 `item` 和 `block` 两个 sleeping_bag 条目 |
+
+### 3.0.0.beta.build22 (2026-08-13)
+
+#### 修复：KubeJS 脚本全面修复（第一轮）
+
+**问题**：服务器日志显示 KubeJS 脚本加载失败，7 个脚本仅 2 个成功（2/7）。
+
+**修复内容**：
+
+| 问题 | 修复方案 |
+|:-----|:---------|
+| `const ServerLevel` 重复声明（4 个脚本） | 用 IIFE（立即执行函数表达式）包裹，使 const 成为局部变量 |
+| `const THROTTLE_TICKS` 重复声明（2 个脚本） | 同上 |
+| `onEvent()` 已废弃（2 个脚本，9 处调用） | 迁移至 KubeJS 6 新 API |
+
+**API 迁移映射**：
+
+| 旧 API (KubeJS 5) | 新 API (KubeJS 6) |
+|:------------------|:------------------|
+| `onEvent('recipes', ...)` | `ServerEvents.recipes(...)` |
+| `onEvent('tags', ...)` | `ServerEvents.tags('item', ...)` |
+| `onEvent('player.logged_in', ...)` | `PlayerEvents.loggedIn(...)` |
+| `onEvent('entity.death', ...)` | `EntityEvents.death(...)` |
+| `onEvent('block.break', ...)` | `BlockEvents.broken(...)` |
+| `onEvent('loot_tables', ...)` | `LootJS.modifiers(...)` + `addLootTypeModifier` |
+
+**修改文件**：
+- [airdrop_scheduler.js](file:///D:/mcmod/src/main/kubejs/airdrop_scheduler.js) — IIFE 包裹
+- [harvest_moon_growth.js](file:///D:/mcmod/src/main/kubejs/harvest_moon_growth.js) — IIFE 包裹
+- [lucky_moon_buff.js](file:///D:/mcmod/src/main/kubejs/lucky_moon_buff.js) — IIFE 包裹
+- [moon_scheduler.js](file:///D:/mcmod/src/main/kubejs/moon_scheduler.js) — IIFE 包裹
+- [qlmzombie_loot.js](file:///D:/mcmod/src/main/kubejs/qlmzombie_loot.js) — onEvent → LootJS/EntityEvents/BlockEvents
+- [qlmzombie_scripts.js](file:///D:/mcmod/src/main/kubejs/qlmzombie_scripts.js) — onEvent → ServerEvents/PlayerEvents
 
 ### 3.0.0.beta.build21 (2026-08-13)
 
@@ -1794,4 +1875,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build21` · 构建日期：2026-08-13 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build24` · 构建日期：2026-08-14 · Minecraft 1.20.1

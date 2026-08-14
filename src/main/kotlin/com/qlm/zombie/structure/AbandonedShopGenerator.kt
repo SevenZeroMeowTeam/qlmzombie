@@ -17,52 +17,62 @@ import java.util.concurrent.ConcurrentHashMap
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = [Dist.DEDICATED_SERVER])
 object AbandonedShopGenerator {
 
-    private const val SPAWN_CHANCE = 0.04
-    private const val MIN_SPACING = 6
+    private const val SPAWN_CHANCE = 0.12
+    private const val MIN_SPACING = 4
     private const val SHOP_WIDTH = 9
     private const val SHOP_DEPTH = 7
     private const val SHOP_HEIGHT = 4
 
     private val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
 
-    private val medicalLoot = listOf(
-        CDItems.BANDAGE.get(),
-        CDItems.FIRST_AID_KIT.get(),
-        CDItems.ADRENALINE_SYRINGE.get(),
-        CDItems.PAINKILLERS.get(),
-        CDItems.TOURNIQUET.get(),
-        CDItems.SALINE_BAG.get(),
-        CDItems.SPLINT.get(),
-        CDItems.SURGICAL_SCISSORS.get(),
-        QLMItems.MEDICAL_SUPPLY.get(),
-        QLMItems.ANTIDOTE.get(),
-    )
+    // 延迟初始化：RegistryObject.get() 必须在注册表完成注册后调用，
+    // 类静态初始化时（CONSTRUCT 阶段）调用会抛出 NPE。
+    private val medicalLoot by lazy {
+        listOf(
+            CDItems.BANDAGE.get(),
+            CDItems.FIRST_AID_KIT.get(),
+            CDItems.ADRENALINE_SYRINGE.get(),
+            CDItems.PAINKILLERS.get(),
+            CDItems.TOURNIQUET.get(),
+            CDItems.SALINE_BAG.get(),
+            CDItems.SPLINT.get(),
+            CDItems.SURGICAL_SCISSORS.get(),
+            QLMItems.MEDICAL_SUPPLY.get(),
+            QLMItems.ANTIDOTE.get(),
+        )
+    }
 
-    private val ammoLoot = listOf(
-        CDItems.RIFLE_AMMO.get(),
-        CDItems.PISTOL_AMMO.get(),
-        CDItems.SHOTGUN_SHELL.get(),
-        CDItems.SNIPER_AMMO.get(),
-        QLMItems.TACTICAL_AMMO.get(),
-    )
+    private val ammoLoot by lazy {
+        listOf(
+            CDItems.RIFLE_AMMO.get(),
+            CDItems.PISTOL_AMMO.get(),
+            CDItems.SHOTGUN_SHELL.get(),
+            CDItems.SNIPER_AMMO.get(),
+            QLMItems.TACTICAL_AMMO.get(),
+        )
+    }
 
-    private val foodLoot = listOf(
-        QLMItems.EMERGENCY_RATION.get(),
-        QLMItems.PURIFIED_WATER_BOTTLE.get(),
-        Items.BREAD,
-        Items.COOKED_BEEF,
-        Items.APPLE,
-        Items.GOLDEN_APPLE,
-    )
+    private val foodLoot by lazy {
+        listOf(
+            QLMItems.EMERGENCY_RATION.get(),
+            QLMItems.PURIFIED_WATER_BOTTLE.get(),
+            Items.BREAD,
+            Items.COOKED_BEEF,
+            Items.APPLE,
+            Items.GOLDEN_APPLE,
+        )
+    }
 
-    private val miscLoot = listOf(
-        QLMItems.ZOMBIE_CORE.get(),
-        QLMItems.INFECTED_ESSENCE.get(),
-        QLMItems.SURVIVAL_KIT.get(),
-        QLMItems.REINFORCED_PARTS.get(),
-        QLMItems.BIOHAZARD_SAMPLE.get(),
-        QLMItems.FAKE_PLAYER_SPAWN_EGG.get(),
-    )
+    private val miscLoot by lazy {
+        listOf(
+            QLMItems.ZOMBIE_CORE.get(),
+            QLMItems.INFECTED_ESSENCE.get(),
+            QLMItems.SURVIVAL_KIT.get(),
+            QLMItems.REINFORCED_PARTS.get(),
+            QLMItems.BIOHAZARD_SAMPLE.get(),
+            QLMItems.FAKE_PLAYER_SPAWN_EGG.get(),
+        )
+    }
 
     @SubscribeEvent
     fun onChunkLoad(event: ChunkEvent.Load) {

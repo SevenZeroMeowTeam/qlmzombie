@@ -18,34 +18,38 @@ import java.util.concurrent.ConcurrentHashMap
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = [Dist.DEDICATED_SERVER])
 object OceanRuinGenerator {
 
-    private const val SPAWN_CHANCE = 0.08
-    private const val MIN_SPACING = 7
+    private const val SPAWN_CHANCE = 0.20
+    private const val MIN_SPACING = 4
     private const val RUIN_SIZE = 10
     private const val SEA_LEVEL = 62
 
     private val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
 
-    private val oceanLoot = listOf(
-        QLMItems.ZOMBIE_CORE.get(),
-        QLMItems.INFECTED_ESSENCE.get(),
-        QLMItems.MEDICAL_SUPPLY.get(),
-        QLMItems.REINFORCED_PARTS.get(),
-        QLMItems.BIOHAZARD_SAMPLE.get(),
-        QLMItems.TACTICAL_AMMO.get(),
-        QLMItems.SURVIVAL_KIT.get(),
-        CDItems.RIFLE_AMMO.get(),
-        CDItems.PISTOL_AMMO.get(),
-        CDItems.SNIPER_AMMO.get(),
-        CDItems.BANDAGE.get(),
-        CDItems.FIRST_AID_KIT.get(),
-        Items.IRON_INGOT,
-        Items.GOLD_INGOT,
-        Items.COPPER_INGOT,
-        Items.LAPIS_LAZULI,
-        Items.EMERALD,
-        Items.PRISMARINE_CRYSTALS,
-        Items.PRISMARINE_SHARD,
-    )
+    // 延迟初始化：RegistryObject.get() 必须在注册表完成注册后调用，
+    // 类静态初始化时（CONSTRUCT 阶段）调用会抛出 NPE。
+    private val oceanLoot by lazy {
+        listOf(
+            QLMItems.ZOMBIE_CORE.get(),
+            QLMItems.INFECTED_ESSENCE.get(),
+            QLMItems.MEDICAL_SUPPLY.get(),
+            QLMItems.REINFORCED_PARTS.get(),
+            QLMItems.BIOHAZARD_SAMPLE.get(),
+            QLMItems.TACTICAL_AMMO.get(),
+            QLMItems.SURVIVAL_KIT.get(),
+            CDItems.RIFLE_AMMO.get(),
+            CDItems.PISTOL_AMMO.get(),
+            CDItems.SNIPER_AMMO.get(),
+            CDItems.BANDAGE.get(),
+            CDItems.FIRST_AID_KIT.get(),
+            Items.IRON_INGOT,
+            Items.GOLD_INGOT,
+            Items.COPPER_INGOT,
+            Items.LAPIS_LAZULI,
+            Items.EMERALD,
+            Items.PRISMARINE_CRYSTALS,
+            Items.PRISMARINE_SHARD,
+        )
+    }
 
     @SubscribeEvent
     fun onChunkLoad(event: ChunkEvent.Load) {

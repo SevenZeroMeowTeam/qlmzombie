@@ -172,6 +172,8 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备全部无限耐久：铁剑/斧/镐/锹/锄+弓+全套铁盔甲（Unbreakable）+隐藏附魔/耐久显示"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7配置文件已修复：62项配置含完整中文说明，游戏启动不再崩溃"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7反射字段已修复：骷髅AI/经验球合并/AI节流功能恢复正常"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7KubeJS脚本已修复：7/7脚本全部加载成功，事件API迁移至KubeJS 6"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7口渴模组兼容修复：自动禁用ToughAsNails，修复创造模式翻页崩溃+净化水瓶反射"))
         entity.sendSystemMessage(Component.literal("§6[七零喵] §a输入 §b/qlm help§a 查看命令列表，§b/qlm stats§a 查看永久属性"))
     }
 
@@ -203,7 +205,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build21"
+        const val MOD_VERSION = "3.0.0.beta.build24"
 
         @JvmField
         @Volatile

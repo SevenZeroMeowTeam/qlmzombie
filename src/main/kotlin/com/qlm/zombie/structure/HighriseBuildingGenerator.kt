@@ -18,8 +18,8 @@ import java.util.concurrent.ConcurrentHashMap
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = [Dist.DEDICATED_SERVER])
 object HighriseBuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.02
-    private const val MIN_SPACING = 8
+    private const val SPAWN_CHANCE = 0.06
+    private const val MIN_SPACING = 5
     private const val BUILDING_WIDTH = 13
     private const val BUILDING_DEPTH = 9
     private const val FLOORS = 9
@@ -29,26 +29,30 @@ object HighriseBuildingGenerator {
 
     private val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
 
-    private val modLoot = listOf(
-        QLMItems.ZOMBIE_CORE.get(),
-        QLMItems.INFECTED_ESSENCE.get(),
-        QLMItems.SURVIVAL_KIT.get(),
-        QLMItems.ANTIDOTE.get(),
-        QLMItems.MEDICAL_SUPPLY.get(),
-        QLMItems.REINFORCED_PARTS.get(),
-        QLMItems.BIOHAZARD_SAMPLE.get(),
-        QLMItems.EMERGENCY_RATION.get(),
-        QLMItems.TACTICAL_AMMO.get(),
-        CDItems.BANDAGE.get(),
-        CDItems.FIRST_AID_KIT.get(),
-        CDItems.RIFLE_AMMO.get(),
-        CDItems.PISTOL_AMMO.get(),
-        CDItems.SHOTGUN_SHELL.get(),
-        CDItems.SNIPER_AMMO.get(),
-        CDItems.BALLISTIC_HELMET.get(),
-        CDItems.PLATE_CARRIER.get(),
-        CDItems.TACTICAL_VEST.get(),
-    )
+    // 延迟初始化：RegistryObject.get() 必须在注册表完成注册后调用，
+    // 类静态初始化时（CONSTRUCT 阶段）调用会抛出 NPE。
+    private val modLoot by lazy {
+        listOf(
+            QLMItems.ZOMBIE_CORE.get(),
+            QLMItems.INFECTED_ESSENCE.get(),
+            QLMItems.SURVIVAL_KIT.get(),
+            QLMItems.ANTIDOTE.get(),
+            QLMItems.MEDICAL_SUPPLY.get(),
+            QLMItems.REINFORCED_PARTS.get(),
+            QLMItems.BIOHAZARD_SAMPLE.get(),
+            QLMItems.EMERGENCY_RATION.get(),
+            QLMItems.TACTICAL_AMMO.get(),
+            CDItems.BANDAGE.get(),
+            CDItems.FIRST_AID_KIT.get(),
+            CDItems.RIFLE_AMMO.get(),
+            CDItems.PISTOL_AMMO.get(),
+            CDItems.SHOTGUN_SHELL.get(),
+            CDItems.SNIPER_AMMO.get(),
+            CDItems.BALLISTIC_HELMET.get(),
+            CDItems.PLATE_CARRIER.get(),
+            CDItems.TACTICAL_VEST.get(),
+        )
+    }
 
     private val vanillaLoot = listOf(
         Items.IRON_INGOT,
