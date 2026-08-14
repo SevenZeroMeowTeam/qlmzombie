@@ -1,0 +1,279 @@
+name: Release - 七零喵僵尸末日生存 Mod
+
+# 触发条件：
+#   1. 推送 v* 格式的 tag（推荐，例如：git tag v3.0.0.beta.build25 && git push origin v3.0.0.beta.build25）
+#   2. 手动触发（在 GitHub Actions 页面点 "Run workflow"，可自定义版本号与是否为 prerelease）
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "版本号（留空则从 gradle.properties 读取）"
+        required: false
+        default: ""
+      prerelease:
+        description: "是否为预发布版本（beta/build 系列）"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+      tag_name:
+        description: "Release 标签名（留空则用 v<版本号>）"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 构建 JAR 并发布 GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: 读取版本号
+        id: ver
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(grep "^mod_version=" gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🔍 版本号: $VERSION"
+
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="v$VERSION"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "🏷️  Release 标签: $TAG"
+
+          if [ -n "${{ github.event.inputs.prerelease }}" ]; then
+            PRE="${{ github.event.inputs.prerelease }}"
+          else
+            # 自动判断：版本含 beta/build/rc/alpha → prerelease
+            if echo "$VERSION" | grep -qiE 'beta|build|rc|alpha|dev'; then
+              PRE="true"
+            else
+              PRE="false"
+            fi
+          fi
+          echo "prerelease=$PRE" >> $GITHUB_OUTPUT
+
+      - name: Gradle Build
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
+          arguments: >
+            build
+            -x test
+            --no-daemon
+            --warning-mode=summary
+            -Dorg.gradle.jvmargs=-Xmx4g
+            -Dfile.encoding=UTF-8
+
+      - name: 整理构建产物
+        id: artifacts
+        run: |
+          set -e
+          mkdir -p release-assets
+          MAIN_JAR=$(ls -1t build/libs/qlmzombie-*.jar 2>/dev/null | grep -vE 'sources|api|javadoc' | head -1)
+          if [ -z "$MAIN_JAR" ]; then
+            echo "❌ 未找到主 JAR 产物"
+            exit 1
+          fi
+          cp "$MAIN_JAR" release-assets/
+          MAIN_NAME=$(basename "$MAIN_JAR")
+
+          # 可选附加：sources jar（如果存在）
+          SRC_JAR=$(ls -1t build/libs/qlmzombie-*-sources.jar 2>/dev/null | head -1)
+          if [ -n "$SRC_JAR" ]; then
+            cp "$SRC_JAR" release-assets/
+          fi
+
+          # 计算大小
+          SIZE_BYTES=$(stat -c%s "$MAIN_JAR")
+          SIZE_MB=$(awk "BEGIN {printf \"%.2f\", $SIZE_BYTES/1048576}")
+          echo "main_jar=$MAIN_NAME" >> $GITHUB_OUTPUT
+          echo "main_size_mb=$SIZE_MB" >> $GITHUB_OUTPUT
+
+          # 校验 libs/manifest.txt 是否打包成功
+          MANIFEST_COUNT=0
+          if command -v unzip >/dev/null 2>&1; then
+            MANIFEST_COUNT=$(unzip -p "$MAIN_JAR" libs/manifest.txt 2>/dev/null | grep -v '^#' | grep -v '^$' | wc -l)
+          fi
+          echo "manifest_count=$MANIFEST_COUNT" >> $GITHUB_OUTPUT
+
+          ls -la release-assets/
+
+      - name: 生成模组清单表（从 scripts/libs-list.txt）
+        id: modlist
+        run: |
+          set -e
+          if [ ! -f "scripts/libs-list.txt" ]; then
+            echo "⚠️ scripts/libs-list.txt 不存在，模组清单将为空"
+            echo "table=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          TOTAL=$(grep -c "." scripts/libs-list.txt || echo 0)
+
+          # 生成 markdown 表格
+          {
+            echo "| # | 模组名称（中文） | 文件名 |"
+            echo "|---|------------------|--------|"
+            i=0
+            while IFS= read -r line; do
+              [ -z "$line" ] && continue
+              i=$((i+1))
+              # 格式：[中文名] filename.jar
+              if [[ "$line" =~ ^\[(.+)\][[:space:]]*(.+)$ ]]; then
+                NAME="${BASH_REMATCH[1]}"
+                FILE="${BASH_REMATCH[2]}"
+              else
+                NAME="-"
+                FILE="$line"
+              fi
+              echo "| $i | $NAME | \`$FILE\` |"
+            done < scripts/libs-list.txt
+          } > modlist-table.md
+
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "✅ 生成模组清单表：$TOTAL 条目"
+
+      - name: 生成 Release 说明
+        id: notes
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          TAG="${{ steps.ver.outputs.tag }}"
+          MAIN_JAR="${{ steps.artifacts.outputs.main_jar }}"
+          SIZE_MB="${{ steps.artifacts.outputs.main_size_mb }}"
+          MANIFEST_COUNT="${{ steps.artifacts.outputs.manifest_count }}"
+          MOD_COUNT="${{ steps.modlist.outputs.total }}"
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          COMMIT_DATE=$(git log -1 --format='%cd' --date=format:'%Y-%m-%d %H:%M:%S')
+
+          cat > release-notes.md <<EOF
+          # 🧟 七零喵僵尸末日生存 Mod v${VERSION}
+
+          **构建时间**：${COMMIT_DATE}（UTC+8 时区请加 8 小时）
+          **提交哈希**：\`${SHA_SHORT}\`
+          **Release 标签**：\`${TAG}\`
+
+          ---
+
+          ## ⚠️ 重要说明：模组需自行下载
+
+          由于 GitHub 单文件 100MB 限制，**本 Release 提供的 JAR 不包含 100+ 内嵌依赖模组**（仅包含 qlmzombie 核心代码）。
+
+          完整运行需要将以下 **${MOD_COUNT} 个模组** 下载到客户端 \`mods/\` 目录：
+
+          - **方式 A（推荐）**：将本 JAR 放入已配好 mods 的整合包目录即可，模组首次启动会自动检测并提示
+          - **方式 B（手动）**：按下方模组清单表逐个下载（CurseForge / Modrinth），与本 JAR 一并放入 \`mods/\` 目录
+          - **方式 C（服务端）**：服务端使用 \`SeverMod/\` 部署脚本，会自动从 \`src/main/libs/\` 同步全部依赖到 mods 目录
+
+          > 💡 服务端管理员：参考 [\`SeverMod/deploy.sh\`](SeverMod/deploy.sh) 一键部署，自动同步所有依赖模组。
+
+          ---
+
+          ## 📦 下载文件
+
+          | 文件 | 说明 | 大小 |
+          |------|------|------|
+          | \`${MAIN_JAR}\` | 主模组 JAR（核心代码，无内嵌依赖） | ${SIZE_MB} MB |
+
+          - **SHA-256 校验**：见下方 Assets 列表中各文件的 checksum
+          - **运行环境**：Minecraft 1.20.1 + Forge 47.4.22 + Java 17
+          - **白名单清单**：JAR 内 \`libs/manifest.txt\`（${MANIFEST_COUNT} 条目，由构建时自动生成）
+
+          ---
+
+          ## 📋 模组清单表（${MOD_COUNT} 个，需自行下载）
+
+          EOF
+
+          # 追加模组清单表
+          cat modlist-table.md >> release-notes.md
+
+          cat >> release-notes.md <<EOF
+
+          ---
+
+          ## 🚀 安装步骤
+
+          1. **下载并安装 Minecraft 1.20.1**（正版或离线账号均可）
+          2. **安装 Forge 47.4.22**：https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html
+          3. **下载本 Release 的 JAR** 文件，放入 \`.minecraft/mods/\` 目录
+          4. **按上方模组清单表下载所有依赖模组**，一并放入 \`mods/\` 目录
+          5. **启动游戏**，首次进入世界会看到七零喵公告，说明安装成功
+
+          ## 🔧 服务端部署
+
+          服务端一键部署请参考 [\`SeverMod/README.md\`](SeverMod/README.md)：
+
+          \`\`\`bash
+          # Docker 部署（推荐）
+          cd SeverMod && ./deploy.sh docker
+
+          # Java 原生部署
+          cd SeverMod && ./deploy.sh java
+          \`\`\`
+
+          ## 📝 更新日志
+
+          详见 [README.md - 更新说明](https://github.com/SevenZeroMeowTeam/qlmzombie/blob/dev/README.md#-更新说明)
+
+          ## 🐛 问题反馈
+
+          - 提交 Issue：https://github.com/SevenZeroMeowTeam/qlmzombie/issues
+          - 请附上 \`logs/latest.log\` 或崩溃报告 \`crash-reports/crash-*.txt\`
+          EOF
+
+          echo "✅ Release 说明已生成"
+          wc -l release-notes.md
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: "七零喵僵尸末日生存 Mod v${{ steps.ver.outputs.version }}"
+          body_path: release-notes.md
+          prerelease: ${{ steps.ver.outputs.prerelease == 'true' }}
+          files: release-assets/*.jar
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+          make_latest: ${{ steps.ver.outputs.prerelease == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release 摘要
+        run: |
+          echo "## 🚀 Release 发布完成" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----|" >> $GITHUB_STEP_SUMMARY
+          echo "| 版本 | ${{ steps.ver.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 标签 | ${{ steps.ver.outputs.tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 预发布 | ${{ steps.ver.outputs.prerelease }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 主 JAR | ${{ steps.artifacts.outputs.main_jar }} (${{ steps.artifacts.outputs.main_size_mb }} MB) |" >> $GITHUB_STEP_SUMMARY
+          echo "| manifest 条目 | ${{ steps.artifacts.outputs.manifest_count }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 模组清单 | ${{ steps.modlist.outputs.total }} 个 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 Release 链接：https://github.com/${{ github.repository }}/releases/tag/${{ steps.ver.outputs.tag }}" >> $GITHUB_STEP_SUMMARY

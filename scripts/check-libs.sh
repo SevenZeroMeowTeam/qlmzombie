@@ -1,6 +1,7 @@
 #!/bin/bash
 # 依赖检查脚本 (Bash)
 # 检查 src/main/libs/ 目录是否包含所有必需的依赖 jar 文件
+# libs-list.txt 每行格式：[中文名] filename.jar  或  filename.jar
 # 用法: ./scripts/check-libs.sh
 
 set -e
@@ -21,9 +22,17 @@ echo "========================================"
 echo "  依赖检查 - 七零喵僵尸末日生存 Mod"
 echo "========================================"
 
-while IFS= read -r jar; do
-    [ -z "$jar" ] && continue
+while IFS= read -r line; do
+    # 跳过空行和注释
+    [ -z "$line" ] && continue
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+
     total=$((total + 1))
+
+    # libs-list.txt 每行就是完整文件名（可能含 [中文名] 前缀）
+    # 实际文件名与列表行完全一致，直接匹配
+    jar="$line"
+
     if [ -f "$LIBS_DIR/$jar" ]; then
         found=$((found + 1))
     else

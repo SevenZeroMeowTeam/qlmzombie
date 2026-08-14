@@ -8,10 +8,12 @@
 [拆解台] uncrafting_table-1.20.1-forge-1.1.0.jar
 [车万女仆] touhoulittlemaid-1.5.3-forge+mc1.20.1.jar
 [车万女仆附属：爱恋] touhou-maid-affection-1.7.2.2.jar
+[吃不停] AlwaysEat-5.2.jar
+[多态合成] polymorph-forge-0.49.10+1.20.1.jar
 [附魔描述] EnchantmentDescriptions-Forge-1.20.1-17.1.21.jar
 [精妙背包] sophisticatedbackpacks-1.20.1-3.24.59.1960.jar
 [精妙核心] sophisticatedcore-1.20.1-1.3.65.2126.jar
-[口渴] ThirstWasTaken-1.20.1-1.4.0.jar
+[精致存储] refinedstorage-1.12.4.jar
 [夸克-奇思妙想] QuarkOddities-1.20.1.jar
 [旅人标题] TravelersTitles-1.20-Forge-4.0.2.jar
 [旅行地图] journeymap-1.20.1-5.10.3-forge.jar
@@ -22,6 +24,7 @@
 [实体模型特性] entity_model_features-3.2.4-1.20.1-forge.jar
 [实体纹理特性] entity_texture_features_1.20.1-forge-7.1.jar
 [是，史蒂夫模型] ysm-2.6.5-forge+mc1.20.1-release.jar
+[舒适用品] comforts-forge-6.4.0+1.20.1.jar
 [输入法冲突修复] IMBlocker-5.5.4-forge+1.17-1.20.4.jar
 [斯巴达的武器] SpartanWeaponry-1.20.1-forge-3.2.1-all.jar
 [斯巴达之盾] SpartanShields-1.20.1-forge-3.1.1.jar
@@ -29,9 +32,11 @@
 [铁氧体磁芯] ferritecore-6.0.1-forge.jar
 [玩家救援] PlayerRevive_FORGE_v2.0.31_mc1.20.1.jar
 [物品物理掉落] ItemPhysic_FORGE_v1.8.13_mc1.20.1.jar
+[犀牛] rhino-forge-2001.2.3-build.10.jar
 [现代化修复] modernfix-forge-5.27.58+mc1.20.1.jar
 [星光] starlight-1.1.2+forge.1cda73c.jar
 [意志坚定] ToughAsNails-forge-1.20.1-9.2.0.171.jar
+[应用能源2] appliedenergistics2-forge-15.4.10.jar
 [真正的力量] True_POWER-1.20.1-1.1.8.jar
 [卓越前线] superbwarfare-0.8.9-final-mc1.20.1-6effe4385-all.jar
 3d-armor-0.9.4.1-mod.jar
@@ -49,6 +54,11 @@ cloth-config-11.1.136-forge.jar
 cofh_core-1.20.1-11.0.2.56.jar
 collective-1.20.1-8.39.jar
 Corgilib-Forge-1.20.1-4.0.3.4.jar
+crafting-dead-core-1.20.1-1.8.1.homebaked.jar
+crafting-dead-core-1.20.1-1.8.1.homebaked-all.jar
+crafting-dead-decoration-1.20.1-1.0.2.homebaked.jar
+crafting-dead-survival-1.20.1-1.2.1.homebaked.jar
+crafting-dead-worldguard-1.20.1-0.0.2.homebaked.jar
 create-1.20.1-6.0.8.jar
 CreativeCore_FORGE_v2.12.39_mc1.20.1.jar
 curios-forge-5.14.1+1.20.1.jar
@@ -91,10 +101,11 @@ player2npc-forge-1.20.1-1.4.0.jar
 player-animation-lib-forge-1.0.2-rc1+1.20.jar
 playerengine-forge-1.20.1-1.4.0.jar
 pneumaticcraft-repressurized-6.0.22+mc1.20.1.jar
+polyeng-forge-0.1.1-1.20.1.jar
 PuzzlesLib-v8.1.33-1.20.1-Forge.jar
 Quark-4.0-462.jar
+refinedpolymorph-0.1.1-1.20.1.jar
 refinedstorage-1.12.4.jar
-rhino-forge-2001.2.3-build.10.jar
 SimpleStorageNetwork-1.20.1-1.11.3.jar
 sodiumoptionsapi-forge-1.0.10-1.20.1.jar
 spartantoolkit-1.20.1-1.6.1.jar
