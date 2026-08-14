@@ -2,7 +2,6 @@ name: CI - 七零喵僵尸末日生存 Mod
 
 on:
   push:
-    branches: ["*", "**"]
   pull_request:
     branches: [main, dev]
   workflow_dispatch:
