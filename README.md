@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build25-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build26-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD25%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD26%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build25` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build25.jar` |
+| **当前版本** | `3.0.0.beta.build26` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build26.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -390,7 +390,7 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build25.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
+成功构建后，`qlmzombie-3.0.0.beta.build26.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
 
 ---
 
@@ -601,8 +601,8 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build25.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
-└── qlmzombie-3.0.0.beta.build25-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build26.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
+└── qlmzombie-3.0.0.beta.build26-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -612,7 +612,7 @@ D:\mcmod\build\libs\
 ### 方法 A：玩家正常使用 (推荐)
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
-2. 将 `qlmzombie-3.0.0.beta.build25.jar` 放入 `.minecraft/mods/` 目录
+2. 将 `qlmzombie-3.0.0.beta.build26.jar` 放入 `.minecraft/mods/` 目录
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -683,7 +683,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build25` (精确到 build)
+1. **版本号**：`3.0.0.beta.build26` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -763,6 +763,46 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build26 (2026-08-14)
+
+#### 修复：服务端 ExceptionInInitializerError 崩溃
+
+**问题根因**：专用服务端启动时 `qlmzombie` mod 加载失败，报 `java.lang.ExceptionInInitializerError: null`。
+
+通过 `javap` 分析编译后的 class 文件，定位到 [NonConflictKeysFeature.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/feature/NonConflictKeysFeature.kt)：
+
+```kotlin
+// 修复前：object 初始化块中直接创建 KeyMapping（客户端类）
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+object NonConflictKeysFeature {
+    private val keyMappings = listOf(
+        KeyMapping("key.qlmzombie.open_qlm_menu", GLFW.GLFW_KEY_R, "category.qlmzombie.main"),
+        // ...
+    )
+}
+```
+
+崩溃链：
+1. `@Mod.EventBusSubscriber` 缺少 `Dist.CLIENT` → Forge 在服务端加载该类
+2. Kotlin `object` 类加载时初始化 `keyMappings` → 创建 `KeyMapping` 实例
+3. `KeyMapping` = `net.minecraft.client.KeyMapping`（客户端独有）→ 服务端不存在
+4. `NoClassDefFoundError` → `ExceptionInInitializerError` → mod 加载失败
+
+**修复方案（双重保险）**：
+
+| 改动 | 文件 | 说明 |
+|:-----|:-----|:-----|
+| 添加 `Dist.CLIENT` | [NonConflictKeysFeature.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/feature/NonConflictKeysFeature.kt#L11-L15) | `@Mod.EventBusSubscriber` 添加 `value = [Dist.CLIENT]`，Forge 不在服务端加载此类 |
+| 延迟初始化 | 同上 [#L22-L45](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/feature/NonConflictKeysFeature.kt#L22-L45) | `keyMappings` 改为 `by lazy`，即使类被意外加载也不会触发 `KeyMapping` 创建 |
+
+**排查方法**：使用 `javap -c -p` 扫描编译输出的非 client 包 class 文件，查找引用 `net/minecraft/client/` 的类。
+
+#### 版本号同步
+
+| 改动 | 文件 |
+|:-----|:-----|
+| `3.0.0.beta.build25` → `build26` | [gradle.properties](file:///D:/mcmod/gradle.properties)、[QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt)、[README.md](file:///D:/mcmod/README.md) |
 
 ### 3.0.0.beta.build25 (2026-08-14)
 
@@ -1913,4 +1953,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build24` · 构建日期：2026-08-14 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build26` · 构建日期：2026-08-14 · Minecraft 1.20.1
