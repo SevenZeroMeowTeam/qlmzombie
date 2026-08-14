@@ -183,3 +183,124 @@ jobs:
             echo "$JAR_FILES" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           fi
+
+  # ==================== Gradle 构建 JAR ====================
+  build:
+    name: 构建 Mod JAR
+    runs-on: ubuntu-latest
+    needs: [version-check, structure-check]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: 准备 src/main/libs（可选）
+        id: prepare_libs
+        run: |
+          echo "## 📦 依赖打包准备" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          LIBS_COUNT=$(find src/main/libs -maxdepth 1 -name "*.jar" 2>/dev/null | wc -l)
+          echo "仓库内 src/main/libs 的 JAR 数量: $LIBS_COUNT" >> $GITHUB_STEP_SUMMARY
+          if [ "$LIBS_COUNT" -eq 0 ]; then
+            echo "⚠️ CI 环境未检测到 src/main/libs/*.jar（因 .gitignore 排除，属正常）" >> $GITHUB_STEP_SUMMARY
+            echo "→ 生成的 JAR 不内嵌 100+ 依赖模组，仅包含 qlmzombie 核心代码" >> $GITHUB_STEP_SUMMARY
+            echo "→ 白名单 manifest.txt 会是 0 条，但构建仍会成功" >> $GITHUB_STEP_SUMMARY
+            echo "libs_present=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ 检测到 $LIBS_COUNT 个依赖 JAR，将生成完整内嵌版本" >> $GITHUB_STEP_SUMMARY
+            echo "libs_present=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Gradle Build
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
+          cache-encryption-key: "${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}"
+          cache-read-only: false
+          arguments: >
+            build
+            -x test
+            --no-daemon
+            --warning-mode=summary
+            -Dorg.gradle.jvmargs=-Xmx4g
+            -Dfile.encoding=UTF-8
+
+      - name: 收集构建产物信息
+        id: artifact_info
+        run: |
+          echo "## 🏗️ 构建结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----|" >> $GITHUB_STEP_SUMMARY
+          MOD_VERSION=$(grep "^mod_version=" gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          echo "| 版本 | $MOD_VERSION |" >> $GITHUB_STEP_SUMMARY
+
+          JAR_DIR=build/libs
+          mkdir -p "$JAR_DIR"
+          JARS=$(ls -1 "$JAR_DIR"/*.jar 2>/dev/null || true)
+          if [ -z "$JARS" ]; then
+            echo "❌ 没有找到构建产物" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          TOTAL_SIZE=0
+          for j in $JARS; do
+            SIZE=$(stat -c%s "$j" 2>/dev/null || stat -f%z "$j" 2>/dev/null || echo 0)
+            SIZE_MB=$(awk "BEGIN {printf \"%.2f\", $SIZE/1048576}")
+            TOTAL_SIZE=$((TOTAL_SIZE + SIZE))
+            echo "| 产物 | $(basename $j) · ${SIZE_MB}MB |" >> $GITHUB_STEP_SUMMARY
+          done
+          TOTAL_MB=$(awk "BEGIN {printf \"%.2f\", $TOTAL_SIZE/1048576}")
+          echo "| 总计 | ${TOTAL_MB}MB |" >> $GITHUB_STEP_SUMMARY
+
+          # 检查 manifest 是否包含在 JAR 内 libs/manifest.txt
+          MAIN_JAR=$(ls -1t "$JAR_DIR"/qlmzombie-*.jar 2>/dev/null | grep -v source | grep -v api | head -1)
+          if [ -n "$MAIN_JAR" ] && command -v unzip >/dev/null 2>&1; then
+            MANIFEST=$(unzip -l "$MAIN_JAR" 2>/dev/null | grep "libs/manifest.txt" | head -1 | awk '{print $NF}')
+            if [ -n "$MANIFEST" ]; then
+              MANIFEST_LINES=$(unzip -p "$MAIN_JAR" libs/manifest.txt 2>/dev/null | grep -v '^#' | grep -v '^$' | wc -l)
+              echo "| libs/manifest.txt 白名单条目 | $MANIFEST_LINES 条 |" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # artifact 名称：qlmzombie-build-版本-短sha
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          echo "artifact_name=qlmzombie-${MOD_VERSION}-${SHA_SHORT}" >> $GITHUB_OUTPUT
+          echo "artifact_path=build/libs" >> $GITHUB_OUTPUT
+          echo "✅ JAR 构建完成：${MOD_VERSION} @ ${SHA_SHORT}" >> $GITHUB_STEP_SUMMARY
+
+      - name: 上传 JAR Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ steps.artifact_info.outputs.artifact_name }}"
+          path: "${{ steps.artifact_info.outputs.artifact_path }}/*.jar"
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: 失败时打印 Gradle 日志
+        if: failure()
+        run: |
+          echo "## ❌ 构建失败日志" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for log in build/reports/problems/problems-report.html build/tmp/*.log; do
+            if [ -f "$log" ]; then
+              echo "### $log" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              tail -n 100 "$log" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          if [ -f "gradle.properties" ]; then
+            echo "### gradle.properties 关键项" >> $GITHUB_STEP_SUMMARY
+            grep -E "mod_version|minecraft_version|forge_version|mappings" gradle.properties >> $GITHUB_STEP_SUMMARY || true
+          fi
