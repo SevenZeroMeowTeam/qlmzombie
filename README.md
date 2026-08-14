@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build27-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build28-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD27%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD28%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build26` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build26.jar` |
+| **当前版本** | `3.0.0.beta.build28` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build28.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -612,7 +612,7 @@ D:\mcmod\build\libs\
 ### 方法 A：玩家正常使用 (推荐)
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
-2. 将 `qlmzombie-3.0.0.beta.build27.jar` 放入 `.minecraft/mods/` 目录
+2. 将 `qlmzombie-3.0.0.beta.build28.jar` 放入 `.minecraft/mods/` 目录
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -763,6 +763,55 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build28 (2026-08-14)
+
+#### 升级：依赖自动释放 v3（17 条口渴前缀 × 两轮匹配 + 4 级重复保留策略）
+
+**问题根因**（build27 下潜在风险）：
+
+v2 解决了 `[中文名]` 前缀匹配，但 `DEFAULT_DISABLED_PREFIXES` 只有 4 条（`toughasnails` / `thirstwastaken` / `thirstmod` / `thirstcanteen`），未覆盖不规范命名：
+1. `Tough-As-Nails-1.20.1.jar`（连字符）、`tough_as_nails-1.20.jar`（下划线）、`Tough As Nails 模组版.jar`（空格）三种分隔符变体均**不命中** v2 前缀表 → 双重口渴冲突。
+2. 重复检测的保留策略只有 2 级（白名单 → 字母序），字母序"大的保留"遇到 `crafting-dead-core` 残包（短文件名）会误保留残包而覆盖掉完整的 `-all.jar` fat-jar → 依赖缺失。
+3. libs 目录清理审计发现：build27 之后仍残留 `crafting-dead-core` **残包第二份**、以及新生成的 `qlmzombie-3.0.0.beta.build26.jar` 又被误提交回 libs → 需再清理一次。
+
+**修复方案（三端同步）**：
+
+| 层级 | 改动 | 文件 | 说明 |
+|:-----|:-----|:-----|:-----|
+| 禁用前缀表 | `DEFAULT_DISABLED_PREFIXES` 从 4 条 → 17 条 | [ModDependencyHandler.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L49-L76) | 4 大口渴模组家族（ToughAsNails / ThirstWasTaken / ThirstMod / ThirstCanteen）× 4 种常见分隔符（无分隔 / `-` / `_` / 空格），外加 `tough-as` 缩写兜底 |
+| 两轮匹配保险 | `isDefaultDisabled()` 新增分隔符归一化匹配 | [ModDependencyHandler.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L566-L582) | 第一轮标准前缀匹配，第二轮移除 `- _ 空格` 后归一化比较，极端命名（如 `[口渴] Tough As Nails 模组版`）也能命中 |
+| 4 级重复保留 | `detectAndRemoveDuplicates()` / `detectAndResolveConflicts()` 排序优先级升级 | [ModDependencyHandler.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L723-L740)、[#L793-L811](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L793-L811) | ① 白名单 → ② `-all.jar` fat-jar → ③ 文件更大（含内嵌依赖者）→ ④ 字母序，确保 `-all` 一体化包不被残包误覆盖 |
+| 异常保护 | 文件大小比较加 IOException 降级 | 同上两处 | Files.size() 失败时跳过该维度，不因单文件损坏中断整个自动释放流程 |
+
+**命中率验证**（PowerShell 模拟 13 个测试用例 100% 通过）：
+
+| 测试用例 | 期望命中 | 结果 |
+|:---------|:--------:|:----:|
+| `[意志坚定] ToughAsNails-forge-1.20.1-9.2.0.171.jar`（实际存在） | ✅ | OK |
+| `Tough-As-Nails-1.20.1.jar`（连字符） | ✅ | OK |
+| `tough_as_nails-1.20.jar`（下划线） | ✅ | OK |
+| `[口渴] Tough As Nails 模组版 1.20.jar`（空格+中文名） | ✅ | OK |
+| `[口渴] Thirst-Was-Taken-Revived.jar`（另一口渴模组） | ✅ | OK |
+| `thirst canteen-1.18.jar`（空格） | ✅ | OK |
+| `refinedstorage-1.12.4.jar`（非口渴模组） | ❌ | OK（不误伤） |
+
+#### 清理：`src/main/libs` 第二轮深度审计（最终 119 JAR，零重复）
+
+| 删除项 | 原因 |
+|:-------|:-----|
+| `qlmzombie-3.0.0.beta.build26.jar`（424 MB） | 编译产物再次误混入 libs 目录，JarInJar 递归嵌入 |
+| `refinedstorage-1.12.4.jar`（裸名版，哈希与 `[精致存储]` 版 100% 相同） | 与中文前缀版完全重复 |
+| `crafting-dead-core-1.20.1-1.9.1.homebaked.jar`（残包非 `-all` 版） | 保留 `-all.jar` fat-jar（含完整内嵌依赖） |
+
+最终状态（已验证）：✅ **119 个 JAR / 448.3 MB / 零哈希完全重复 / 零 baseName 重复 / 零自身编译产物残留**
+
+#### 游戏公告升级
+
+| 改动 | 文件 |
+|:-----|:-----|
+| 公告文 v3 | [QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt#L196) |
+| 版本号 `build27` → `build28` | [gradle.properties](file:///D:/mcmod/gradle.properties)、[QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt#L228)、[README.md](file:///D:/mcmod/README.md)、`scripts/libs-list.txt` |
 
 ### 3.0.0.beta.build27 (2026-08-14)
 
@@ -1996,4 +2045,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build27` · 构建日期：2026-08-14 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build28` · 构建日期：2026-08-14 · Minecraft 1.20.1

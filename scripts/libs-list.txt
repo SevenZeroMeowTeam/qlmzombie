@@ -54,10 +54,10 @@ cloth-config-11.1.136-forge.jar
 cofh_core-1.20.1-11.0.2.56.jar
 collective-1.20.1-8.39.jar
 Corgilib-Forge-1.20.1-4.0.3.4.jar
-crafting-dead-core-1.20.1-1.9.0.homebaked-all.jar
-crafting-dead-decoration-1.20.1-1.0.3.homebaked.jar
-crafting-dead-survival-1.20.1-1.2.2.homebaked.jar
-crafting-dead-worldguard-1.20.1-0.0.3.homebaked.jar
+crafting-dead-core-1.20.1-1.9.1.homebaked-all.jar
+crafting-dead-decoration-1.20.1-1.0.4.homebaked.jar
+crafting-dead-survival-1.20.1-1.2.3.homebaked.jar
+crafting-dead-worldguard-1.20.1-0.0.4.homebaked.jar
 create-1.20.1-6.0.8.jar
 CreativeCore_FORGE_v2.12.39_mc1.20.1.jar
 curios-forge-5.14.1+1.20.1.jar

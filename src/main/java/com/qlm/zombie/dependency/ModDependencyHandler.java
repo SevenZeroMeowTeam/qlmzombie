@@ -48,14 +48,31 @@ public class ModDependencyHandler {
 
     /**
      * 已知问题模组前缀（精确前缀匹配，非模糊关键字）。
-     * 仅 ToughAsNails / ThirstWasTaken 系列，因为它们与项目"口渴"系统冲突。
+     * 覆盖"口渴/生命管理"系列冲突模组，所有常见分隔符变体（连字符/下划线/无分隔/空格）均列出，
+     * 避免 {@code [中文名] Tough As Nails-...} 等不规范命名绕过匹配。
      * 用户可手动启用（手动启用后会被加入 tracker，不再被自动禁用）。
      */
     private static final List<String> DEFAULT_DISABLED_PREFIXES = Collections.unmodifiableList(Arrays.asList(
+            // ToughAsNails 常见变体（含连字符、下划线、空格、缩写）
             "toughasnails",
+            "tough-as-nails",
+            "tough_as_nails",
+            "tough as nails",
+            "tough-as",
+            // ThirstWasTaken 常见变体
             "thirstwastaken",
+            "thirst-was-taken",
+            "thirst_was_taken",
+            "thirst was taken",
+            // ThirstMod / ThirstCanteen 系列（全部变体）
             "thirstmod",
-            "thirstcanteen"
+            "thirst-mod",
+            "thirst_mod",
+            "thirst mod",
+            "thirstcanteen",
+            "thirst-canteen",
+            "thirst_canteen",
+            "thirst canteen"
     ));
 
     private static int releasedCount;
@@ -448,13 +465,27 @@ public class ModDependencyHandler {
                 if (entry.getValue().size() <= 1) continue;
 
                 List<Path> dups = entry.getValue();
-                // 排序：白名单优先，然后按文件名排序
+                // 排序优先级（从高到低）：
+                // 1. 在白名单中（精准白名单，ModDependencyHandler 自身释放）
+                // 2. 文件名以 "-all.jar" 结尾（fat-jar / 一体化打包，优先于残包）
+                // 3. 文件大小更大（通常 fat-jar 更大）
+                // 4. 按文件名做稳定排序（字母序回退，保证结果确定）
                 dups.sort((a, b) -> {
                     String aName = a.getFileName().toString().toLowerCase(Locale.ROOT);
                     String bName = b.getFileName().toString().toLowerCase(Locale.ROOT);
                     boolean aWhite = whiteList.contains(aName);
                     boolean bWhite = whiteList.contains(bName);
                     if (aWhite != bWhite) return aWhite ? -1 : 1;
+                    boolean aAll = aName.endsWith("-all.jar");
+                    boolean bAll = bName.endsWith("-all.jar");
+                    if (aAll != bAll) return aAll ? -1 : 1;
+                    try {
+                        long aSize = Files.size(a);
+                        long bSize = Files.size(b);
+                        if (aSize != bSize) return Long.compare(bSize, aSize); // 大的在前
+                    } catch (IOException ignored) {
+                        // 读取失败时跳过大小比较
+                    }
                     return aName.compareTo(bName);
                 });
 
@@ -550,8 +581,16 @@ public class ModDependencyHandler {
         // 先剥离 [中文名] 前缀，再检查前缀匹配
         // 例如 "[意志坚定] ToughAsNails-1.20.1-9.2.0.171.jar" → "toughasnails-..."
         String stripped = stripBracketPrefix(fileName);
+        // 第一轮：标准前缀直接匹配（命中快，最常见场景）
         for (String prefix : DEFAULT_DISABLED_PREFIXES) {
             if (stripped.startsWith(prefix)) return true;
+        }
+        // 第二轮（保险）：移除 - _ 空格三种分隔符后再做精确前缀匹配，
+        // 对付 "tough-as nails_mod" 这类分隔符混乱的极端文件名。
+        String normalized = stripped.replace("-", "").replace("_", "").replace(" ", "");
+        for (String rawPrefix : DEFAULT_DISABLED_PREFIXES) {
+            String normPrefix = rawPrefix.replace("-", "").replace("_", "").replace(" ", "");
+            if (!normPrefix.isEmpty() && normalized.startsWith(normPrefix)) return true;
         }
         return false;
     }
@@ -751,12 +790,22 @@ public class ModDependencyHandler {
                 if (entry.getValue().size() > 1) {
                     hasDuplicates = true;
                     List<Path> dups = entry.getValue();
+                    // 同 detectAndRemoveDuplicates：白名单 → -all fat-jar → 更大文件 → 字母序
                     dups.sort((a, b) -> {
                         String aName = a.getFileName().toString().toLowerCase(Locale.ROOT);
                         String bName = b.getFileName().toString().toLowerCase(Locale.ROOT);
                         boolean aWhite = whiteList.contains(aName);
                         boolean bWhite = whiteList.contains(bName);
                         if (aWhite != bWhite) return aWhite ? -1 : 1;
+                        boolean aAll = aName.endsWith("-all.jar");
+                        boolean bAll = bName.endsWith("-all.jar");
+                        if (aAll != bAll) return aAll ? -1 : 1;
+                        try {
+                            long aSize = Files.size(a);
+                            long bSize = Files.size(b);
+                            if (aSize != bSize) return Long.compare(bSize, aSize);
+                        } catch (IOException ignored) {
+                        }
                         return aName.compareTo(bName);
                     });
                     Path keep = dups.get(0);
