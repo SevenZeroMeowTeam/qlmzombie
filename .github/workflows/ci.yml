@@ -226,7 +226,9 @@ jobs:
           cache-read-only: false
 
       - name: Gradle Build
-        run: ./gradlew build -x test --no-daemon --warning-mode=summary -Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test --no-daemon --warning-mode=summary -Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8
 
       - name: 收集构建产物信息
         id: artifact_info

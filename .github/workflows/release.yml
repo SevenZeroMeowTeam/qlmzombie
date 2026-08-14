@@ -83,7 +83,9 @@ jobs:
           gradle-version: wrapper
 
       - name: Gradle Build
-        run: ./gradlew build -x test --no-daemon --warning-mode=summary -Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8
+        run: |
+          chmod +x gradlew
+          ./gradlew build -x test --no-daemon --warning-mode=summary -Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8
 
       - name: 整理构建产物
         id: artifacts
