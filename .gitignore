@@ -9,10 +9,10 @@ bin/
 gradle-app.setting
 !gradle/wrapper/gradle-wrapper.jar
 
-# ==================== 依赖大文件（超过 GitHub 限制） ====================
-# libs 目录下的依赖 jar 文件不纳入版本控制
-# clone 后需手动下载依赖到 src/main/libs/ 目录
-src/main/libs/*.jar
+# ==================== 依赖 jar 文件（已纳入版本控制） ====================
+# src/main/libs/*.jar 现已提交到仓库，clone 后可直接编译
+# 仅排除 .disabled 文件（被禁用的冲突模组）
+src/main/libs/*.disabled
 
 # ==================== IDE 文件 ====================
 .idea/

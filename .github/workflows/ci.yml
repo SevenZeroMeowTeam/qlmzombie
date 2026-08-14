@@ -145,8 +145,7 @@ jobs:
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "> 注意: 依赖 jar 文件未纳入版本控制（超过 GitHub 大小限制）" >> $GITHUB_STEP_SUMMARY
-          echo "> 本地编译前请运行 \`./scripts/check-libs.sh\` 检查依赖完整性" >> $GITHUB_STEP_SUMMARY
+          echo "> 注意: 依赖 jar 文件已纳入版本控制（src/main/libs/*.jar），clone 后可直接编译" >> $GITHUB_STEP_SUMMARY
 
   # ==================== 大文件检查 ====================
   large-file-check:
@@ -177,7 +176,8 @@ jobs:
           if [ -z "$JAR_FILES" ]; then
             echo "✅ 未发现 jar 文件被提交（gradle-wrapper.jar 除外）" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ 发现 jar 文件:" >> $GITHUB_STEP_SUMMARY
+            JAR_COUNT=$(echo "$JAR_FILES" | wc -l)
+            echo "ℹ️ 发现 $JAR_COUNT 个 jar 文件（含 src/main/libs 依赖，已纳入版本控制）" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$JAR_FILES" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -202,7 +202,7 @@ jobs:
           java-version: "17"
           cache: "gradle"
 
-      - name: 准备 src/main/libs（可选）
+      - name: 检查 src/main/libs 依赖
         id: prepare_libs
         run: |
           echo "## 📦 依赖打包准备" >> $GITHUB_STEP_SUMMARY
@@ -210,9 +210,7 @@ jobs:
           LIBS_COUNT=$(find src/main/libs -maxdepth 1 -name "*.jar" 2>/dev/null | wc -l)
           echo "仓库内 src/main/libs 的 JAR 数量: $LIBS_COUNT" >> $GITHUB_STEP_SUMMARY
           if [ "$LIBS_COUNT" -eq 0 ]; then
-            echo "⚠️ CI 环境未检测到 src/main/libs/*.jar（因 .gitignore 排除，属正常）" >> $GITHUB_STEP_SUMMARY
-            echo "→ 生成的 JAR 不内嵌 100+ 依赖模组，仅包含 qlmzombie 核心代码" >> $GITHUB_STEP_SUMMARY
-            echo "→ 白名单 manifest.txt 会是 0 条，但构建仍会成功" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ 未检测到 src/main/libs/*.jar，生成的 JAR 不内嵌依赖模组" >> $GITHUB_STEP_SUMMARY
             echo "libs_present=false" >> $GITHUB_OUTPUT
           else
             echo "✅ 检测到 $LIBS_COUNT 个依赖 JAR，将生成完整内嵌版本" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,22 @@
+# 二进制文件标记 - 不进行 delta 压缩和文本转换
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.dds binary
+
+# 文本文件强制 UTF-8 + LF
+*.kt text eol=lf
+*.java text eol=lf
+*.kts text eol=lf
+*.toml text eol=lf
+*.properties text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.json text eol=lf
+*.mcmeta text eol=lf

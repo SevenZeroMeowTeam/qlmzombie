@@ -3,14 +3,25 @@ package com.qlm.zombie.moon;
 import com.qlm.zombie.QLMZombieMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fml.ModList;
 
+/**
+ * EnhancedCelestials 5.x 兼容层。
+ *
+ * <p>EC 5.0+ 使用 DataAnchor 库的 TrackedDataKey 系统存储月亮数据，
+ * 不再有旧的 EnhancedCelestialsContext 类。本类通过反射适配新 API：</p>
+ *
+ * <ol>
+ *   <li>从 {@code EnhancedCelestials.LUNAR_FORECAST_WORLD_DATA} 获取 TrackedDataKey</li>
+ *   <li>通过 Level mixin 的 {@code dataAnchor$getTrackedData(key)} 获取数据实例</li>
+ *   <li>调用 {@code currentLunarEventHolder()} 获取当前月亮事件 Holder</li>
+ *   <li>通过 {@code Holder.getKey()} 获取 ResourceKey，转为字符串 ID</li>
+ * </ol>
+ */
 public class MoonHelper {
 
     private static final boolean EC_LOADED = ModList.get().isLoaded("enhancedcelestials");
@@ -23,18 +34,68 @@ public class MoonHelper {
     /** 是否已经报告过 EnhancedCelestials API 失败 */
     private static boolean reportedApiFailure = false;
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static ResourceKey LUCKY_MOON_KEY;
+    // 反射缓存：避免每次调用都重新查找类和方法
+    private static Class<?> trackedDataKeyClass;
+    private static java.lang.reflect.Method getTrackedDataMethod;
+    private static Object lunarForecastKey; // EnhancedCelestials.LUNAR_FORECAST_WORLD_DATA
+    private static java.lang.reflect.Method currentLunarEventHolderMethod;
+    private static java.lang.reflect.Method holderGetKeyMethod;
+    private static java.lang.reflect.Method setLunarEventMethod;
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static ResourceKey getLuckyMoonKey() {
-        if (LUCKY_MOON_KEY == null) {
-            ResourceKey registryKey = ResourceKey.createRegistryKey(
-                    ResourceLocation.fromNamespaceAndPath("enhancedcelestials", "lunar_event"));
-            LUCKY_MOON_KEY = ResourceKey.create(registryKey,
-                    ResourceLocation.fromNamespaceAndPath("enhancedcelestials", "lucky_moon"));
+    // DefaultLunarEvents 常量缓存
+    private static Object bloodMoonKey;
+    private static Object harvestMoonKey;
+    private static Object blueMoonKey;
+
+    /** 初始化反射缓存（首次调用时执行） */
+    private static boolean initReflection() {
+        if (lunarForecastKey != null) return true;
+        try {
+            // 1. 获取 TrackedDataKey 类
+            trackedDataKeyClass = Class.forName("dev.corgitaco.dataanchor.data.registry.TrackedDataKey");
+
+            // 2. 获取 EnhancedCelestials.LUNAR_FORECAST_WORLD_DATA 静态字段
+            Class<?> ecClass = Class.forName("dev.corgitaco.enhancedcelestials.EnhancedCelestials");
+            lunarForecastKey = ecClass.getField("LUNAR_FORECAST_WORLD_DATA").get(null);
+
+            // 3. 获取 DefaultLunarEvents 常量
+            Class<?> defaultEventsClass = Class.forName("dev.corgitaco.enhancedcelestials.api.lunarevent.DefaultLunarEvents");
+            bloodMoonKey = defaultEventsClass.getField("BLOOD_MOON").get(null);
+            harvestMoonKey = defaultEventsClass.getField("HARVEST_MOON").get(null);
+            blueMoonKey = defaultEventsClass.getField("BLUE_MOON").get(null);
+
+            return true;
+        } catch (Exception e) {
+            QLMZombieMod.LOGGER.error("[QLM Zombie] EnhancedCelestials 反射初始化失败", e);
+            return false;
         }
-        return LUCKY_MOON_KEY;
+    }
+
+    /**
+     * 从 ServerLevel 获取 EnhancedCelestialsLunarForecastWorldData 实例。
+     * Level 通过 DataAnchor 的 mixin 实现了 TrackedDataContainer 接口，
+     * 通过 dataAnchor$getTrackedData(key) 方法获取数据。
+     */
+    private static Object getLunarForecastData(ServerLevel level) {
+        try {
+            if (!initReflection()) return null;
+
+            // 查找 dataAnchor$getTrackedData 方法（mixin 注入到 Level 类）
+            if (getTrackedDataMethod == null) {
+                getTrackedDataMethod = level.getClass().getMethod("dataAnchor$getTrackedData", trackedDataKeyClass);
+            }
+            Object optional = getTrackedDataMethod.invoke(level, lunarForecastKey);
+            if (optional == null) return null;
+
+            // Optional.orElse(null)
+            java.lang.reflect.Method orElse = optional.getClass().getMethod("orElse", Object.class);
+            return orElse.invoke(optional, (Object) null);
+        } catch (Exception e) {
+            if (!reportedApiFailure) {
+                QLMZombieMod.LOGGER.warn("[QLM Zombie] getLunarForecastData failed: {}", e.getMessage());
+            }
+            return null;
+        }
     }
 
     public static boolean forceBloodMoon(ServerLevel level) {
@@ -42,23 +103,7 @@ public class MoonHelper {
             QLMZombieMod.LOGGER.warn("[QLM Zombie] EnhancedCelestials 未加载，无法设置血月");
             return false;
         }
-        try {
-            Class<?> defaultEvents = Class.forName("dev.corgitaco.enhancedcelestials.api.lunarevent.DefaultLunarEvents");
-            java.lang.reflect.Field bloodMoonField = defaultEvents.getField("BLOOD_MOON");
-            Object bloodMoon = bloodMoonField.get(null);
-            return setLunarEvent(level, bloodMoon);
-        } catch (Exception e) {
-            QLMZombieMod.LOGGER.error("[QLM Zombie] forceBloodMoon failed", e);
-            return false;
-        }
-    }
-
-    public static boolean forceLuckyMoon(ServerLevel level) {
-        if (!EC_LOADED) {
-            QLMZombieMod.LOGGER.warn("[QLM Zombie] EnhancedCelestials 未加载，无法设置幸运之月");
-            return false;
-        }
-        return setLunarEvent(level, getLuckyMoonKey());
+        return setLunarEvent(level, bloodMoonKey);
     }
 
     public static boolean forceHarvestMoon(ServerLevel level) {
@@ -66,15 +111,7 @@ public class MoonHelper {
             QLMZombieMod.LOGGER.warn("[QLM Zombie] EnhancedCelestials 未加载，无法设置丰收之月");
             return false;
         }
-        try {
-            Class<?> defaultEvents = Class.forName("dev.corgitaco.enhancedcelestials.api.lunarevent.DefaultLunarEvents");
-            java.lang.reflect.Field harvestMoonField = defaultEvents.getField("HARVEST_MOON");
-            Object harvestMoon = harvestMoonField.get(null);
-            return setLunarEvent(level, harvestMoon);
-        } catch (Exception e) {
-            QLMZombieMod.LOGGER.error("[QLM Zombie] forceHarvestMoon failed", e);
-            return false;
-        }
+        return setLunarEvent(level, harvestMoonKey);
     }
 
     public static boolean forceBlueMoon(ServerLevel level) {
@@ -82,22 +119,32 @@ public class MoonHelper {
             QLMZombieMod.LOGGER.warn("[QLM Zombie] EnhancedCelestials 未加载，无法设置蓝月");
             return false;
         }
-        return false;
+        return setLunarEvent(level, blueMoonKey);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static boolean setLunarEvent(ServerLevel level, Object lunarEvent) {
-        if (!EC_LOADED) return false;
+    public static boolean forceLuckyMoon(ServerLevel level) {
+        // EnhancedCelestials 5.x 中没有 "lucky_moon"，使用 BLUE_MOON 作为替代
+        if (!EC_LOADED) {
+            QLMZombieMod.LOGGER.warn("[QLM Zombie] EnhancedCelestials 未加载，无法设置幸运之月");
+            return false;
+        }
+        return setLunarEvent(level, blueMoonKey);
+    }
+
+    /**
+     * 设置月亮事件。
+     * 调用 EnhancedCelestialsLunarForecastWorldData.setLunarEvent(ResourceKey<LunarEvent>)
+     */
+    private static boolean setLunarEvent(ServerLevel level, Object lunarEventKey) {
+        if (!EC_LOADED || lunarEventKey == null) return false;
         try {
-            Class<?> lunarUtil = Class.forName("dev.corgitaco.enhancedcelestials.core.EnhancedCelestialsContext");
-            java.lang.reflect.Method getContext = lunarUtil.getMethod("get", Level.class);
-            Object context = getContext.invoke(null, level);
-            if (context == null) return false;
-            java.lang.reflect.Method getData = context.getClass().getMethod("getLunarData");
-            Object data = getData.invoke(context);
+            Object data = getLunarForecastData(level);
             if (data == null) return false;
-            java.lang.reflect.Method setEvent = data.getClass().getMethod("setLunarEvent", ResourceKey.class);
-            setEvent.invoke(data, lunarEvent);
+
+            if (setLunarEventMethod == null) {
+                setLunarEventMethod = data.getClass().getMethod("setLunarEvent", ResourceKey.class);
+            }
+            setLunarEventMethod.invoke(data, lunarEventKey);
             return true;
         } catch (Exception e) {
             QLMZombieMod.LOGGER.error("[QLM Zombie] setLunarEvent failed", e);
@@ -105,6 +152,10 @@ public class MoonHelper {
         }
     }
 
+    /**
+     * 获取当前月亮事件 ID。
+     * 返回格式如 "enhancedcelestials:blood_moon" 或 "none"。
+     */
     public static String getCurrentMoonId(ServerLevel level) {
         if (!EC_LOADED || level == null) return "none";
 
@@ -115,19 +166,24 @@ public class MoonHelper {
         }
 
         try {
-            Class<?> lunarUtil = Class.forName("dev.corgitaco.enhancedcelestials.core.EnhancedCelestialsContext");
-            java.lang.reflect.Method getContext = lunarUtil.getMethod("get", Level.class);
-            Object context = getContext.invoke(null, level);
-            if (context == null) return "none";
-            java.lang.reflect.Method getData = context.getClass().getMethod("getLunarData");
-            Object data = getData.invoke(context);
+            Object data = getLunarForecastData(level);
             if (data == null) return "none";
-            java.lang.reflect.Method getCurrentEvent = data.getClass().getMethod("getCurrentLunarEvent");
-            Object event = getCurrentEvent.invoke(data);
-            if (event == null) return "none";
-            java.lang.reflect.Method getKey = event.getClass().getMethod("getKey");
-            Object key = getKey.invoke(event);
-            String result = key != null ? key.toString() : "none";
+
+            // 调用 currentLunarEventHolder() 获取 Holder<LunarEvent>
+            if (currentLunarEventHolderMethod == null) {
+                currentLunarEventHolderMethod = data.getClass().getMethod("currentLunarEventHolder");
+            }
+            Object holder = currentLunarEventHolderMethod.invoke(data);
+            if (holder == null) return "none";
+
+            // 调用 Holder.getKey() 获取 ResourceKey<LunarEvent>
+            if (holderGetKeyMethod == null) {
+                holderGetKeyMethod = holder.getClass().getMethod("getKey");
+            }
+            Object resourceKey = holderGetKeyMethod.invoke(holder);
+            if (resourceKey == null) return "none";
+
+            String result = resourceKey.toString();
 
             // 更新缓存
             cachedMoonId = result;
@@ -161,7 +217,8 @@ public class MoonHelper {
     }
 
     public static boolean isLuckyMoon(ServerLevel level) {
-        return level != null && "enhancedcelestials:lucky_moon".equals(getCurrentMoonId(level));
+        // EC 5.x 用 blue_moon 替代 lucky_moon
+        return level != null && "enhancedcelestials:blue_moon".equals(getCurrentMoonId(level));
     }
 
     public static boolean isBloodMoon(ServerLevel level) {
