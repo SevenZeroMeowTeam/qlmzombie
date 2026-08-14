@@ -139,7 +139,10 @@ val generateLibsManifest by tasks.registering {
     outputs.dir(libsManifestDir)
     val libsDir = file("src/main/libs")
     val manifestFile = libsManifestDir.map { it.file("manifest.txt") }
-    inputs.dir(libsDir)
+    // CI 环境可能没有 src/main/libs（.gitignore 排除），用可选方式声明输入
+    if (libsDir.exists()) {
+        inputs.dir(libsDir)
+    }
     doLast {
         val excludes = listOf(
             Regex("(?i)^qlmzombie.*\\.jar$"),

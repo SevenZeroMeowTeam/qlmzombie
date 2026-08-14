@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build24` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build24.jar` |
+| **当前版本** | `3.0.0.beta.build25` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build25.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
