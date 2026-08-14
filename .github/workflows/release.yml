@@ -77,17 +77,13 @@ jobs:
           fi
           echo "prerelease=$PRE" >> $GITHUB_OUTPUT
 
-      - name: Gradle Build
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: wrapper
-          arguments: >
-            build
-            -x test
-            --no-daemon
-            --warning-mode=summary
-            -Dorg.gradle.jvmargs=-Xmx4g
-            -Dfile.encoding=UTF-8
+
+      - name: Gradle Build
+        run: ./gradlew build -x test --no-daemon --warning-mode=summary -Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8
 
       - name: 整理构建产物
         id: artifacts

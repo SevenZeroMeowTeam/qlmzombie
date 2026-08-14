@@ -219,19 +219,14 @@ jobs:
             echo "libs_present=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Gradle Build
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: wrapper
-          cache-encryption-key: "${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}"
           cache-read-only: false
-          arguments: >
-            build
-            -x test
-            --no-daemon
-            --warning-mode=summary
-            -Dorg.gradle.jvmargs=-Xmx4g
-            -Dfile.encoding=UTF-8
+
+      - name: Gradle Build
+        run: ./gradlew build -x test --no-daemon --warning-mode=summary -Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8
 
       - name: 收集构建产物信息
         id: artifact_info
