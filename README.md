@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build26-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build27-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD26%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD27%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -390,7 +390,7 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build26.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
+成功构建后，`qlmzombie-3.0.0.beta.build27.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
 
 ---
 
@@ -612,7 +612,7 @@ D:\mcmod\build\libs\
 ### 方法 A：玩家正常使用 (推荐)
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
-2. 将 `qlmzombie-3.0.0.beta.build26.jar` 放入 `.minecraft/mods/` 目录
+2. 将 `qlmzombie-3.0.0.beta.build27.jar` 放入 `.minecraft/mods/` 目录
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -763,6 +763,49 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build27 (2026-08-14)
+
+#### 重写：依赖自动释放 v2（支持 `[中文名]` 前缀 + 重复文件清理 + 精准禁用）
+
+**问题根因**（build26 以下，多个用户反馈口渴冲突失效、依赖误释放）：
+
+`ModDependencyHandler.java` 和 `build.gradle.kts` 的文件匹配均使用文件名**从头匹配**逻辑，未处理用户自定义的 `[中文名]` 前缀（如 `[意志坚定] ToughAsNails-forge-...jar`），导致：
+1. `[意志坚定] ToughAsNails-forge-1.20.1-9.2.0.171.jar` 不匹配 `startsWith("toughasnails")` → 口渴模组**不会被自动禁用**，与内置 ThirstFeature 双重口渴冲突。
+2. `refinedstorage-1.12.4.jar` 与 `[精致存储] refinedstorage-1.12.4.jar` 视为两个不同模组 → 重复加载报错。
+3. `libs/` 目录中误混入 `qlmzombie-3.0.0.beta.build26.jar`（编译产物，424 MB）→ 打包时 JAR 体积膨胀，若带 `[中文名]` 前缀亦无法被 `shouldSkipEmbeddedJar` 排除。
+
+**修复方案（三端同步）**：
+
+| 层级 | 改动 | 文件 | 说明 |
+|:-----|:-----|:-----|:-----|
+| 运行时匹配 | 新增 `stripBracketPrefix()` 剥离 `[中文名]` | [ModDependencyHandler.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L288-L302) | 先剥离方括号前缀（含去空格小写），再做前缀匹配和去版本 |
+| 禁用判定 | `isDefaultDisabled()` 改用前缀剥离后比较 | 同上 [#L549-L557](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L549-L557) | 带中文前缀的 ToughAsNails / ThirstWasTaken 现在可正确命中 `DEFAULT_DISABLED_PREFIXES` |
+| 重复检测 | `stripVersion()` 先剥离前缀再去版本号 | 同上 [#L559-L569](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L559-L569) | `[精致存储] refinedstorage-…` 和裸 `refinedstorage-…` 返回同一 baseName → 正确识别为重复 |
+| 排除判定 | `shouldSkipEmbeddedJar()` 先剥离前缀匹配 qlmzombie/serveradmin 等 | 同上 [#L274-L286](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L274-L286) | 防止 `[某名] qlmzombie-xxx.jar` 被误打包嵌入 |
+| 构建清单 | `generateLibsManifest` 任务同步添加 `stripBracketPrefix` | [build.gradle.kts](file:///D:/mcmod/build.gradle.kts#L146-L175) | manifest 白名单生成阶段即过滤带前缀的排除项 |
+| 打包排除 | `jar` 任务排除通配加 `*] qlmzombie*` 等前缀变体 | 同上 [#L217-L235](file:///D:/mcmod/build.gradle.kts#L217-L235) | 方括号无法被 `qlmzombie*.jar` glob 覆盖，需追加模式 |
+
+#### 清理：`src/main/libs` 目录去重 + 剔除编译产物
+
+| 删除项 | 原因 | 保留项 |
+|:-------|:-----|:-------|
+| `qlmzombie-3.0.0.beta.build26.jar` (424 MB) | 编译产物非依赖，且 `JarInJar` 递归嵌入会超 1GB | — |
+| `refinedstorage-1.12.4.jar`（裸名版，3223 KB） | 与 `[精致存储] refinedstorage-1.12.4.jar` 重复 | `[精致存储] refinedstorage-1.12.4.jar` |
+| `crafting-dead-core-1.20.1-1.9.0.homebaked.jar`（非 all 版，6587 KB） | `-all.jar` 已包含全部内嵌依赖，裸版为残包 | `crafting-dead-core-1.20.1-1.9.0.homebaked-all.jar` |
+
+清理后：**119 个 JAR，总大小 448.3 MB**（之前 121 个、907 MB）。
+
+#### 配套：`MoonHelper.java` 升级到 EnhancedCelestials 5.x API
+
+（随本次 build 一并提交）
+[MoonHelper.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/moon/MoonHelper.java) 从 EC 4.x `CelestialHolder` 静态字段直接读取，迁移到 EC 5.x `DataAnchor<TrackedDataKey>` 反射机制，适配 5.0.x+ 版本月相读取。
+
+#### 版本号同步
+
+| 改动 | 文件 |
+|:-----|:-----|
+| `3.0.0.beta.build26` → `build27` | [gradle.properties](file:///D:/mcmod/gradle.properties)、[QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt)、[README.md](file:///D:/mcmod/README.md)、`scripts/libs-list.txt` |
 
 ### 3.0.0.beta.build26 (2026-08-14)
 
@@ -1953,4 +1996,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build26` · 构建日期：2026-08-14 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build27` · 构建日期：2026-08-14 · Minecraft 1.20.1

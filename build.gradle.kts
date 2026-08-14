@@ -144,6 +144,18 @@ val generateLibsManifest by tasks.registering {
         inputs.dir(libsDir)
     }
     doLast {
+        // 剥离 [中文名] 前缀后检查排除规则，确保带前缀的文件也能被正确排除
+        // 例如 "[某名] qlmzombie-xxx.jar" 也会被排除
+        fun stripBracketPrefix(name: String): String {
+            val lower = name.lowercase()
+            if (lower.startsWith("[")) {
+                val close = lower.indexOf(']')
+                if (close > 0 && close < lower.length - 1) {
+                    return lower.substring(close + 1).trim()
+                }
+            }
+            return lower
+        }
         val excludes = listOf(
             Regex("(?i)^qlmzombie.*\\.jar$"),
             Regex("(?i)^serveradmin.*\\.jar$"),
@@ -155,9 +167,12 @@ val generateLibsManifest by tasks.registering {
             Regex("(?i)\\[python\\]")
         )
         val jarNames = libsDir.listFiles { f ->
-            f.isFile && f.name.endsWith(".jar") && !f.name.endsWith(".disabled") &&
-                excludes.none { it.containsMatchIn(f.name) }
-        }?.map { it.name } ?: emptyList()
+            f.isFile && f.name.endsWith(".jar") && !f.name.endsWith(".disabled")
+        }?.map { it.name }?.filter { name ->
+            // 先检查原始名称，再检查剥离前缀后的名称
+            val stripped = stripBracketPrefix(name)
+            excludes.none { it.containsMatchIn(name) || it.containsMatchIn(stripped) }
+        } ?: emptyList()
 
         val outDir = manifestFile.get().asFile.parentFile
         outDir.mkdirs()
@@ -203,6 +218,7 @@ tasks.named<Jar>("jar") {
         into("libs")
         include("*.jar")
         exclude("README.txt")
+        // 排除自身编译产物和不需要打包的 JAR
         exclude("qlmzombie*.jar")
         exclude("serveradmin*")
         exclude("player2-*")
@@ -211,6 +227,11 @@ tasks.named<Jar>("jar") {
         exclude("*graal*")
         exclude("*polyglot*")
         exclude("*[Python]*")
+        // 同样排除带 [中文名] 前缀的变体
+        exclude("*] qlmzombie*")
+        exclude("*] serveradmin*")
+        exclude("*] player2-*")
+        exclude("*] vanilla_server*")
     }
 
     // 把生成的 manifest.txt 打包到 mod JAR 内的 libs/manifest.txt

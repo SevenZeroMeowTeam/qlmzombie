@@ -273,15 +273,32 @@ public class ModDependencyHandler {
 
     private static boolean shouldSkipEmbeddedJar(String fileName) {
         String lower = fileName.toLowerCase(Locale.ROOT);
-        if (lower.startsWith("qlmzombie")) return true;
-        if (lower.startsWith("serveradmin")) return true;
-        if (lower.startsWith("player2-")) return true;
-        if (lower.startsWith("vanilla_server")) return true;
+        String stripped = stripBracketPrefix(lower);
+        if (stripped.startsWith("qlmzombie")) return true;
+        if (stripped.startsWith("serveradmin")) return true;
+        if (stripped.startsWith("player2-")) return true;
+        if (stripped.startsWith("vanilla_server")) return true;
         if (lower.contains("jython")) return true;
         if (lower.contains("graal")) return true;
         if (lower.contains("polyglot")) return true;
         if (lower.contains("[python]")) return true;
         return false;
+    }
+
+    /**
+     * 剥离文件名中的 {@code [中文名]} 前缀，返回纯净的文件名。
+     * 例如 {@code "[意志坚定] ToughAsNails-1.20.1-9.2.0.171.jar"} → {@code "toughasnails-1.20.1-9.2.0.171.jar"}
+     * 如果没有方括号前缀，返回原文件名的小写形式。
+     */
+    private static String stripBracketPrefix(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("[")) {
+            int close = lower.indexOf(']');
+            if (close > 0 && close < lower.length() - 1) {
+                return lower.substring(close + 1).trim();
+            }
+        }
+        return lower;
     }
 
     private static Set<String> buildWhiteList(List<EmbeddedJar> embeddedJars) {
@@ -530,15 +547,19 @@ public class ModDependencyHandler {
     }
 
     private static boolean isDefaultDisabled(String fileName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
+        // 先剥离 [中文名] 前缀，再检查前缀匹配
+        // 例如 "[意志坚定] ToughAsNails-1.20.1-9.2.0.171.jar" → "toughasnails-..."
+        String stripped = stripBracketPrefix(fileName);
         for (String prefix : DEFAULT_DISABLED_PREFIXES) {
-            if (lower.startsWith(prefix)) return true;
+            if (stripped.startsWith(prefix)) return true;
         }
         return false;
     }
 
     private static String stripVersion(String fileName) {
-        String name = fileName.toLowerCase(Locale.ROOT);
+        // 先剥离 [中文名] 前缀，使带前缀和不带前缀的同名模组能被识别为重复
+        // 例如 "[精致存储] refinedstorage-1.12.4.jar" 和 "refinedstorage-1.12.4.jar" 都返回 "refinedstorage"
+        String name = stripBracketPrefix(fileName);
         if (name.endsWith(".jar")) {
             name = name.substring(0, name.length() - 4);
         }

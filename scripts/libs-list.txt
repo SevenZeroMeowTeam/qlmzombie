@@ -1,4 +1,4 @@
-[3D 皮肤层] skinlayers3d-forge-1.11.2-mc1.20.1.jar
+﻿[3D 皮肤层] skinlayers3d-forge-1.11.2-mc1.20.1.jar
 [FTB 任务] ftb-quests-forge-2001.4.22.jar
 [FTB 团队] ftb-teams-forge-2001.3.2.jar
 [REI物品管理器] RoughlyEnoughItems-12.1.785-forge.jar
@@ -54,11 +54,10 @@ cloth-config-11.1.136-forge.jar
 cofh_core-1.20.1-11.0.2.56.jar
 collective-1.20.1-8.39.jar
 Corgilib-Forge-1.20.1-4.0.3.4.jar
-crafting-dead-core-1.20.1-1.8.1.homebaked.jar
-crafting-dead-core-1.20.1-1.8.1.homebaked-all.jar
-crafting-dead-decoration-1.20.1-1.0.2.homebaked.jar
-crafting-dead-survival-1.20.1-1.2.1.homebaked.jar
-crafting-dead-worldguard-1.20.1-0.0.2.homebaked.jar
+crafting-dead-core-1.20.1-1.9.0.homebaked-all.jar
+crafting-dead-decoration-1.20.1-1.0.3.homebaked.jar
+crafting-dead-survival-1.20.1-1.2.2.homebaked.jar
+crafting-dead-worldguard-1.20.1-0.0.3.homebaked.jar
 create-1.20.1-6.0.8.jar
 CreativeCore_FORGE_v2.12.39_mc1.20.1.jar
 curios-forge-5.14.1+1.20.1.jar
@@ -105,7 +104,6 @@ polyeng-forge-0.1.1-1.20.1.jar
 PuzzlesLib-v8.1.33-1.20.1-Forge.jar
 Quark-4.0-462.jar
 refinedpolymorph-0.1.1-1.20.1.jar
-refinedstorage-1.12.4.jar
 SimpleStorageNetwork-1.20.1-1.11.3.jar
 sodiumoptionsapi-forge-1.0.10-1.20.1.jar
 spartantoolkit-1.20.1-1.6.1.jar
