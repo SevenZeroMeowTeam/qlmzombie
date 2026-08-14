@@ -1,0 +1,305 @@
+name: CI - 七零喵僵尸末日生存 Mod
+
+on:
+  push:
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+jobs:
+  # ==================== 代码变更检查 ====================
+  notify:
+    name: 变更通知
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 获取变更信息
+        id: changes
+        run: |
+          echo "commit_msg=$(git log -1 --pretty=%s)" >> $GITHUB_OUTPUT
+          echo "author=$(git log -1 --pretty=%an)" >> $GITHUB_OUTPUT
+          echo "files=$(git diff --name-only HEAD~1 HEAD | wc -l)" >> $GITHUB_OUTPUT
+          echo "## 📦 代码变更通知" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 项目 | 内容 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 提交信息 | $(git log -1 --pretty=%s) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 作者 | $(git log -1 --pretty=%an) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 变更文件数 | $(git diff --name-only HEAD~1 HEAD \| wc -l) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 分支 | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 提交哈希 | $(git rev-parse --short HEAD) |" >> $GITHUB_STEP_SUMMARY
+
+  # ==================== 版本号一致性检查 ====================
+  version-check:
+    name: 版本号一致性检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 检查版本号一致性
+        run: |
+          echo "## 🔍 版本号一致性检查" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 从 gradle.properties 读取版本号
+          GRADLE_VERSION=$(grep "^mod_version=" gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          echo "gradle.properties 版本: \`$GRADLE_VERSION\`" >> $GITHUB_STEP_SUMMARY
+
+          # 从 QLMZombieMod.kt 读取版本号
+          KOTLIN_VERSION=$(grep "MOD_VERSION.*=" src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt | grep -o '"[^"]*"' | tr -d '"')
+          echo "QLMZombieMod.kt 版本: \`$KOTLIN_VERSION\`" >> $GITHUB_STEP_SUMMARY
+
+          # 从 README.md 读取版本号
+          README_VERSION=$(grep "当前版本" README.md | grep -o '`[^`]*`' | head -1 | tr -d '`')
+          echo "README.md 版本: \`$README_VERSION\`" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$GRADLE_VERSION" = "$KOTLIN_VERSION" ] && [ "$GRADLE_VERSION" = "$README_VERSION" ]; then
+            echo "✅ 版本号一致: $GRADLE_VERSION" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 版本号不一致!" >> $GITHUB_STEP_SUMMARY
+            echo "| 文件 | 版本号 |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+            echo "| gradle.properties | $GRADLE_VERSION |" >> $GITHUB_STEP_SUMMARY
+            echo "| QLMZombieMod.kt | $KOTLIN_VERSION |" >> $GITHUB_STEP_SUMMARY
+            echo "| README.md | $README_VERSION |" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+  # ==================== 文件结构检查 ====================
+  structure-check:
+    name: 文件结构检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 检查关键文件
+        run: |
+          echo "## 📁 文件结构检查" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 文件 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+
+          files=(
+            "build.gradle.kts"
+            "gradle.properties"
+            "settings.gradle"
+            "README.md"
+            ".gitignore"
+            "src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt"
+            "src/main/resources/META-INF/mods.toml"
+            "src/main/resources/pack.mcmeta"
+          )
+
+          all_ok=true
+          for f in "${files[@]}"; do
+            if [ -f "$f" ]; then
+              echo "| $f | ✅ |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $f | ❌ 缺失 |" >> $GITHUB_STEP_SUMMARY
+              all_ok=false
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$all_ok" = true ]; then
+            echo "✅ 所有关键文件均存在" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 存在缺失文件" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+  # ==================== 依赖列表检查 ====================
+  deps-check:
+    name: 依赖列表检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 检查依赖列表
+        run: |
+          echo "## 📦 依赖列表检查" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ ! -f "scripts/libs-list.txt" ]; then
+            echo "❌ scripts/libs-list.txt 不存在" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          DEP_COUNT=$(grep -c "." scripts/libs-list.txt || echo 0)
+          echo "依赖文件数量: **$DEP_COUNT**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$DEP_COUNT" -gt 0 ]; then
+            echo "✅ 依赖列表完整 ($DEP_COUNT 个依赖)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 依赖列表为空" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 注意: 依赖 jar 文件未纳入版本控制（超过 GitHub 大小限制）" >> $GITHUB_STEP_SUMMARY
+          echo "> 本地编译前请运行 \`./scripts/check-libs.sh\` 检查依赖完整性" >> $GITHUB_STEP_SUMMARY
+
+  # ==================== 大文件检查 ====================
+  large-file-check:
+    name: 大文件检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 检查是否有大文件被提交
+        run: |
+          echo "## 🚫 大文件检查" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          LARGE_FILES=$(find . -not -path './.git/*' -size +50M -type f 2>/dev/null || echo "")
+          JAR_FILES=$(find . -not -path './.git/*' -not -path './gradle/wrapper/*' -name "*.jar" -type f 2>/dev/null || echo "")
+
+          if [ -z "$LARGE_FILES" ]; then
+            echo "✅ 未发现超过 50MB 的大文件" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 发现大文件:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$LARGE_FILES" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -z "$JAR_FILES" ]; then
+            echo "✅ 未发现 jar 文件被提交（gradle-wrapper.jar 除外）" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ 发现 jar 文件:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$JAR_FILES" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ==================== Gradle 构建 JAR ====================
+  build:
+    name: 构建 Mod JAR
+    runs-on: ubuntu-latest
+    needs: [version-check, structure-check]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: 准备 src/main/libs（可选）
+        id: prepare_libs
+        run: |
+          echo "## 📦 依赖打包准备" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          LIBS_COUNT=$(find src/main/libs -maxdepth 1 -name "*.jar" 2>/dev/null | wc -l)
+          echo "仓库内 src/main/libs 的 JAR 数量: $LIBS_COUNT" >> $GITHUB_STEP_SUMMARY
+          if [ "$LIBS_COUNT" -eq 0 ]; then
+            echo "⚠️ CI 环境未检测到 src/main/libs/*.jar（因 .gitignore 排除，属正常）" >> $GITHUB_STEP_SUMMARY
+            echo "→ 生成的 JAR 不内嵌 100+ 依赖模组，仅包含 qlmzombie 核心代码" >> $GITHUB_STEP_SUMMARY
+            echo "→ 白名单 manifest.txt 会是 0 条，但构建仍会成功" >> $GITHUB_STEP_SUMMARY
+            echo "libs_present=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ 检测到 $LIBS_COUNT 个依赖 JAR，将生成完整内嵌版本" >> $GITHUB_STEP_SUMMARY
+            echo "libs_present=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Gradle Build
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
+          cache-encryption-key: "${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}"
+          cache-read-only: false
+          arguments: >
+            build
+            -x test
+            --no-daemon
+            --warning-mode=summary
+            -Dorg.gradle.jvmargs=-Xmx4g
+            -Dfile.encoding=UTF-8
+
+      - name: 收集构建产物信息
+        id: artifact_info
+        run: |
+          echo "## 🏗️ 构建结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----|" >> $GITHUB_STEP_SUMMARY
+          MOD_VERSION=$(grep "^mod_version=" gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          echo "| 版本 | $MOD_VERSION |" >> $GITHUB_STEP_SUMMARY
+
+          JAR_DIR=build/libs
+          mkdir -p "$JAR_DIR"
+          JARS=$(ls -1 "$JAR_DIR"/*.jar 2>/dev/null || true)
+          if [ -z "$JARS" ]; then
+            echo "❌ 没有找到构建产物" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          TOTAL_SIZE=0
+          for j in $JARS; do
+            SIZE=$(stat -c%s "$j" 2>/dev/null || stat -f%z "$j" 2>/dev/null || echo 0)
+            SIZE_MB=$(awk "BEGIN {printf \"%.2f\", $SIZE/1048576}")
+            TOTAL_SIZE=$((TOTAL_SIZE + SIZE))
+            echo "| 产物 | $(basename $j) · ${SIZE_MB}MB |" >> $GITHUB_STEP_SUMMARY
+          done
+          TOTAL_MB=$(awk "BEGIN {printf \"%.2f\", $TOTAL_SIZE/1048576}")
+          echo "| 总计 | ${TOTAL_MB}MB |" >> $GITHUB_STEP_SUMMARY
+
+          # 检查 manifest 是否包含在 JAR 内 libs/manifest.txt
+          MAIN_JAR=$(ls -1t "$JAR_DIR"/qlmzombie-*.jar 2>/dev/null | grep -v source | grep -v api | head -1)
+          if [ -n "$MAIN_JAR" ] && command -v unzip >/dev/null 2>&1; then
+            MANIFEST=$(unzip -l "$MAIN_JAR" 2>/dev/null | grep "libs/manifest.txt" | head -1 | awk '{print $NF}')
+            if [ -n "$MANIFEST" ]; then
+              MANIFEST_LINES=$(unzip -p "$MAIN_JAR" libs/manifest.txt 2>/dev/null | grep -v '^#' | grep -v '^$' | wc -l)
+              echo "| libs/manifest.txt 白名单条目 | $MANIFEST_LINES 条 |" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # artifact 名称：qlmzombie-build-版本-短sha
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          echo "artifact_name=qlmzombie-${MOD_VERSION}-${SHA_SHORT}" >> $GITHUB_OUTPUT
+          echo "artifact_path=build/libs" >> $GITHUB_OUTPUT
+          echo "✅ JAR 构建完成：${MOD_VERSION} @ ${SHA_SHORT}" >> $GITHUB_STEP_SUMMARY
+
+      - name: 上传 JAR Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ steps.artifact_info.outputs.artifact_name }}"
+          path: "${{ steps.artifact_info.outputs.artifact_path }}/*.jar"
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: 失败时打印 Gradle 日志
+        if: failure()
+        run: |
+          echo "## ❌ 构建失败日志" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for log in build/reports/problems/problems-report.html build/tmp/*.log; do
+            if [ -f "$log" ]; then
+              echo "### $log" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              tail -n 100 "$log" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          if [ -f "gradle.properties" ]; then
+            echo "### gradle.properties 关键项" >> $GITHUB_STEP_SUMMARY
+            grep -E "mod_version|minecraft_version|forge_version|mappings" gradle.properties >> $GITHUB_STEP_SUMMARY || true
+          fi
