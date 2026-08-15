@@ -1,7 +1,9 @@
 package com.qlm.zombie.dependency;
 
 import com.mojang.logging.LogUtils;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.slf4j.Logger;
 
@@ -51,6 +53,8 @@ public class ModDependencyHandler {
      * 覆盖"口渴/生命管理"系列冲突模组，所有常见分隔符变体（连字符/下划线/无分隔/空格）均列出，
      * 避免 {@code [中文名] Tough As Nails-...} 等不规范命名绕过匹配。
      * 用户可手动启用（手动启用后会被加入 tracker，不再被自动禁用）。
+     *
+     * <p><b>双端通用</b>：无论 CLIENT 还是 DEDICATED_SERVER 都会匹配。
      */
     private static final List<String> DEFAULT_DISABLED_PREFIXES = Collections.unmodifiableList(Arrays.asList(
             // ToughAsNails 常见变体（含连字符、下划线、空格、缩写）
@@ -74,6 +78,31 @@ public class ModDependencyHandler {
             "thirst_canteen",
             "thirst canteen"
     ));
+
+    /**
+     * 服务端专属禁用前缀（仅在 {@code FMLEnvironment.dist == DEDICATED_SERVER} 时生效）。
+     *
+     * <p>禁用原因：Crafting Dead 模组以"枪/装饰/生存"为核心的大量客户端资源（动画、
+     * 粒子、渲染器、GUI）在独立专用服务端上毫无意义，反而会触发类加载警告、
+     * 延长启动时间、干扰服务端-only 集成测试。客户端（单人 / LAN 主机）仍然需要。
+     *
+     * <p>当前列出全部 4 个 Crafting Dead 子模组变体：core / decoration / survival / worldguard。
+     * 以 {@code crafting-dead} 为主前缀，连字符、下划线、空格三种分隔符全部列出
+     * （对付中文前缀、重命名、压缩包解压后各种奇怪变体）。
+     */
+    private static final List<String> SERVER_DISABLED_PREFIXES = Collections.unmodifiableList(Arrays.asList(
+            "crafting-dead",
+            "crafting_dead",
+            "crafting dead",
+            "[crafting-dead]",
+            "[craftingdead]",
+            "craftingdead"
+    ));
+
+    /** @return 当前运行环境是否为独立专用服务端。 */
+    private static boolean isDedicatedServerEnv() {
+        return FMLEnvironment.dist == Dist.DEDICATED_SERVER;
+    }
 
     private static int releasedCount;
     private static int skippedCount;
@@ -125,6 +154,10 @@ public class ModDependencyHandler {
             }
 
             LOGGER.info("[QLM Zombie] Mod JAR 路径: {}", modJarPath);
+
+            if (isDedicatedServerEnv()) {
+                LOGGER.info("[QLM Zombie] 检测到 DEDICATED_SERVER 环境: 将自动禁用服务端不需要的模组 (crafting-dead* 等)");
+            }
 
             List<EmbeddedJar> embeddedJars = readEmbeddedJars(modJarPath);
             totalLibsCount = embeddedJars.size();
@@ -334,8 +367,8 @@ public class ModDependencyHandler {
 
             // 情况 1：用户已手动禁用（.disabled 存在且 .jar 不存在）
             if (Files.exists(disabledPath) && !Files.exists(targetPath)) {
-                if (isDefaultDisabled(fileName)) {
-                    LOGGER.debug("[QLM Zombie] 已知问题模组，保持禁用: {}", fileName);
+                if (isUnifiedDisabled(fileName)) {
+                    LOGGER.debug("[QLM Zombie] 命中统一禁用策略，保持禁用: {}", fileName);
                 } else {
                     LOGGER.debug("[QLM Zombie] 用户已禁用此模组，跳过释放: {}", fileName);
                 }
@@ -369,9 +402,10 @@ public class ModDependencyHandler {
                 LOGGER.info("[QLM Zombie] 释放模组: {} ({} 字节)", fileName, embeddedJar.content.length);
             }
 
-            // 如果是 DEFAULT_DISABLED，禁用它（除非用户手动启用过）
-            if (isDefaultDisabled(fileName) && !trackedDisabled.contains(fileName)) {
-                disableMod(targetPath, "DEFAULT_DISABLED");
+            // 如果命中统一禁用策略，禁用它（除非用户手动启用过）
+            if (isUnifiedDisabled(fileName) && !trackedDisabled.contains(fileName)) {
+                String reason = isServerDisabled(fileName) ? "SERVER_DISABLED" : "DEFAULT_DISABLED";
+                disableMod(targetPath, reason);
                 trackedDisabled.add(fileName);
             }
 
@@ -398,7 +432,7 @@ public class ModDependencyHandler {
                 String lowerJar = jarName.toLowerCase(Locale.ROOT);
 
                 if (!whiteList.contains(lowerJar)) continue;
-                if (isDefaultDisabled(jarName)) continue;
+                if (isUnifiedDisabled(jarName)) continue;
                 if (trackedDisabled.contains(jarName)) {
                     LOGGER.debug("[QLM Zombie] 用户已主动追踪禁用，不恢复: {}", jarName);
                     continue;
@@ -424,20 +458,21 @@ public class ModDependencyHandler {
     }
 
     /**
-     * 禁用 DEFAULT_DISABLED_PREFIXES 中的已知问题模组。
+     * 禁用命中统一禁用策略（DEFAULT_DISABLED ∪ SERVER_DISABLED）的模组。
      * 使用精确前缀匹配，不扫描整个 mods 目录的关键字。
      */
     private static void disableKnownProblemMods(Path modsDir, Set<String> trackedDisabled) {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
             for (Path modFile : stream) {
                 String fileName = modFile.getFileName().toString();
-                if (!isDefaultDisabled(fileName)) continue;
+                if (!isUnifiedDisabled(fileName)) continue;
                 if (trackedDisabled.contains(fileName)) continue;
 
                 Path disabledPath = modFile.resolveSibling(fileName + DISABLED_MARKER);
                 if (Files.exists(disabledPath)) continue;
 
-                disableMod(modFile, "DEFAULT_DISABLED");
+                String reason = isServerDisabled(fileName) ? "SERVER_DISABLED" : "DEFAULT_DISABLED";
+                disableMod(modFile, reason);
                 trackedDisabled.add(fileName);
             }
         } catch (IOException e) {
@@ -564,10 +599,13 @@ public class ModDependencyHandler {
         try {
             List<String> lines = new ArrayList<>();
             lines.add("# QLM Zombie Dependency Handler - Disabled Mod Tracking");
-            lines.add("# This file tracks mods that were automatically disabled by DEFAULT_DISABLED policy.");
+            lines.add("# This file tracks mods that were automatically disabled by unified policy.");
+            lines.add("# Policy = DEFAULT_DISABLED_PREFIXES ∪ (SERVER_DISABLED_PREFIXES when dist=DEDICATED_SERVER)");
+            lines.add("#   - DEFAULT_DISABLED: e.g. ToughAsNails/ThirstWasTaken/thirstmod (口渴冲突模组，双端都禁用)");
+            lines.add("#   - SERVER_DISABLED: e.g. crafting-dead-core/decoration/survival/worldguard (仅专用服务端禁用)");
             lines.add("# If you manually enable a mod listed here, it will NOT be re-disabled.");
             lines.add("# Whitelist mods (embedded in mod JAR) are auto-restored even if .disabled exists,");
-            lines.add("# unless they match DEFAULT_DISABLED_PREFIXES (e.g. ToughAsNails/ThirstWasTaken).");
+            lines.add("# unless they hit the unified disabled policy above.");
             lines.addAll(trackedDisabled);
             Files.write(trackingPath, lines,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -595,6 +633,34 @@ public class ModDependencyHandler {
         return false;
     }
 
+    /**
+     * 专用服务端环境下禁用的模组前缀判断。
+     * 使用与 {@link #isDefaultDisabled(String)} 相同的"前缀+分隔符归一化"双重匹配逻辑。
+     * 在非 DEDICATED_SERVER 环境下恒返回 false。
+     */
+    private static boolean isServerDisabled(String fileName) {
+        if (!isDedicatedServerEnv()) return false;
+        String stripped = stripBracketPrefix(fileName);
+        for (String prefix : SERVER_DISABLED_PREFIXES) {
+            if (stripped.startsWith(prefix)) return true;
+        }
+        String normalized = stripped.replace("-", "").replace("_", "").replace(" ", "");
+        for (String rawPrefix : SERVER_DISABLED_PREFIXES) {
+            String normPrefix = rawPrefix.replace("-", "").replace("_", "").replace(" ", "");
+            if (!normPrefix.isEmpty() && normalized.startsWith(normPrefix)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * 聚合禁用判断（DEFAULT_DISABLED ∪ SERVER_DISABLED，取并集）。
+     * 所有释放/恢复/禁用流程都应使用此方法，保证 DEFAULT_DISABLED 与 SERVER_DISABLED
+     * 两套策略在每个分支点行为一致，避免"某分支恢复了但另一分支又禁用"的振荡。
+     */
+    private static boolean isUnifiedDisabled(String fileName) {
+        return isDefaultDisabled(fileName) || isServerDisabled(fileName);
+    }
+
     private static String stripVersion(String fileName) {
         // 先剥离 [中文名] 前缀，使带前缀和不带前缀的同名模组能被识别为重复
         // 例如 "[精致存储] refinedstorage-1.12.4.jar" 和 "refinedstorage-1.12.4.jar" 都返回 "refinedstorage"
@@ -610,12 +676,14 @@ public class ModDependencyHandler {
     private static void logSummary() {
         hasConflicts = !disabledMods.isEmpty();
         LOGGER.info("[QLM Zombie] ====== 依赖释放汇总 ======");
+        LOGGER.info("[QLM Zombie] 运行环境 Dist: {} ({})", FMLEnvironment.dist,
+                isDedicatedServerEnv() ? "专用服务端 -  crafting-dead* 自动禁用" : "客户端/LAN主机 - 全模组释放");
         LOGGER.info("[QLM Zombie] 嵌入 JAR 总数（白名单）: {}", totalLibsCount);
         LOGGER.info("[QLM Zombie] 成功释放: {}", releasedCount);
         LOGGER.info("[QLM Zombie] 跳过(已存在): {}", skippedCount);
         LOGGER.info("[QLM Zombie] 自动恢复(误禁用): {}", restoredCount);
         LOGGER.info("[QLM Zombie] 失败: {}", failedCount);
-        LOGGER.info("[QLM Zombie] 自动禁用(已知问题): {}", disabledMods.size());
+        LOGGER.info("[QLM Zombie] 自动禁用(统一策略): {}", disabledMods.size());
         if (!disabledMods.isEmpty()) {
             LOGGER.info("[QLM Zombie] 禁用列表: {}", String.join(", ", disabledMods));
         }
@@ -828,17 +896,18 @@ public class ModDependencyHandler {
                 }
             }
 
-            // Disable DEFAULT_DISABLED mods only (no more keyword scanning)
+            // Disable mods hitting unified policy (DEFAULT_DISABLED ∪ SERVER_DISABLED) - no more keyword scanning
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(modsDir, "*.jar")) {
                 for (Path modFile : stream) {
                     String fileName = modFile.getFileName().toString();
-                    if (!isDefaultDisabled(fileName)) continue;
+                    if (!isUnifiedDisabled(fileName)) continue;
                     if (trackedDisabled.contains(fileName)) continue;
                     Path disabledPath = modFile.resolveSibling(fileName + DISABLED_MARKER);
                     if (Files.exists(disabledPath)) continue;
-                    disableMod(modFile, "DEFAULT_DISABLED");
+                    String reason = isServerDisabled(fileName) ? "SERVER_DISABLED" : "DEFAULT_DISABLED";
+                    disableMod(modFile, reason);
                     trackedDisabled.add(fileName);
-                    detectedConflicts.add(fileName + " (禁用: DEFAULT_DISABLED)");
+                    detectedConflicts.add(fileName + " (禁用: " + reason + ")");
                 }
             }
             hasConflicts = !disabledMods.isEmpty();

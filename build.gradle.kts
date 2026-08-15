@@ -242,3 +242,91 @@ tasks.named<Jar>("jar") {
 
     finalizedBy("reobfJar")
 }
+
+/**
+ * 构建服务端专用发行包（带 `server` 分类器）。
+ *
+ * <p>产物：`build/libs/qlmzombie-<version>-server.jar`。
+ *
+ * <p>与默认 jar（客户端双用）的区别：
+ * <ol>
+ *   <li>MANIFEST.MF 新增属性 {@code QLM-Server-Release: true} + {@code QLM-Server-Disabled-Prefixes: crafting-dead*}</li>
+ *   <li>JAR 根目录新增 {@code server.release.txt} 标记文件，标注：服务端模式、禁用模组清单、构建时间、版本号。</li>
+ *   <li>内嵌的 libs 依赖清单（manifest.txt）保持不变 —— 真正的禁用行为由运行时
+ *       {@code FMLEnvironment.dist == DEDICATED_SERVER} 判断，所以同一个 server JAR
+ *       如果被误用在客户端也能 100% 正常运行（所有 crafting-dead 正常加载）。</li>
+ * </ol>
+ *
+ * <p>运行时行为才是权威来源（FMLEnvironment），分类器 JAR 只作为下载/分发时的人工区分。
+ */
+val buildServerJar by tasks.registering(Jar::class) {
+    group = "build"
+    description = "Builds a DEDICATED_SERVER classifier release JAR."
+
+    // 依赖默认 jar（所有 libs/manifest/classes 已准备好）
+    dependsOn(tasks.named("jar"))
+
+    archiveClassifier.set("server")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    // 以默认 jar 输出为蓝本（直接复用 reobf 后的 classes / libs / manifest）
+    val defaultJar = tasks.named<Jar>("jar").flatMap { it.archiveFile }
+    from(zipTree(defaultJar))
+
+    // 新增 MANIFEST.MF 额外属性（服务端标记）
+    manifest {
+        attributes(
+            mapOf(
+                "QLM-Server-Release" to "true",
+                "QLM-Server-Disabled-Prefixes" to "crafting-dead, crafting_dead, crafting dead, craftingdead",
+                "Implementation-Timestamp" to Instant.now().toString()
+            )
+        )
+    }
+
+    // 写入 JAR 根目录的 server.release.txt 标记文件
+    val serverMarkerFile = temporaryDir.resolve("server.release.txt")
+    doFirst {
+        val disabled = buildList {
+            add("crafting-dead-core (Crafting Dead Core - 武器/枪械核心)")
+            add("crafting-dead-decoration (Crafting Dead Decoration - 装饰方块)")
+            add("crafting-dead-survival (Crafting Dead Survival - 生存机制扩展)")
+            add("crafting-dead-worldguard (Crafting Dead WorldGuard - 区域保护集成)")
+        }
+        serverMarkerFile.writeText(buildString {
+            appendLine("QLM Zombie Server Release Marker")
+            appendLine("================================")
+            appendLine("Version: $mod_version")
+            appendLine("Build:   ${Instant.now()}")
+            appendLine("Mode:    DEDICATED_SERVER_ONLY (recommended for stand-alone server hosts)")
+            appendLine()
+            appendLine("Server-Only Disabled Mods (these JARs will be renamed to .disabled on release:)")
+            for (d in disabled) {
+                appendLine("  - $d")
+            }
+            appendLine()
+            appendLine("Runtime behavior (authoritative, not this file:)")
+            appendLine("  FMLEnvironment.dist == DEDICATED_SERVER -> disable SERVER_DISABLED_PREFIXES")
+            appendLine("  Note: This JAR is identical in content to the main JAR; classifier only distinguishes downloads.")
+        }, Charsets.UTF_8)
+    }
+    from(serverMarkerFile) {
+        into("/")
+    }
+
+    // server jar 只是基于 reobf 后的主 jar 再加一层 wrapper（marker + manifest 属性），
+    // 不再二次 reobf —— server jar 内的 classes 已经是 reobf 后的产物。
+}
+
+// 确保主 jar 构建完 + 跑完 reobf 流程后，立刻产出 server classifier 发行包。
+// reobfJar 由 ForgeGradle 在 afterEvaluate 内注册，需在 afterEvaluate 里 findByName 查找。
+afterEvaluate {
+    val reobfTask = tasks.findByName("reobfJar")
+    if (reobfTask != null) {
+        reobfTask.finalizedBy(buildServerJar)
+        buildServerJar.configure { mustRunAfter(reobfTask) }
+    } else {
+        // 开发环境/无插件场景：只保证 build server jar 在主 jar 之后
+        buildServerJar.configure { mustRunAfter(tasks.named("jar")) }
+    }
+}

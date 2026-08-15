@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build31-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build32-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD30%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD32%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build30` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build30.jar` |
+| **当前版本** | `3.0.0.beta.build32` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build32.jar` / `qlmzombie-3.0.0.beta.build32-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -390,7 +390,7 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build31.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
+成功构建后，`qlmzombie-3.0.0.beta.build32.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build32-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
 
 ---
 
@@ -601,8 +601,9 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build31.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
-└── qlmzombie-3.0.0.beta.build31-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build32.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
+├── qlmzombie-3.0.0.beta.build32-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
+└── qlmzombie-3.0.0.beta.build32-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -683,7 +684,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build30` (精确到 build)
+1. **版本号**：`3.0.0.beta.build32` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -763,6 +764,101 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build32 (2026-08-15)
+
+#### 新增：服务端自动禁用 crafting-dead* 4 个模组 + 服务端专用 `-server.jar` 发行包
+
+**禁用原因**：Crafting Dead 模组（Crafting Dead Core/Decoration/Survival/WorldGuard）以"枪支、装饰方块、第一人称动画、粒子、渲染器、GUI"为核心，在独立专用服务端（DEDICATED_SERVER）上：
+- 不需要加载任何客户端渲染/粒子/模型类
+- 可能触发"服务端加载客户端类"的类加载警告，延长启动时间
+- 干扰 Dedicated Server-only 集成测试
+
+客户端/单人/LAN 主机仍然完整加载 4 个 crafting-dead 子模组（枪支/装饰/生存机制/区域保护），完全不影响玩家体验。
+
+##### 运行时权威判定：`FMLEnvironment.dist`
+
+[ModDependencyHandler.java:102-105](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L102-L105) 使用 Forge 原生 API：
+
+```java
+private static boolean isDedicatedServerEnv() {
+    return FMLEnvironment.dist == Dist.DEDICATED_SERVER;
+}
+```
+
+**不是**靠 `-server.jar` 文件名或标记文件判断，所以 server JAR 即使被误放到客户端也能 100% 正常运行（crafting-dead 照常加载）。
+
+##### 禁用策略设计：两套前缀 + 并集聚合
+
+[ModDependencyHandler.java:59-100](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L59-L100)：
+
+| 前缀表 | 生效范围 | 内容 |
+|:------|:---------|:-----|
+| `DEFAULT_DISABLED_PREFIXES` | 双端通用 | 17 条口渴冲突模组（ToughAsNails / ThirstWasTaken / thirstmod 等 4 家族 × 分隔符变体） |
+| `SERVER_DISABLED_PREFIXES`（**新增**） | 仅 DEDICATED_SERVER | 6 条 crafting-dead 变体（`crafting-dead` / `crafting_dead` / `crafting dead` / `[crafting-dead]` / `[craftingdead]` / `craftingdead`） |
+
+新增聚合判断：
+
+```java
+private static boolean isUnifiedDisabled(String fileName) {
+    return isDefaultDisabled(fileName) || isServerDisabled(fileName);
+}
+```
+
+`releaseJar`/`restoreMistakenlyDisabled`/`disableKnownProblemMods`/`detectAndResolveConflicts` 公共 API 全部切换到 `isUnifiedDisabled`，两套策略在每个分支点行为一致，不会出现"某分支恢复又被另一分支禁用"的振荡。禁用时 reason 明确标为 `SERVER_DISABLED` 或 `DEFAULT_DISABLED`：
+
+```
+[QLM Zombie] 禁用模组 (SERVER_DISABLED): crafting-dead-core-1.20.1-1.9.1.homebaked-all.jar
+```
+
+##### 4 个 crafting-dead JAR 禁用清单（服务端）
+
+| 文件名 | 体积 | 禁用影响（服务端） |
+|:------|:-----|:------------------|
+| `crafting-dead-core-1.20.1-1.9.1.homebaked-all.jar` | 7.1 MB | 核心枪械/动画/渲染/合成（客户端 GUI） |
+| `crafting-dead-decoration-1.20.1-1.0.4.homebaked.jar` | 24 MB | 装饰方块模型资源（服务器不需要） |
+| `crafting-dead-survival-1.20.1-1.2.3.homebaked.jar` | 1.3 MB | 生存机制扩展（血量/口渴/体温类客户端内容） |
+| `crafting-dead-worldguard-1.20.1-0.0.4.homebaked.jar` | 0.03 MB | 区域保护集成（服务器无 WorldGuard 场景） |
+
+> 注：4 个 JAR 仍然嵌入在主 JAR 和 server JAR 中（不删除），只是运行时在 DEDICATED_SERVER 环境下释放后立即重命名为 `.disabled`。用户想手动启用时删除 `.disabled` 后缀，并会被加入禁用追踪文件不再被自动禁用。
+
+##### 构建产物：双 JAR 发行（主 JAR 通用 + server classifier）
+
+新增 Gradle 任务 `buildServerJar`（[build.gradle.kts:246-332](file:///D:/mcmod/build.gradle.kts#L246-L332)），运行 `.\gradlew build buildServerJar` 后产出：
+
+```
+build/libs/
+├── qlmzombie-3.0.0.beta.build32.jar          # 主发行版 (415.3 MB, 客户端/LAN主机通用)
+├── qlmzombie-3.0.0.beta.build32-server.jar   # 服务端发行 (415.3 MB, DEDICATED_SERVER推荐)
+└── qlmzombie-3.0.0.beta.build32-sources.jar  # 源码包
+```
+
+`-server.jar` 相比主 JAR 多了两项**人工区分标记**（非运行时权威来源）：
+- **MANIFEST.MF**：新增 `QLM-Server-Release: true`、`QLM-Server-Disabled-Prefixes: crafting-dead, ...` 属性
+- **`server.release.txt`**（JAR 根目录）：服务端说明文档（模式、禁用清单、构建时间、版本号）
+
+`afterEvaluate` 保证 reobfJar 执行完成后才产出 server JAR（避免拿未混淆的 classes 做打包）。
+
+##### 日志增强
+
+`logSummary()` 新增 `运行环境 Dist` 行（[ModDependencyHandler.java:679-680](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L679-L680)）：
+
+```
+[QLM Zombie] 运行环境 Dist: DEDICATED_SERVER (专用服务端 - crafting-dead* 自动禁用)
+  或
+[QLM Zombie] 运行环境 Dist: CLIENT (客户端/LAN主机 - 全模组释放)
+```
+
+`saveTrackedDisabled()` 追踪文件注释同步更新，列出 DEFAULT_DISABLED 与 SERVER_DISABLED 两套策略的用途。
+
+#### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| [ModDependencyHandler.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java) | 新增 FMLEnvironment/Dist import + SERVER_DISABLED_PREFIXES(6条) + isDedicatedServerEnv() + isServerDisabled() + isUnifiedDisabled()，全部调用点切换聚合判断 + 禁用reason区分SERVER/DEFAULT + 日志Dist信息 + 追踪文件注释 |
+| [build.gradle.kts](file:///D:/mcmod/build.gradle.kts) | 新增 `buildServerJar` Gradle 任务（server classifier + MANIFEST 标记属性 + server.release.txt + afterEvaluate挂reobfJar） |
+| [QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt) | 公告 v4 / MOD_VERSION build31→build32 |
+| [README.md](file:///D:/mcmod/README.md) | build32 更新说明章节 + 双 JAR 下载/安装文档 + 版本号统一 |
 
 ### 3.0.0.beta.build31 (2026-08-15)
 
@@ -2212,4 +2308,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build31` · 构建日期：2026-08-15 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build32` · 构建日期：2026-08-15 · Minecraft 1.20.1
