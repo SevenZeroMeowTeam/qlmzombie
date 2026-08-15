@@ -44,6 +44,11 @@ config/*.bak
 crash-reports/
 .trae/
 
+# ==================== Minecraft/Forge 反射分析解压的原版文件（严禁入库）====================
+# jar -xf srg/joined jar 时解压出的 net/minecraft、net/minecraftforge 源文件/类文件
+# 仅用于本地 javap 分析，切勿纳入 git 跟踪
+net/
+
 # ==================== 部署工具包（与 mod 源码无关） ====================
 SeverMod/
 SeverMod.zip
