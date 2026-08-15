@@ -50,7 +50,8 @@ public class AIImprovementsFeature {
     private static final Field WG_GOAL;
 
     static {
-        Field gsa = ReflectionHelper.findField(GoalSelector.class, "availableGoals", "f_257247_");
+        // 1.20.1 SRG: availableGoals = f_25345_（旧值 f_257247_ 为错误名，原靠 Set 类型兜底）
+        Field gsa = ReflectionHelper.findField(GoalSelector.class, "availableGoals", "f_25345_");
         if (gsa == null) {
             gsa = ReflectionHelper.findFieldByAssignableType(GoalSelector.class, Set.class);
         }
@@ -58,7 +59,8 @@ public class AIImprovementsFeature {
             QLMZombieMod.LOGGER.warn("[AIImprovements] GoalSelector.availableGoals 反射失败，反射降级");
         }
 
-        Field wgg = ReflectionHelper.findField(WrappedGoal.class, "goal", "f_25723_");
+        // 1.20.1 SRG: goal = f_25994_（旧值 f_25723_ 为错误名，原靠 Goal 类型兜底）
+        Field wgg = ReflectionHelper.findField(WrappedGoal.class, "goal", "f_25994_");
         if (wgg == null) {
             wgg = ReflectionHelper.findFieldByAssignableType(WrappedGoal.class, Goal.class);
         }

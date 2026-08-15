@@ -37,12 +37,14 @@ public class SkeletonAIFixFeature {
     private static Field GOAL_SELECTOR_GOALS_FIELD = null;
 
     static {
-        ATTACK_INTERVAL_FIELD = ReflectionHelper.findField(RangedAttackGoal.class, "attackIntervalMax", "f_257245_");
+        // 1.20.1 SRG: attackIntervalMax = f_25764_（旧值 f_257245_ 为错误名，导致反射降级）
+        ATTACK_INTERVAL_FIELD = ReflectionHelper.findField(RangedAttackGoal.class, "attackIntervalMax", "f_25764_");
         if (ATTACK_INTERVAL_FIELD == null) {
             QLMZombieMod.LOGGER.warn("[SkeletonAIFix] 未找到 RangedAttackGoal.attackIntervalMax 字段，反射降级");
         }
 
-        GOAL_SELECTOR_GOALS_FIELD = ReflectionHelper.findField(GoalSelector.class, "availableGoals", "f_257247_");
+        // 1.20.1 SRG: availableGoals = f_25345_（旧值 f_257247_ 为错误名，原靠 Set 类型兜底）
+        GOAL_SELECTOR_GOALS_FIELD = ReflectionHelper.findField(GoalSelector.class, "availableGoals", "f_25345_");
         if (GOAL_SELECTOR_GOALS_FIELD == null) {
             GOAL_SELECTOR_GOALS_FIELD = ReflectionHelper.findFieldByAssignableType(GoalSelector.class, Set.class);
         }

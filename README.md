@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build28-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build29-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD28%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD29%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build28` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build28.jar` |
+| **当前版本** | `3.0.0.beta.build29` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build29.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -390,7 +390,7 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build27.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
+成功构建后，`qlmzombie-3.0.0.beta.build29.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
 
 ---
 
@@ -601,8 +601,8 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build26.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
-└── qlmzombie-3.0.0.beta.build26-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build29.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
+└── qlmzombie-3.0.0.beta.build29-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -612,7 +612,7 @@ D:\mcmod\build\libs\
 ### 方法 A：玩家正常使用 (推荐)
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
-2. 将 `qlmzombie-3.0.0.beta.build28.jar` 放入 `.minecraft/mods/` 目录
+2. 将 `qlmzombie-3.0.0.beta.build29.jar` 放入 `.minecraft/mods/` 目录
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -683,7 +683,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build26` (精确到 build)
+1. **版本号**：`3.0.0.beta.build29` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -763,6 +763,45 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build29 (2026-08-15)
+
+#### 修复：SkeletonAIFix / AIImprovements 反射 SRG 名纠正（消除 4 处「反射降级」警告 + 骷髅远程 AI 真正生效）
+
+**问题根因**：
+运行时日志打印 `[SkeletonAIFix] 未找到 RangedAttackGoal.attackIntervalMax 字段，反射降级`，导致骷髅远程攻击 AI 调整（攻击间隔减半、最低 20 tick）功能**完全未执行**，骷髅瞄不准、不攻击。
+
+`ReflectionHelper.findField()` 采用三层降级查找：**Mojang 名 → SRG 名 → ObfuscationReflectionHelper**，生产环境（reobf 后的 joined-srg jar）中类字段被重命名为 SRG 名，但代码硬编码的 SRG 名**全部错误**：
+
+| 字段（1.20.1 Official） | 代码 SRG（错误） | javap 反汇编 SRG（正确） | 原影响 |
+|:------------------------|:----------------|:------------------------|:-------|
+| `RangedAttackGoal.attackIntervalMax` | `f_257245_` | **`f_25764_`** | int 字段无类型兜底 → **警告 + 攻击间隔调整失效** |
+| `GoalSelector.availableGoals` | `f_257247_` | **`f_25345_`** | `Set<WrappedGoal>` 有类型兜底 → 静默走 fallback，有性能开销 |
+| `GoalSelector.availableGoals` (AIImprovementsFeature 同) | `f_257247_` | **`f_25345_`** | 同上 |
+| `WrappedGoal.goal` | `f_25723_` | **`f_25994_`** | `Goal` 有类型兜底 → 静默走 fallback，有性能开销 |
+
+SRG 名均通过 `javap -p` 直接反汇编运行时
+`joined-1.20.1-20230612.114412-srg.jar` 中 `RangedAttackGoal.class` / `GoalSelector.class` / `WrappedGoal.class` 确认，非猜测。
+
+**修复方案（两处文件，直接把正确 SRG 名传入 ReflectionHelper）**：
+
+| 文件 | 说明 |
+|:-----|:-----|
+| [SkeletonAIFixFeature.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/feature/SkeletonAIFixFeature.java#L40-L47) | attackIntervalMax: `f_257245_` → `f_25764_`；availableGoals: `f_257247_` → `f_25345_` |
+| [AIImprovementsFeature.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/feature/AIImprovementsFeature.java#L52-L63) | availableGoals: `f_257247_` → `f_25345_`；WrappedGoal.goal: `f_25723_` → `f_25994_` |
+
+**修复后**：
+- `ReflectionHelper.findField()` 第二层 SRG 名查找直接命中，三层失败率为 0。
+- `RangedAttackGoal.attackIntervalMax` 是**实例 final 字段**（`private final int`），JDK 17 下 `setAccessible(true)` 后 `Field.setInt()` 可正常写入，无需 Unsafe 去 final。
+- 骷髅远程攻击调整功能真正生效：攻击间隔减半（最低 20 tick = 1 秒），follow range 若 < 24 则提升到 24。
+- `AIImprovementsFeature` 不再走 Set/Goal 类型兜底，性能和健壮性提升。
+
+**配套：公告 & 版本号同步**
+
+| 改动 | 文件 |
+|:-----|:-----|
+| 公告文 v3.1 | [QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt#L196) |
+| 版本号 `build28` → `build29` | [gradle.properties](file:///D:/mcmod/gradle.properties)、[QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt#L228)、[README.md](file:///D:/mcmod/README.md) |
 
 ### 3.0.0.beta.build28 (2026-08-14)
 
@@ -2045,4 +2084,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build28` · 构建日期：2026-08-14 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build29` · 构建日期：2026-08-15 · Minecraft 1.20.1
