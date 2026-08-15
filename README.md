@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build32-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build33-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD32%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD33%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -613,7 +613,9 @@ D:\mcmod\build\libs\
 ### 方法 A：玩家正常使用 (推荐)
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
-2. 将 `qlmzombie-3.0.0.beta.build30.jar` 放入 `.minecraft/mods/` 目录
+2. 选择对应发行包放入 `.minecraft/mods/` 目录：
+   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build33.jar`（完整包含 crafting-dead 4 个模组）
+   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build33-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -764,6 +766,47 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build33 (2026-08-15)
+
+#### 依赖同步：crafting-dead-core 升级 1.9.1 → 1.9.2 + 清理残包
+
+根据 `src/main/libs` 目录审计发现：`crafting-dead-core` 模组进行了版本升级（1.9.1 → 1.9.2），但升级后**残包与 -all fat-jar 并存**，违反之前制定的"fat-jar 优先"策略。
+
+##### 问题定位
+
+| 状态 | 文件 | 体积 | stripVersion |
+|:-----|:-----|:-----|:-------------|
+| 已删除（旧版） | `crafting-dead-core-1.20.1-1.9.1.homebaked-all.jar` | 7.1 MB | `crafting-dead-core` |
+| 新增（残包） | `crafting-dead-core-1.20.1-1.9.2.homebaked.jar` | 6.43 MB | `crafting-dead-core` |
+| 新增（-all fat-jar） | `crafting-dead-core-1.20.1-1.9.2.homebaked-all.jar` | 7.1 MB | `crafting-dead-core` |
+
+三个文件的 `stripVersion` 都是 `crafting-dead-core`，是重复。更危险的是：如果残包和 -all 包都被 `generateLibsManifest` 写入 manifest 白名单，运行时 `detectAndRemoveDuplicates` 的"白名单绝对不删"规则会让两个都保留 → Forge 报重复 mod ID 错误。
+
+##### 修复
+
+按 fat-jar 优先策略（[ModDependencyHandler.java:473-490](file:///D:/mcmod/src/main/java/com/qlm/zombie/dependency/ModDependencyHandler.java#L473-L490) 的 4 级排序：白名单 > -all > 文件大小 > 字母序），删除残包 `crafting-dead-core-1.20.1-1.9.2.homebaked.jar`，保留 `-all` fat-jar（内嵌依赖完整）。
+
+##### 最终状态
+
+| 项 | 值 |
+|:---|:---|
+| libs 目录 JAR 总数 | **119**（120 → 删 1 残包 = 119） |
+| 总体积 | **448.3 MB**（454.7 → 删 6.43 MB = 448.3） |
+| libs-list.txt | 119 条目，与 libs 目录完全一致 ✅ |
+| build33 JAR 内 manifest.txt | 119 条目 ✅ |
+| crafting-dead-core 内嵌版本 | `1.9.2.homebaked-all.jar`（唯一，无重复） ✅ |
+| 自身 JAR 残留 | 0 个 ✅ |
+
+##### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| `src/main/libs/crafting-dead-core-1.20.1-1.9.2.homebaked.jar` | **删除**（残包，6.43 MB） |
+| `src/main/libs/crafting-dead-core-1.20.1-1.9.1.homebaked-all.jar` | 已被 1.9.2-all 替代（外部替换） |
+| [scripts/libs-list.txt](file:///D:/mcmod/scripts/libs-list.txt) | 第 57 行 1.9.1-all → 1.9.2-all |
+| [QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt) | 公告 v4.1 / MOD_VERSION build32→build33 |
+| [README.md](file:///D:/mcmod/README.md) | build33 更新说明 + 版本号统一 |
 
 ### 3.0.0.beta.build32 (2026-08-15)
 
@@ -2308,4 +2351,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build32` · 构建日期：2026-08-15 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build33` · 构建日期：2026-08-15 · Minecraft 1.20.1

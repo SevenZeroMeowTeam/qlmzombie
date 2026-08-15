@@ -1,4 +1,4 @@
-﻿[3D 皮肤层] skinlayers3d-forge-1.11.2-mc1.20.1.jar
+[3D 皮肤层] skinlayers3d-forge-1.11.2-mc1.20.1.jar
 [FTB 任务] ftb-quests-forge-2001.4.22.jar
 [FTB 团队] ftb-teams-forge-2001.3.2.jar
 [REI物品管理器] RoughlyEnoughItems-12.1.785-forge.jar
@@ -54,7 +54,7 @@ cloth-config-11.1.136-forge.jar
 cofh_core-1.20.1-11.0.2.56.jar
 collective-1.20.1-8.39.jar
 Corgilib-Forge-1.20.1-4.0.3.4.jar
-crafting-dead-core-1.20.1-1.9.1.homebaked-all.jar
+crafting-dead-core-1.20.1-1.9.2.homebaked-all.jar
 crafting-dead-decoration-1.20.1-1.0.4.homebaked.jar
 crafting-dead-survival-1.20.1-1.2.3.homebaked.jar
 crafting-dead-worldguard-1.20.1-0.0.4.homebaked.jar
