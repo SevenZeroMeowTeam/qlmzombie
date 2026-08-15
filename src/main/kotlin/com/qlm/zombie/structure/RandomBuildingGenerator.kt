@@ -4,21 +4,26 @@ import com.qlm.zombie.QLMZombieMod
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.DoorBlock
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf
 import net.minecraft.world.level.levelgen.Heightmap
+import net.minecraftforge.event.entity.player.PlayerEvent
 import net.minecraftforge.event.level.ChunkEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
 import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.api.distmarker.Dist
 import java.util.concurrent.ConcurrentHashMap
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = [Dist.DEDICATED_SERVER])
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 object RandomBuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.15
-    private const val MIN_SPACING = 3
+    private const val SPAWN_CHANCE = 0.25
+    private const val MIN_SPACING = 2
     private const val HUT_SIZE = 5
+    // 玩家登录时扫描周围已加载区块的半径（半径 3 = 7x7 = 49 个区块）
+    private const val LOGIN_SCAN_RADIUS = 3
 
     private val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
 
@@ -51,19 +56,49 @@ object RandomBuildingGenerator {
 
         val level = levelAccessor as? net.minecraft.world.level.Level ?: return
         val chunk = event.chunk as? net.minecraft.world.level.chunk.LevelChunk ?: return
+        tryGenerate(level, chunk)
+    }
 
+    @SubscribeEvent
+    fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {
+        val player = event.entity ?: return
+        val level = player.level()
+        if (level.isClientSide) return
+        val serverLevel = level as? net.minecraft.server.level.ServerLevel ?: return
+
+        val centerChunkX = player.blockPosition().x shr 4
+        val centerChunkZ = player.blockPosition().z shr 4
+        var scanned = 0
+        var generated = 0
+        for (dx in -LOGIN_SCAN_RADIUS..LOGIN_SCAN_RADIUS) {
+            for (dz in -LOGIN_SCAN_RADIUS..LOGIN_SCAN_RADIUS) {
+                val chunk = serverLevel.chunkSource.getChunkNow(centerChunkX + dx, centerChunkZ + dz)
+                if (chunk != null) {
+                    scanned++
+                    if (tryGenerate(serverLevel, chunk)) generated++
+                }
+            }
+        }
+        if (scanned > 0) {
+            QLMZombieMod.LOGGER.info(
+                "[随机小屋] 玩家 {} 登录扫描 {} 个区块, 新生成 {} 个小屋",
+                player.name.string, scanned, generated
+            )
+        }
+    }
+
+    private fun tryGenerate(
+        level: net.minecraft.world.level.Level,
+        chunk: net.minecraft.world.level.chunk.LevelChunk
+    ): Boolean {
         val chunkX = chunk.pos.x
         val chunkZ = chunk.pos.z
 
         val chunkKey = chunkKey(chunkX, chunkZ)
-        if (generatedChunks.contains(chunkKey)) return
-
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return
-
-        if (!isFarEnoughFromOtherStructures(chunkX, chunkZ)) return
+        if (generatedChunks.contains(chunkKey)) return false
 
         val surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, 8, 8)
-        if (surfaceY <= 0) return
+        if (surfaceY <= 0) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8,
@@ -71,15 +106,45 @@ object RandomBuildingGenerator {
             chunkZ * 16 + 8
         )
 
-        try {
+        // 跨会话防重复：若建筑标志（箱子）已存在，记入缓存并跳过
+        if (hasExistingStructure(level, origin)) {
+            generatedChunks.add(chunkKey)
+            return false
+        }
+
+        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
+        if (!isFarEnoughFromOtherStructures(chunkX, chunkZ)) return false
+
+        return try {
             generateHut(level, chunk, origin)
             generatedChunks.add(chunkKey)
-            QLMZombieMod.LOGGER.debug(
+            QLMZombieMod.LOGGER.info(
                 "[随机小屋] 在区块 ({}, {}) 生成5x5小屋", chunkX, chunkZ
             )
+            true
         } catch (e: Exception) {
             QLMZombieMod.LOGGER.error("[随机小屋] 生成失败: {}", e.message)
+            false
         }
+    }
+
+    /**
+     * 检测目标位置是否已存在本生成器产出的建筑（箱子标志）。
+     * 用于跨会话防重复：generatedChunks 是内存 Set，重启后清空，
+     * 若不检查会概率性地在旧建筑上重叠生成第二座。
+     */
+    private fun hasExistingStructure(
+        level: net.minecraft.world.level.Level,
+        origin: BlockPos
+    ): Boolean {
+        // 小屋箱子位置：(x0+1, groundY, z0+1) = (origin.x - HUT_SIZE/2 + 1, origin.y, origin.z - HUT_SIZE/2 + 1)
+        val chestPos = BlockPos(
+            origin.x - HUT_SIZE / 2 + 1,
+            origin.y,
+            origin.z - HUT_SIZE / 2 + 1
+        )
+        return level.getBlockState(chestPos).block ==
+            net.minecraft.world.level.block.Blocks.CHEST
     }
 
     private fun isFarEnoughFromOtherStructures(chunkX: Int, chunkZ: Int): Boolean {
@@ -112,13 +177,21 @@ object RandomBuildingGenerator {
                 if (isWall) {
                     for (dy in 0..2) {
                         val wallPos = BlockPos.MutableBlockPos(bx, groundY + dy, bz)
-                        val isDoor = dy == 0 && dx == HUT_SIZE / 2 && dz == HUT_SIZE - 1
-                        level.setBlock(
-                            wallPos,
-                            if (isDoor) Blocks.OAK_DOOR.defaultBlockState()
-                            else Blocks.OAK_PLANKS.defaultBlockState(),
-                            3
-                        )
+                        // 门：两格高（dy=0 下半 + dy=1 上半），位于 +z 墙正中，朝南外开，
+                        // 上方 dy=2 留作门楣木板，玩家可右键开门进出
+                        val isDoorPos = dx == HUT_SIZE / 2 && dz == HUT_SIZE - 1
+                        val state = when {
+                            isDoorPos && dy == 0 ->
+                                Blocks.OAK_DOOR.defaultBlockState()
+                                    .setValue(DoorBlock.FACING, Direction.SOUTH)
+                                    .setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER)
+                            isDoorPos && dy == 1 ->
+                                Blocks.OAK_DOOR.defaultBlockState()
+                                    .setValue(DoorBlock.FACING, Direction.SOUTH)
+                                    .setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER)
+                            else -> Blocks.OAK_PLANKS.defaultBlockState()
+                        }
+                        level.setBlock(wallPos, state, 3)
                     }
                 }
 

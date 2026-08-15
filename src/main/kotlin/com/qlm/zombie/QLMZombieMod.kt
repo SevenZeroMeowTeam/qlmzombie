@@ -193,7 +193,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊僵尸（16种）：巨人/木桶/召唤/烈焰/剧毒/铁甲/跳跃/投掷/吐息/爆破/投手TNT/自爆/弓箭手"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7睡袋系统：3羊毛合成，夜晚可入睡不重置出生点，白天自动收起可拾取"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：仅保留自定义绿色血量条+护甲/饱食度数值，原版心形隐藏"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖白名单 v3.1：§r§7修复RangedAttackGoal反射(4处SRG名纠正)，骷髅远程AI真正生效"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l建筑生成器 v3.2：§r§7修复4种建筑单人游戏不生成(去Dist限制+登录扫描+防重复)，5x5小屋门可进出，刷新概率提升"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7输入 §a/qlm help§r 查看命令列表，§b/qlm mods§r 查看内嵌模组状态，§b/qlm download§r 强制重新释放"))
     }
 

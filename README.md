@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build29-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build30-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD29%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD30%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build29` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build29.jar` |
+| **当前版本** | `3.0.0.beta.build30` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build30.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -390,7 +390,7 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build29.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
+成功构建后，`qlmzombie-3.0.0.beta.build30.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
 
 ---
 
@@ -601,8 +601,8 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build29.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
-└── qlmzombie-3.0.0.beta.build29-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build30.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
+└── qlmzombie-3.0.0.beta.build30-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -612,7 +612,7 @@ D:\mcmod\build\libs\
 ### 方法 A：玩家正常使用 (推荐)
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
-2. 将 `qlmzombie-3.0.0.beta.build29.jar` 放入 `.minecraft/mods/` 目录
+2. 将 `qlmzombie-3.0.0.beta.build30.jar` 放入 `.minecraft/mods/` 目录
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -683,7 +683,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build29` (精确到 build)
+1. **版本号**：`3.0.0.beta.build30` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -763,6 +763,82 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build30 (2026-08-15)
+
+#### 修复：四种随机建筑生成器在单人游戏中完全不生成 + 5x5 小屋门无法进出
+
+本次解决玩家反馈"游戏加载成功时没有刷新建筑物"的核心问题，涉及四处生成器（随机小屋 / 废弃商店 / 高层建筑 / 海底遗迹）的多重缺陷。
+
+##### 缺陷 1：`Dist.DEDICATED_SERVER` 限制导致单人游戏不注册监听器
+
+四个生成器的 `@Mod.EventBusSubscriber` 都带 `value = [Dist.DEDICATED_SERVER]`，该注解让 Forge **只在独立专用服务端进程注册**监听器。
+
+- **单人游戏**使用 Integrated Server，跑在客户端 JVM 里，Dist = `CLIENT`
+- 因此单人游戏里这 4 个监听器**根本不注册** → `ChunkEvent.Load` 触发时无人响应 → **永远不生成任何建筑**
+
+项目里 71 个其它 EventBusSubscriber 都没有这个限制，只有这 4 个生成器误用。修复：去掉 `value = [Dist.DEDICATED_SERVER]`，改用运行时 `isClientSide` 判断防冲突（Forge 推荐做法）。
+
+##### 缺陷 2：`ChunkEvent.Load` 时机问题——出生点区块不会重新触发
+
+出生点区块在世界生成阶段就已加载并触发过 `ChunkEvent.Load`，玩家进入世界后这些区块**不会重新触发 Load 事件**；旧世界已探索区域同理。只有玩家走到全新区域才可能触发，导致"进入游戏后周围看不到建筑"。
+
+修复：每个生成器新增 `PlayerLoggedInEvent` 监听，玩家登录时扫描周围 `7×7 = 49` 个**已加载**区块（`getChunkNow`，不强制加载未加载区块），对每个调用 `tryGenerate` 补触发建筑生成。
+
+##### 缺陷 3：跨会话重复生成风险
+
+`generatedChunks` 是内存 `ConcurrentHashMap.newKeySet`，**服务器重启后清空**。若不检查，玩家每次登录都可能概率性地在旧建筑上重叠生成第二座。
+
+修复：每个生成器新增 `hasExistingStructure` 检查，按自身建筑标志方块检测已存在建筑，检测到则记入缓存并跳过：
+
+| 生成器 | 检测位置 | 标志方块 |
+|:------|:---------|:---------|
+| 随机小屋 | `(origin.x-1, origin.y, origin.z-1)` | CHEST |
+| 废弃商店 | `(origin.x+1, origin.y+1, origin.z+1)` | CHEST |
+| 高层建筑 | 建筑中心一/二层地板 | 双层 STONE（自然地形空中不会有连续两层石头） |
+| 海底遗迹 | `(origin.x+2, origin.y+1, origin.z+2)` | CHEST |
+
+##### 缺陷 4：5x5 小屋门只有下半部分，玩家无法进出
+
+[RandomBuildingGenerator.generateHut](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/RandomBuildingGenerator.kt#L177-L196) 原门逻辑 `isDoor = dy == 0 && ...` 只在 `dy==0` 放一格 `OAK_DOOR`，而 `dy==1` 放的是 `OAK_PLANKS`（木板）。Minecraft 门是**两格高**，只有下半部分 + 上半被木板堵死 → 玩家无法通过。且 `defaultBlockState()` 未设 `HALF`/`FACING`，门方块状态不完整。
+
+修复：门正确占据 `dy=0`（`DoubleBlockHalf.LOWER`）和 `dy=1`（`DoubleBlockHalf.UPPER`）两格，统一 `FACING=SOUTH`（朝南外开），`dy=2` 留作门楣木板。玩家可右键开门进出。
+
+##### 提升：四种建筑刷新概率 + 间距优化
+
+| 生成器 | SPAWN_CHANCE | MIN_SPACING |
+|:------|:------------:|:-----------:|
+| 随机小屋 | 0.15 → **0.25** | 3 → **2** |
+| 废弃商店 | 0.12 → **0.20** | 4 → **3** |
+| 高层建筑 | 0.06 → **0.10** | 5 → **4** |
+| 海底遗迹 | 0.20 → **0.30** | 4 → **3** |
+
+保留原有稀有度差异（高层最稀有 10%，遗迹最常见 30%），整体密度提升约 50~67%。
+
+##### 服务端/客户端防冲突保证
+
+| 防护点 | 实现 |
+|:------|:-----|
+| 客户端不生成 | `onPlayerLogin` / `onChunkLoad` 开头 `if (level.isClientSide) return` |
+| 服务端独占生成 | 只有 `ServerLevel`（`isClientSide=false`）能通过检查继续 `tryGenerate` |
+| 客户端获取建筑 | 通过区块数据同步（服务端 `setBlock` 后自动同步给客户端） |
+| 双端注册监听器 | 去掉 `Dist.DEDICATED_SERVER` 后双端都注册，但客户端立即 return，不会冲突 |
+
+##### 关键日志 `debug` → `info`
+
+玩家可在 `logs/latest.log` 直接看到：
+- 登录时扫描了多少区块、新建了多少建筑
+- 每个建筑生成的区块坐标
+
+#### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| [RandomBuildingGenerator.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/RandomBuildingGenerator.kt) | 去 Dist / 登录扫描 / 防重复 / 门修复 / 概率提升 |
+| [AbandonedShopGenerator.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/AbandonedShopGenerator.kt) | 去 Dist / 登录扫描 / 防重复 / 概率提升 |
+| [HighriseBuildingGenerator.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/HighriseBuildingGenerator.kt) | 去 Dist / 登录扫描 / 防重复（双层STONE标志）/ 概率提升 |
+| [OceanRuinGenerator.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/OceanRuinGenerator.kt) | 去 Dist / 登录扫描 / 防重复 / 概率提升 |
+| [QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt) | 公告 v3.2 / 版本号 build30 |
 
 ### 3.0.0.beta.build29 (2026-08-15)
 
@@ -2084,4 +2160,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build29` · 构建日期：2026-08-15 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build30` · 构建日期：2026-08-15 · Minecraft 1.20.1
