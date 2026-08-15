@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 object AbandonedShopGenerator {
 
-    private const val SPAWN_CHANCE = 0.20
+    private const val SPAWN_CHANCE = 0.30
     private const val MIN_SPACING = 3
     private const val SHOP_WIDTH = 9
     private const val SHOP_DEPTH = 7
@@ -93,6 +93,25 @@ object AbandonedShopGenerator {
         if (level.isClientSide) return
         val serverLevel = level as? net.minecraft.server.level.ServerLevel ?: return
 
+        QLMZombieMod.LOGGER.info(
+            "[废弃商店] 玩家 {} 登录, 延迟2秒后扫描周围区块补生成",
+            player.name.string
+        )
+        // 延迟 40 tick (2秒) 扫描，确保玩家周围区块已加载完成
+        val server = serverLevel.server
+        server.tell(net.minecraft.server.TickTask(server.tickCount + 40, Runnable {
+            try {
+                scanAndGenerate(serverLevel, player)
+            } catch (e: Exception) {
+                QLMZombieMod.LOGGER.error("[废弃商店] 延迟扫描异常: {}", e.message)
+            }
+        }))
+    }
+
+    private fun scanAndGenerate(
+        serverLevel: net.minecraft.server.level.ServerLevel,
+        player: net.minecraft.world.entity.player.Player
+    ) {
         val centerChunkX = player.blockPosition().x shr 4
         val centerChunkZ = player.blockPosition().z shr 4
         var scanned = 0
@@ -106,12 +125,10 @@ object AbandonedShopGenerator {
                 }
             }
         }
-        if (scanned > 0) {
-            QLMZombieMod.LOGGER.info(
-                "[废弃商店] 玩家 {} 登录扫描 {} 个区块, 新生成 {} 个商店",
-                player.name.string, scanned, generated
-            )
-        }
+        QLMZombieMod.LOGGER.info(
+            "[废弃商店] 玩家 {} 延迟扫描完成: 扫描{}区块, 新生成{}商店",
+            player.name.string, scanned, generated
+        )
     }
 
     private fun tryGenerate(

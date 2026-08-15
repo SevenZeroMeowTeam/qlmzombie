@@ -4,7 +4,7 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build30-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build31-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
@@ -390,7 +390,7 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build30.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
+成功构建后，`qlmzombie-3.0.0.beta.build31.jar` 内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。
 
 ---
 
@@ -601,8 +601,8 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build30.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
-└── qlmzombie-3.0.0.beta.build30-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build31.jar          # 主发行版 (含 classes + 资源 + 内嵌 libs/ + libs/manifest.txt)
+└── qlmzombie-3.0.0.beta.build31-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -763,6 +763,58 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build31 (2026-08-15)
+
+#### 修复：单人游戏登录扫描时机 + 刷新概率再提升
+
+build30 已去掉 `Dist.DEDICATED_SERVER` 限制并新增玩家登录扫描，但玩家反馈单人游戏仍不生成建筑。根因定位：**`PlayerLoggedInEvent` 触发瞬间，玩家周围的 spawn chunks 可能仍在异步加载，`getChunkNow` 返回 `null`，导致 `scanned=0`、不生成任何建筑**。
+
+##### 修复：登录扫描改为延迟 2 秒执行
+
+四个生成器的 `onPlayerLogin` 改为通过 `MinecraftServer.tell(TickTask)` 延迟 40 tick（2 秒）后执行扫描：
+
+```kotlin
+val server = serverLevel.server
+server.tell(TickTask(server.tickCount + 40, Runnable {
+    scanAndGenerate(serverLevel, player)  // 此时区块已加载完成
+}))
+```
+
+2 秒后玩家周围区块已完全加载，`getChunkNow` 返回有效 `LevelChunk`，扫描可正常补生成建筑。同时抽取 `scanAndGenerate` 方法，逻辑更清晰。
+
+##### 诊断日志增强
+
+- 玩家登录瞬间立即输出 `[随机小屋] 玩家 X 登录, 延迟2秒后扫描` —— 确认事件已触发
+- 延迟扫描完成后输出 `扫描N区块, 新生成M小屋` —— 确认扫描结果
+- 异常时输出 `延迟扫描异常: ...` —— 捕获运行时错误
+
+玩家可在 `logs/latest.log` 搜索 `[随机小屋]`/`[废弃商店]`/`[高层建筑]`/`[海底遗迹]` 排查。
+
+##### 刷新概率再提升
+
+| 生成器 | build30 | build31 | 提升 |
+|:------|:-------:|:-------:|:----:|
+| 随机小屋 | 0.25 | **0.35** | +40% |
+| 废弃商店 | 0.20 | **0.30** | +50% |
+| 高层建筑 | 0.10 | **0.15** | +50% |
+| 海底遗迹 | 0.30 | **0.40** | +33% |
+
+以随机小屋为例，玩家登录扫描 49 个区块，至少生成 1 个小屋的概率：`1 - (1-0.35)^49 ≈ 99.9999%`，几乎必然在出生点附近生成建筑。
+
+##### 附带修复：MOD_VERSION 版本号同步
+
+发现 `QLMZombieMod.kt` 的 `MOD_VERSION` 常量在 build30 时未正确更新（仍为 build29），本次统一修正为 build31。
+
+#### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| [RandomBuildingGenerator.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/RandomBuildingGenerator.kt) | 延迟扫描 + 概率 0.25→0.35 + 诊断日志 |
+| [AbandonedShopGenerator.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/AbandonedShopGenerator.kt) | 延迟扫描 + 概率 0.20→0.30 + 诊断日志 |
+| [HighriseBuildingGenerator.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/HighriseBuildingGenerator.kt) | 延迟扫描 + 概率 0.10→0.15 + 诊断日志 |
+| [OceanRuinGenerator.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/structure/OceanRuinGenerator.kt) | 延迟扫描 + 概率 0.30→0.40 + 诊断日志 |
+| [QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt) | 公告 v3.3 + MOD_VERSION build29→build31 |
 
 ### 3.0.0.beta.build30 (2026-08-15)
 
@@ -2160,4 +2212,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build30` · 构建日期：2026-08-15 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build31` · 构建日期：2026-08-15 · Minecraft 1.20.1

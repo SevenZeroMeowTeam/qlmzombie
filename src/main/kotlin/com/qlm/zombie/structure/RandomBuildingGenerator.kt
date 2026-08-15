@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 object RandomBuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.25
+    private const val SPAWN_CHANCE = 0.35
     private const val MIN_SPACING = 2
     private const val HUT_SIZE = 5
     // 玩家登录时扫描周围已加载区块的半径（半径 3 = 7x7 = 49 个区块）
@@ -66,6 +66,26 @@ object RandomBuildingGenerator {
         if (level.isClientSide) return
         val serverLevel = level as? net.minecraft.server.level.ServerLevel ?: return
 
+        QLMZombieMod.LOGGER.info(
+            "[随机小屋] 玩家 {} 登录, 延迟2秒后扫描周围区块补生成",
+            player.name.string
+        )
+        // 延迟 40 tick (2秒) 扫描，确保玩家周围区块已加载完成
+        // 玩家登录瞬间 spawn chunks 可能仍在异步加载，getChunkNow 会返回 null
+        val server = serverLevel.server
+        server.tell(net.minecraft.server.TickTask(server.tickCount + 40, Runnable {
+            try {
+                scanAndGenerate(serverLevel, player)
+            } catch (e: Exception) {
+                QLMZombieMod.LOGGER.error("[随机小屋] 延迟扫描异常: {}", e.message)
+            }
+        }))
+    }
+
+    private fun scanAndGenerate(
+        serverLevel: net.minecraft.server.level.ServerLevel,
+        player: net.minecraft.world.entity.player.Player
+    ) {
         val centerChunkX = player.blockPosition().x shr 4
         val centerChunkZ = player.blockPosition().z shr 4
         var scanned = 0
@@ -79,12 +99,10 @@ object RandomBuildingGenerator {
                 }
             }
         }
-        if (scanned > 0) {
-            QLMZombieMod.LOGGER.info(
-                "[随机小屋] 玩家 {} 登录扫描 {} 个区块, 新生成 {} 个小屋",
-                player.name.string, scanned, generated
-            )
-        }
+        QLMZombieMod.LOGGER.info(
+            "[随机小屋] 玩家 {} 延迟扫描完成: 扫描{}区块, 新生成{}小屋",
+            player.name.string, scanned, generated
+        )
     }
 
     private fun tryGenerate(
