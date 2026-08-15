@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build33-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build34-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD33%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD34%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build32` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build32.jar` / `qlmzombie-3.0.0.beta.build32-server.jar` |
+| **当前版本** | `3.0.0.beta.build34` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build34.jar` / `qlmzombie-3.0.0.beta.build34-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -390,7 +390,7 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build32.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build32-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
+成功构建后，`qlmzombie-3.0.0.beta.build34.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build34-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
 
 ---
 
@@ -601,9 +601,9 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build32.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
-├── qlmzombie-3.0.0.beta.build32-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
-└── qlmzombie-3.0.0.beta.build32-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build34.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
+├── qlmzombie-3.0.0.beta.build34-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
+└── qlmzombie-3.0.0.beta.build34-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -614,8 +614,8 @@ D:\mcmod\build\libs\
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
 2. 选择对应发行包放入 `.minecraft/mods/` 目录：
-   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build33.jar`（完整包含 crafting-dead 4 个模组）
-   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build33-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
+   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build34.jar`（完整包含 crafting-dead 4 个模组）
+   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build34-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -686,7 +686,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build32` (精确到 build)
+1. **版本号**：`3.0.0.beta.build34` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -766,6 +766,51 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build34 (2026-08-16)
+
+#### 依赖同步：crafting-dead 系列 4 模组升级
+
+根据 `src/main/libs` 目录审计发现：`crafting-dead` 家族 4 个子模组全部升级为官方新版（命名去掉 `homebaked` 自制标识）：
+
+| 模组 | 旧版本 | 新版本 |
+|:-----|:-------|:-------|
+| crafting-dead-core | `1.9.2.homebaked-all.jar` | `1.9.4.8-all.jar` |
+| crafting-dead-decoration | `1.0.4.homebaked.jar` | `1.0.6.8.jar` |
+| crafting-dead-survival | `1.2.3.homebaked.jar` | `1.2.5.8.jar` |
+| crafting-dead-worldguard | `0.0.4.homebaked.jar` | `0.0.6.8.jar` |
+
+##### 处理
+
+- 4 个新版本 JAR 已放入 `src/main/libs/`，构建时 `generateLibsManifest` 自动生成白名单 `libs/manifest.txt`，运行时 `ModDependencyHandler` 自动释放到 `mods/`
+- 旧的 3 个 `homebaked` JAR（decoration/survival/worldguard）已删除；core 旧版本未纳入 git 跟踪，直接替换
+- `scripts/libs-list.txt` 同步 4 条记录
+- 服务端发行版 `-server.jar` 仍按 `crafting-dead*` 前缀在 DEDICATED_SERVER 下自动禁用 4 个客户端向模组，逻辑无需改动
+
+##### 最终状态
+
+| 项 | 值 |
+|:---|:---|
+| libs 目录 JAR 总数 | **119**（不变） |
+| libs-list.txt | 119 条目，与 libs 目录完全一致 ✅ |
+| build34 JAR 内 manifest.txt | 119 条目 ✅ |
+| crafting-dead 内嵌版本 | core `1.9.4.8-all` / decoration `1.0.6.8` / survival `1.2.5.8` / worldguard `0.0.6.8` ✅ |
+| 自身 JAR 残留 | 0 个 ✅ |
+
+##### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| `src/main/libs/crafting-dead-decoration-1.20.1-1.0.4.homebaked.jar` | **删除**（旧版） |
+| `src/main/libs/crafting-dead-survival-1.20.1-1.2.3.homebaked.jar` | **删除**（旧版） |
+| `src/main/libs/crafting-dead-worldguard-1.20.1-0.0.4.homebaked.jar` | **删除**（旧版） |
+| `src/main/libs/crafting-dead-core-1.20.1-1.9.4.8-all.jar` | **新增** |
+| `src/main/libs/crafting-dead-decoration-1.20.1-1.0.6.8.jar` | **新增** |
+| `src/main/libs/crafting-dead-survival-1.20.1-1.2.5.8.jar` | **新增** |
+| `src/main/libs/crafting-dead-worldguard-1.20.1-0.0.6.8.jar` | **新增** |
+| [scripts/libs-list.txt](file:///D:/mcmod/scripts/libs-list.txt) | 4 条 crafting-dead 版本同步 |
+| [QLMZombieMod.kt](file:///D:/mcmod/src/main/kotlin/com/qlm/zombie/QLMZombieMod.kt) | 公告 v4.2 / MOD_VERSION build33→build34 |
+| [README.md](file:///D:/mcmod/README.md) | build34 更新说明 + 版本号统一 |
 
 ### 3.0.0.beta.build33 (2026-08-15)
 
@@ -2351,4 +2396,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build33` · 构建日期：2026-08-15 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build34` · 构建日期：2026-08-16 · Minecraft 1.20.1

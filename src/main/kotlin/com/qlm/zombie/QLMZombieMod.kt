@@ -193,7 +193,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊僵尸（16种）：巨人/木桶/召唤/烈焰/剧毒/铁甲/跳跃/投掷/吐息/爆破/投手TNT/自爆/弓箭手"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7睡袋系统：3羊毛合成，夜晚可入睡不重置出生点，白天自动收起可拾取"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：仅保留自定义绿色血量条+护甲/饱食度数值，原版心形隐藏"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖释放 v4.1：§r§7crafting-dead-core升级1.9.1→1.9.2，清理残包保留-all fat-jar，119模组零重复"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖释放 v4.2：§r§7crafting-dead 4模组升级（core 1.9.4.8 / decoration 1.0.6.8 / survival 1.2.5.8 / worldguard 0.0.6.8），119模组零重复"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7输入 §a/qlm help§r 查看命令列表，§b/qlm mods§r 查看内嵌模组状态，§b/qlm download§r 强制重新释放"))
     }
 
@@ -225,7 +225,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build33"
+        const val MOD_VERSION = "3.0.0.beta.build34"
 
         @JvmField
         @Volatile
