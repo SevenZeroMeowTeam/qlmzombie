@@ -192,7 +192,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸潮系统：每28天夜晚，5波僵尸潮+小Boss(死亡召唤精英僵尸)+大Boss 3阶段"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7新手保护：前25天不生成敌对生物，安心发育；25天后计分板更新为丰富emoji（🧟在线/☠附近敌人/🏆成就）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7维度封禁：下界/末地无法进入；末影人/苦力怕/女巫/猪灵族/蜘蛛/守卫者族已封禁"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7村民守卫：5%概率村民变守卫（100血/25攻），不逃跑+铁傀儡协助反击，不会进行交易"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7村民守卫：5%概率村民变守卫（100血/25攻），不逃跑+铁傀儡协助反击，不会交易，牧师村民会为其回血"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7自动扫描：每2秒扫描附近20格，僵尸按强度发光标记"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7成就系统：22项任务解锁成就，非进入游戏即可获得，每项都有技能点奖励"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7技能点：初始5点，成就奖励更多，使用 §b/qlm skill§r 查看"))
@@ -246,7 +246,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build39"
+        const val MOD_VERSION = "3.0.0.beta.build40"
 
         @JvmField
         @Volatile

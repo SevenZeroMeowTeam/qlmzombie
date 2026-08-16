@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build39-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build40-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD39%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD40%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build39` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build39.jar` / `qlmzombie-3.0.0.beta.build39-server.jar` |
+| **当前版本** | `3.0.0.beta.build40` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build40.jar` / `qlmzombie-3.0.0.beta.build40-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -768,6 +768,24 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build40 (2026-08-16)
+
+#### 村民牧师给守卫回血
+
+- **牧师村民（职业 CLERIC）每 2 秒治疗 16 格内的村民守卫**
+- 治疗效果：直接回血 + **再生 II（5秒）**持续恢复
+- 爱心 💗 治疗粒子 + 牧师施法粒子（HAPPY_VILLAGER）显示效果
+- 每轮最多治疗 3 名守卫；牧师守卫（牧师变守卫）也能治疗其他守卫
+- 村民守卫完整能力：5% 刷新、100血/25攻、不逃跑、铁傀儡协助反击、不交易
+
+##### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| `villager/VillagerGuardHandler.java` | 新增牧师回血逻辑 |
+| `QLMZombieMod.kt` | 公告更新 + MOD_VERSION build40 |
+| `gradle.properties` | `mod_version=3.0.0.beta.build40` |
 
 ### 3.0.0.beta.build39 (2026-08-16)
 

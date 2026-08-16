@@ -6,6 +6,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -13,12 +15,16 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraft.world.phys.AABB;
 
 /**
@@ -157,6 +163,57 @@ public class VillagerGuardHandler {
                     }
                 }
             }
+        }
+    }
+
+    // ==================== 牧师村民给守卫回血 ====================
+
+    private static int clericHealTick = 0;
+
+    @SubscribeEvent
+    public static void onClericHealTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        if (++clericHealTick < 40) return; // 每2秒
+        clericHealTick = 0;
+
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+
+        for (ServerLevel level : server.getAllLevels()) {
+            if (level.dimension() != Level.OVERWORLD) continue;
+            // 遍历所有村民，找出牧师
+            for (Villager cleric : level.getEntitiesOfClass(Villager.class,
+                new AABB(level.getMinBuildHeight(), level.getMinBuildHeight(), level.getMinBuildHeight(),
+                         level.getMaxBuildHeight(), level.getMaxBuildHeight(), level.getMaxBuildHeight()),
+                v -> v.isAlive())) {
+                if (cleric.getVillagerData().getProfession() != VillagerProfession.CLERIC) continue;
+                healNearbyGuards(cleric, level);
+            }
+        }
+    }
+
+    /** 牧师治疗 16 格内的村民守卫（回血 + 再生效果 + 爱心粒子） */
+    private static void healNearbyGuards(Villager cleric, ServerLevel level) {
+        int healed = 0;
+        for (Villager guard : level.getEntitiesOfClass(Villager.class,
+            cleric.getBoundingBox().inflate(16.0),
+            g -> g.isAlive() && g != cleric
+                && g.getPersistentData().getBoolean(NBT_IS_GUARD)
+                && g.getHealth() < g.getMaxHealth())) {
+            if (healed >= 3) break; // 每轮最多治疗3个守卫
+
+            guard.heal(1.0f);
+            guard.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 1)); // 再生II 5秒
+            // 爱心治疗粒子
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,
+                guard.getX(), guard.getY() + 1.0, guard.getZ(), 3, 0.3, 0.3, 0.3, 0.05);
+            healed++;
+        }
+        if (healed > 0) {
+            // 牧师施法粒子
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
+                cleric.getX(), cleric.getY() + 1.0, cleric.getZ(), 5, 0.5, 0.5, 0.5, 0.05);
+            QLMZombieMod.LOGGER.debug("[村民守卫] 牧师 {} 治疗了 {} 名守卫", cleric.blockPosition(), healed);
         }
     }
 
