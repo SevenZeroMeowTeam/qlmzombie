@@ -368,64 +368,13 @@ ServerEvents.recipes(event => {
 });
 
 // --- Player Login Messages ---
-PlayerEvents.loggedIn(function(event) {
-    var player = event.player;
-    if (!player) return;
-    
-    try {
-        // 安全获取玩家数据存储对象
-        var dataStorage = null;
-        var hasGetPersistentData = false;
-        
-        // 尝试多种方式获取数据存储
-        try {
-            // 方式1: player.stage (QLM Zombie mod)
-            var stage = player.stage;
-            if (stage && typeof stage.getPersistentData === 'function') {
-                dataStorage = stage;
-                hasGetPersistentData = true;
-            }
-        } catch (e) { /* stage 不可用 */ }
-        
-        if (!hasGetPersistentData) {
-            try {
-                // 方式2: player.entity
-                var entity = player.entity;
-                if (entity && typeof entity.getPersistentData === 'function') {
-                    dataStorage = entity;
-                    hasGetPersistentData = true;
-                }
-            } catch (e) { /* entity 不可用 */ }
-        }
-        
-        if (!hasGetPersistentData) {
-            try {
-                // 方式3: player 自身
-                if (typeof player.getPersistentData === 'function') {
-                    dataStorage = player;
-                    hasGetPersistentData = true;
-                }
-            } catch (e) { /* player 不可用 */ }
-        }
-        
-        if (hasGetPersistentData && dataStorage) {
-            var persistentData = dataStorage.getPersistentData();
-            if (persistentData && !persistentData.getBoolean('qlm_welcomed')) {
-                persistentData.putBoolean('qlm_welcomed', true);
-                player.tell('§6[七零喵僵尸末日] §b欢迎来到末日求生!');
-                player.tell('§7- 使用 §b/qlm help§7 查看命令列表');
-                player.tell('§7- 初始饥饿值已设置, 注意饮水和食物');
-                player.tell('§7- 僵尸在黑暗中更危险, 小心!');
-            }
-        } else {
-            // 无法获取持久化数据，仍然发送欢迎消息（仅首次）
-            // 由于无法判断是否已欢迎过，始终发送
-            player.tell('§6[七零喵僵尸末日] §b欢迎来到末日求生!');
-            player.tell('§7- 使用 §b/qlm help§7 查看命令列表');
-            player.tell('§7- 初始饥饿值已设置, 注意饮水和食物');
-            player.tell('§7- 僵尸在黑暗中更危险, 小心!');
-        }
-    } catch (e) {
-        console.log('[QLM] Player login message error: ' + e.message);
+PlayerEvents.loggedIn(event => {
+    const player = event.player;
+    if (!player.stage.getPersistentData().getBoolean('qlm_welcomed')) {
+        player.stage.getPersistentData().putBoolean('qlm_welcomed', true);
+        player.tell('§6[七零喵僵尸末日] §b欢迎来到末日求生!');
+        player.tell('§7- 使用 §b/qlm help§7 查看命令列表');
+        player.tell('§7- 初始饥饿值已设置, 注意饮水和食物');
+        player.tell('§7- 僵尸在黑暗中更危险, 小心!');
     }
 });

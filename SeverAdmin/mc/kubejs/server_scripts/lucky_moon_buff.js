@@ -2,15 +2,15 @@
 // 幸运之月期间给所有在线玩家持续刷新 Luck buff 直到天亮
 
 (() => {
-var MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
-var ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
-var LUCK_DURATION = 600
-var LUCK_AMPLIFIER = 1
+const MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
+const ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
+const LUCK_DURATION = 600
+const LUCK_AMPLIFIER = 1
 
 PlayerEvents.tick(event => {
   if (event.server.tickCount % 60 !== 0) return
   if (event.player.level === null) return
-  var level = event.player.level
+  const level = event.player.level
   if (!(level instanceof ServerLevel)) return
 
   if (!MoonHelper.isLuckyMoon(level)) return
@@ -20,11 +20,11 @@ PlayerEvents.tick(event => {
 
 LevelEvents.tick('minecraft:overworld', event => {
   if (event.server.tickCount % 100 !== 0) return
-  var level = event.level
+  const level = event.level
   if (!(level instanceof ServerLevel)) return
   if (!MoonHelper.isLuckyMoon(level)) return
 
-  event.server.players.forEach(function(player) {
+  event.server.players.forEach(player => {
     player.potionEffects.add('minecraft:luck', LUCK_DURATION, LUCK_AMPLIFIER, true, true)
   })
 })

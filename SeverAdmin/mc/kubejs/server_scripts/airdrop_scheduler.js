@@ -1,23 +1,21 @@
 (() => {
-var MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
-var ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
-var RandomSource = Java.loadClass('net.minecraft.util.RandomSource')
-var BlockPos = Java.loadClass('net.minecraft.core.BlockPos')
-var ItemStack = Java.loadClass('net.minecraft.world.item.ItemStack')
-var Blocks = Java.loadClass('net.minecraft.world.level.block.Blocks')
-// KubeJS 6.x 通过 Java.loadClass 获取 Heightmap 类
-var Heightmap = Java.loadClass('net.minecraft.world.level.levelgen.Heightmap')
+const MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
+const ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
+const RandomSource = Java.loadClass('net.minecraft.util.RandomSource')
+const BlockPos = Java.loadClass('net.minecraft.core.BlockPos')
+const ItemStack = Java.loadClass('net.minecraft.world.item.ItemStack')
+const Blocks = Java.loadClass('net.minecraft.world.level.block.Blocks')
 
-var DAY_LENGTH = 24000
-var DAY_START = 0
-var THROTTLE_TICKS = 100
-var AIRDROP_DAY_INTERVAL = 2
-var MIN_DAY_FOR_AIRDROP = 5
-var MAX_AIRDROP_PER_DAY = 3
+const DAY_LENGTH = 24000
+const DAY_START = 0
+const THROTTLE_TICKS = 100
+const AIRDROP_DAY_INTERVAL = 2
+const MIN_DAY_FOR_AIRDROP = 5
+const MAX_AIRDROP_PER_DAY = 3
 
-var tickCounter = 0
+let tickCounter = 0
 
-var MOD_ITEMS = [
+const MOD_ITEMS = [
     'minecraft:diamond_sword',
     'minecraft:diamond_pickaxe',
     'minecraft:diamond_axe',
@@ -155,9 +153,36 @@ var MOD_ITEMS = [
     'quark:prismarine_brick',
     'quark:glowstone_brick',
     'quark:end_stone_brick',
+    'quark:nether_brick_fence',
+    'quark:stone_fence',
+    'quark:brick_fence',
+    'quark:netherrack_fence',
+    'quark:obsidian_fence',
+    'quark:prismarine_fence',
+    'quark:red_sandstone_fence',
+    'quark:purpur_fence',
+    'quark:end_stone_fence',
+    'quark:terracotta_fence',
+    'quark:andesite_fence',
+    'quark:diorite_fence',
+    'quark:granite_fence',
+    'quark:blackstone_fence',
+    'quark:crimson_fence',
+    'quark:warped_fence',
+    'quark:honey_comb',
+    'quark:honey_block',
     'quark:netherite_ingot',
     'quark:netherite_scrap',
     'quark:ancient_debris',
+    'quark:netherite_sword',
+    'quark:netherite_pickaxe',
+    'quark:netherite_axe',
+    'quark:netherite_shovel',
+    'quark:netherite_hoe',
+    'quark:netherite_helmet',
+    'quark:netherite_chestplate',
+    'quark:netherite_leggings',
+    'quark:netherite_boots',
     'sophisticatedcore:upgrade_tier_1',
     'sophisticatedcore:upgrade_tier_2',
     'sophisticatedcore:upgrade_tier_3',
@@ -173,6 +198,17 @@ var MOD_ITEMS = [
     'curios:bauble_necklace',
     'curios:bauble_bracelet',
     'curios:bauble_earring',
+    'curios:bauble_brooch',
+    'curios:bauble_charm',
+    'curios:bauble_pendant',
+    'curios:bauble_sash',
+    'curios:bauble_vest',
+    'curios:bauble_wings',
+    'curios:bauble_anklet',
+    'curios:bauble_talisman',
+    'curios:bauble_ring_cursed',
+    'curios:bauble_amulet_cursed',
+    'curios:bauble_belt_cursed',
     'patchouli:guide_book',
     'patchouli:lexicon',
     'patchouli:book_cloth',
@@ -232,6 +268,10 @@ var MOD_ITEMS = [
     'botania:rune_death',
     'botania:rune_flower',
     'botania:rune_greed',
+    'botania:rune_earth',
+    'botania:rune_water',
+    'botania:rune_fire',
+    'botania:rune_air',
     'botania:petal_red',
     'botania:petal_orange',
     'botania:petal_yellow',
@@ -252,6 +292,37 @@ var MOD_ITEMS = [
     'create:large_cogwheel',
     'create:shaft',
     'create:gearbox',
+    'create:belt_connector',
+    'create:belt_funnel',
+    'create:belt_guide',
+    'create:belt_pulley',
+    'create:belt_transporter',
+    'create:chute',
+    'create:depot',
+    'create:funnel',
+    'create:hopper',
+    'create:mechanical_arm',
+    'create:mechanical_bearings',
+    'create:mechanical_crafter',
+    'create:mechanical_drill',
+    'create:mechanical_fan',
+    'create:mechanical_filter',
+    'create:mechanical_harvester',
+    'create:mechanical_mixer',
+    'create:mechanical_press',
+    'create:mechanical_saw',
+    'create:mechanical_sieve',
+    'create:mechanical_spawner',
+    'create:mechanical_stamp',
+    'create:mechanical_woodcutter',
+    'create:millstone',
+    'create:mixer',
+    'create:press',
+    'create:saw',
+    'create:sieve',
+    'create:spawner',
+    'create:stamp',
+    'create:woodcutter',
     'create:andesite_casing',
     'create:brass_casing',
     'create:copper_casing',
@@ -464,22 +535,22 @@ var MOD_ITEMS = [
 ]
 
 function getRandomItem() {
-    var itemId = MOD_ITEMS[Math.floor(Math.random() * MOD_ITEMS.length)]
+    const itemId = MOD_ITEMS[Math.floor(Math.random() * MOD_ITEMS.length)]
     try {
-        var item = Item.of(itemId)
+        const item = Item.of(itemId)
         return item
     } catch (e) {
-        console.log('[QLM Airdrop] Item not found: ' + itemId)
+        console.log(`[QLM Airdrop] Item not found: ${itemId}`)
         return Item.of('minecraft:iron_ingot')
     }
 }
 
 function generateAirdropLoot() {
-    var loot = []
-    var itemCount = Math.floor(Math.random() * 8) + 5
-    for (var i = 0; i < itemCount; i++) {
-        var item = getRandomItem()
-        var count = Math.floor(Math.random() * 64) + 1
+    const loot = []
+    const itemCount = Math.floor(Math.random() * 8) + 5
+    for (let i = 0; i < itemCount; i++) {
+        const item = getRandomItem()
+        const count = Math.floor(Math.random() * 64) + 1
         item.setCount(count)
         loot.push(item)
     }
@@ -488,51 +559,51 @@ function generateAirdropLoot() {
 
 function spawnAirdrop(level, x, z) {
     try {
-        var y = level.getMaxBuildHeight() - 5
-        var pos = new BlockPos(x, y, z)
+        const y = level.getMaxBuildHeight() - 5
+        const pos = new BlockPos(x, y, z)
         
-        var chest = level.getBlockState(pos).getBlock()
+        const chest = level.getBlockState(pos).getBlock()
         if (chest !== Blocks.AIR) {
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3)
         }
         
         level.setBlock(pos, Blocks.CHEST.defaultBlockState(), 3)
         
-        var chestEntity = level.getBlockEntity(pos)
+        const chestEntity = level.getBlockEntity(pos)
         if (chestEntity) {
-            var loot = generateAirdropLoot()
-            var container = chestEntity.getContainer()
-            for (var i = 0; i < loot.length && i < container.getContainerSize(); i++) {
+            const loot = generateAirdropLoot()
+            const container = chestEntity.getContainer()
+            for (let i = 0; i < loot.length && i < container.getContainerSize(); i++) {
                 container.setItem(i, loot[i])
             }
         }
         
         level.playSound(null, pos, 'minecraft:entity.firework_rocket.launch', 1.0, 1.0)
         
-        console.log('[QLM Airdrop] Spawned airdrop at ' + pos.x + ', ' + pos.y + ', ' + pos.z)
+        console.log(`[QLM Airdrop] Spawned airdrop at ${pos.x}, ${pos.y}, ${pos.z}`)
         
         return true
     } catch (e) {
-        console.log('[QLM Airdrop] Failed to spawn: ' + e.message)
+        console.log(`[QLM Airdrop] Failed to spawn: ${e.message}`)
         return false
     }
 }
 
 LevelEvents.tick('minecraft:overworld', event => {
-    var level = event.level
+    const level = event.level
     if (!(level instanceof ServerLevel)) return
 
     if (++tickCounter < THROTTLE_TICKS) return
     tickCounter = 0
 
-    var dayTime = MoonHelper.getDayTime(level)
-    var timeOfDay = dayTime % DAY_LENGTH
+    const dayTime = MoonHelper.getDayTime(level)
+    const timeOfDay = dayTime % DAY_LENGTH
     
     if (timeOfDay < DAY_START || timeOfDay > DAY_START + 100) return
 
-    var day = MoonHelper.getDay(level)
-    var pd = event.server.persistentData
-    var lastAirdropDay = pd.getLong('qlmzombie.lastAirdropDay')
+    const day = MoonHelper.getDay(level)
+    const pd = event.server.persistentData
+    const lastAirdropDay = pd.getLong('qlmzombie.lastAirdropDay')
 
     if (lastAirdropDay === day) return
 
@@ -540,14 +611,14 @@ LevelEvents.tick('minecraft:overworld', event => {
 
     if (day % AIRDROP_DAY_INTERVAL !== 1) return
 
-    var airdropCount = Math.floor(Math.random() * MAX_AIRDROP_PER_DAY) + 1
-    var spawnedCount = 0
+    const airdropCount = Math.floor(Math.random() * MAX_AIRDROP_PER_DAY) + 1
+    let spawnedCount = 0
 
-    for (var i = 0; i < airdropCount; i++) {
-        var x = Math.floor(Math.random() * 2000) - 1000
-        var z = Math.floor(Math.random() * 2000) - 1000
+    for (let i = 0; i < airdropCount; i++) {
+        const x = Math.floor(Math.random() * 2000) - 1000
+        const z = Math.floor(Math.random() * 2000) - 1000
         
-        var surfaceY = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, new BlockPos(x, 0, z)).getY()
+        const surfaceY = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, new BlockPos(x, 0, z)).getY()
         if (surfaceY > 60) {
             if (spawnAirdrop(level, x, z)) {
                 spawnedCount++
@@ -557,10 +628,10 @@ LevelEvents.tick('minecraft:overworld', event => {
 
     if (spawnedCount > 0) {
         pd.putLong('qlmzombie.lastAirdropDay', day)
-        console.log('[QLM Airdrop] Day ' + day + ' (odd day) -> Spawned ' + spawnedCount + ' airdrops')
+        console.log(`[QLM Airdrop] Day ${day} (odd day) -> Spawned ${spawnedCount} airdrops`)
         
-        event.server.players.forEach(function(player) {
-            player.sendMessage('§e✈️ 空投已投放！今天是第 ' + day + ' 天，天空中落下了 ' + spawnedCount + ' 个空投箱！')
+        event.server.players.forEach(player => {
+            player.sendMessage(`§e✈️ 空投已投放！今天是第 ${day} 天，天空中落下了 ${spawnedCount} 个空投箱！`)
         })
     }
 })
