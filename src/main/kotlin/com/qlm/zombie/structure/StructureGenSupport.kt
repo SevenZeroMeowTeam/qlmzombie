@@ -19,6 +19,17 @@ object StructureGenSupport {
     /** 所有新建筑生成器共享的已生成区块集合 */
     val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
 
+    /** 已生成建筑的中心位置（用于建筑内刷怪） */
+    private val buildingCenters = ConcurrentHashMap<Long, BlockPos>()
+
+    /** 注册一个已生成的建筑中心（chunkKey -> 中心坐标） */
+    fun registerBuilding(chunkKey: Long, center: BlockPos) {
+        buildingCenters[chunkKey] = center.immutable()
+    }
+
+    /** 获取所有已生成建筑的中心位置 */
+    fun getBuildingCenters(): Collection<BlockPos> = buildingCenters.values
+
     fun chunkKey(x: Int, z: Int): Long = (x.toLong() shl 32) or (z.toLong() and 0xFFFFFFFFL)
 
     /** 与已生成建筑保持最小间距 */

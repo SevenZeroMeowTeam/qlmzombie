@@ -127,6 +127,7 @@ object AbandonedSchoolGenerator {
         return try {
             generateSchool(level, origin)
             StructureGenSupport.generatedChunks.add(key)
+            StructureGenSupport.registerBuilding(key, net.minecraft.core.BlockPos(origin.x + SCHOOL_WIDTH / 2, origin.y, origin.z + SCHOOL_DEPTH / 2))
             QLMZombieMod.LOGGER.info("[学校] 在区块 ({}, {}) 生成废弃学校", chunkX, chunkZ)
             true
         } catch (e: Exception) {

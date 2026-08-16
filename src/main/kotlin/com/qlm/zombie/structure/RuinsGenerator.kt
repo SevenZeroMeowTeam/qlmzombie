@@ -97,6 +97,7 @@ object RuinsGenerator {
         return try {
             generateRuins(level, origin)
             StructureGenSupport.generatedChunks.add(key)
+            StructureGenSupport.registerBuilding(key, origin.immutable())
             QLMZombieMod.LOGGER.info("[废墟] 在区块 ({}, {}) 生成废墟", chunkX, chunkZ)
             true
         } catch (e: Exception) {

@@ -54,6 +54,8 @@ public class SpecialZombieHandler {
     public static final String TYPE_TNT_THROWER = "tnt_thrower"; // 投手僵尸 - 丢点燃TNT
     public static final String TYPE_SUICIDE = "suicide";   // 自爆僵尸 - 冲向玩家爆炸
     public static final String TYPE_ARCHER = "archer";     // 弓箭手僵尸 - 射箭
+    public static final String TYPE_WARLORD = "warlord";   // 军阀僵尸 - 高血指挥，给附近僵尸加力量
+    public static final String TYPE_MINI = "mini";         // 迷你僵尸 - 低血高速小鬼
 
     // 召唤僵尸参数
     private static final double SUMMON_CHANCE = 0.3;
@@ -97,6 +99,8 @@ public class SpecialZombieHandler {
                     case TYPE_TNT_THROWER -> handleTntThrowerZombie(zombie, level, tag, gameTime);
                     case TYPE_SUICIDE -> handleSuicideZombie(zombie, level, tag, gameTime);
                     case TYPE_ARCHER -> handleArcherZombie(zombie, level, tag, gameTime);
+                    case TYPE_WARLORD -> handleWarlordZombie(zombie, level, tag, gameTime);
+                    case TYPE_MINI -> handleMiniZombie(zombie, level, tag);
                 }
             }
         }
@@ -512,6 +516,35 @@ public class SpecialZombieHandler {
             zombie.getX(), zombie.getEyeY(), zombie.getZ(), 3, 0.2, 0.2, 0.2, 0.05);
     }
 
+    // ====== 军阀僵尸：每8秒给附近僵尸加力量buff ======
+    private static void handleWarlordZombie(Zombie zombie, ServerLevel level, CompoundTag tag, long gameTime) {
+        long lastBuff = tag.getLong("qlm_warlord_buff_time");
+        if (gameTime - lastBuff < 160) return;
+        tag.putLong("qlm_warlord_buff_time", gameTime);
+
+        int buffed = 0;
+        for (Zombie ally : level.getEntitiesOfClass(Zombie.class,
+            zombie.getBoundingBox().inflate(12.0),
+            z -> z.isAlive() && z != zombie)) {
+            ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 120, 0));
+            ally.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 120, 0));
+            buffed++;
+        }
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.CRIT,
+            zombie.getX(), zombie.getY() + 1, zombie.getZ(), 8, 1.0, 0.5, 1.0, 0.05);
+        if (buffed > 0 && zombie.getTarget() instanceof ServerPlayer sp) {
+            sp.sendSystemMessage(Component.literal("§c§l⚠ 军阀僵尸鼓舞了 " + buffed + " 只僵尸！"));
+        }
+    }
+
+    // ====== 迷你僵尸：低血高速小鬼，无需额外技能 ======
+    private static void handleMiniZombie(Zombie zombie, ServerLevel level, CompoundTag tag) {
+        // 速度已在生成时设置；保持目标追击
+        if (zombie.getTarget() != null) {
+            zombie.getNavigation().moveTo(zombie.getTarget(), 1.4D);
+        }
+    }
+
     /** 特殊僵尸死亡处理 */
     @SubscribeEvent
     public static void onSpecialZombieDeath(LivingDeathEvent event) {
@@ -618,6 +651,8 @@ public class SpecialZombieHandler {
         double tntThrowerChance = baseChance * 0.8 * multiplier;
         double suicideChance = baseChance * 1.2 * multiplier;
         double archerChance = baseChance * 1.2 * multiplier;
+        double warlordChance = baseChance * 0.6 * multiplier;
+        double miniChance = baseChance * 1.5 * multiplier;
 
         CompoundTag tag = zombie.getPersistentData();
 
@@ -665,6 +700,16 @@ public class SpecialZombieHandler {
         } else if (rand < giantChance + barrelChance + summonerChance + fireChance + poisonChance + armoredChance + leaperChance + throwerChance + spitterChance + bomberChance + tntThrowerChance + suicideChance + archerChance) {
             applySpecialType(zombie, tag, TYPE_ARCHER, "§e弓箭手僵尸", 40.0, 8.0, 4.0);
             zombie.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
+        } else if (rand < giantChance + barrelChance + summonerChance + fireChance + poisonChance + armoredChance + leaperChance + throwerChance + spitterChance + bomberChance + tntThrowerChance + suicideChance + archerChance + warlordChance) {
+            applySpecialType(zombie, tag, TYPE_WARLORD, "§5§l军阀僵尸", 180.0, 18.0, 10.0);
+            zombie.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
+            var speedAttr = zombie.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (speedAttr != null) speedAttr.setBaseValue(speedAttr.getBaseValue() * 0.8);
+        } else if (rand < giantChance + barrelChance + summonerChance + fireChance + poisonChance + armoredChance + leaperChance + throwerChance + spitterChance + bomberChance + tntThrowerChance + suicideChance + archerChance + warlordChance + miniChance) {
+            applySpecialType(zombie, tag, TYPE_MINI, "§7迷你僵尸", 12.0, 3.0, 0.0);
+            zombie.setBaby(true);
+            var speedAttr = zombie.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (speedAttr != null) speedAttr.setBaseValue(0.42);
         }
     }
 

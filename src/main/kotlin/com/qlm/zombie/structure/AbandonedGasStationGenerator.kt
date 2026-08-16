@@ -103,6 +103,7 @@ object AbandonedGasStationGenerator {
         return try {
             generateGasStation(level, origin)
             StructureGenSupport.generatedChunks.add(key)
+            StructureGenSupport.registerBuilding(key, net.minecraft.core.BlockPos(origin.x + SHOP_WIDTH / 2, origin.y, origin.z + SHOP_DEPTH / 2))
             QLMZombieMod.LOGGER.info("[加油站] 在区块 ({}, {}) 生成废弃加油站", chunkX, chunkZ)
             true
         } catch (e: Exception) {

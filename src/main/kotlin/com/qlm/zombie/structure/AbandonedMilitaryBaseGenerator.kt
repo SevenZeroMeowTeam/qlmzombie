@@ -106,6 +106,7 @@ object AbandonedMilitaryBaseGenerator {
         return try {
             generateMilitaryBase(level, origin)
             StructureGenSupport.generatedChunks.add(key)
+            StructureGenSupport.registerBuilding(key, net.minecraft.core.BlockPos(origin.x + BASE_WIDTH / 2, origin.y, origin.z + BASE_DEPTH / 2))
             QLMZombieMod.LOGGER.info("[军事基地] 在区块 ({}, {}) 生成废弃军事基地", chunkX, chunkZ)
             true
         } catch (e: Exception) {

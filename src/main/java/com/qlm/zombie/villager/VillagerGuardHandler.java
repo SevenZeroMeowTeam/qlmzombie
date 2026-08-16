@@ -5,6 +5,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -77,10 +79,25 @@ public class VillagerGuardHandler {
             villager.blockPosition().toShortString(), villager.blockPosition());
     }
 
+    /** 村民守卫不会进行交易：右键拦截交易界面 */
+    @SubscribeEvent
+    public static void onPlayerInteractGuard(PlayerInteractEvent.EntityInteract event) {
+        if (!(event.getTarget() instanceof Villager villager)) return;
+        if (!villager.getPersistentData().getBoolean(NBT_IS_GUARD)) return;
+        if (villager.level().isClientSide()) return;
+
+        event.setCanceled(true);
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            sp.displayClientMessage(
+                Component.literal("§c⚠ 村民守卫不会进行交易！").withStyle(ChatFormatting.RED),
+                true
+            );
+        }
+    }
+
     /** 村民守卫受到攻击时：不逃跑，并召唤铁傀儡协助 */
     @SubscribeEvent
-    public static void onGuardHurt(LivingHurtEvent event) {
-        if (!(event.getEntity() instanceof Villager villager)) return;
+    public static void onGuardHurt(LivingHurtEvent event) {        if (!(event.getEntity() instanceof Villager villager)) return;
         if (!villager.getPersistentData().getBoolean(NBT_IS_GUARD)) return;
         if (villager.level().isClientSide()) return;
 

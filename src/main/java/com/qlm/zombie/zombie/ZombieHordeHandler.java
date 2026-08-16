@@ -43,6 +43,9 @@ public class ZombieHordeHandler {
     private static int currentWave = 0;
     private static int currentDay = -1;
     private static int tickCounter = 0;
+    private static boolean daybreakCleared = false;
+    // 僵尸潮生物标记
+    public static final String NBT_HORDE_MOB = "qlm_horde_mob";
     private static final List<ServerPlayer> hordePlayers = new ArrayList<>();
     private static final ServerBossEvent hordeBossBar = new ServerBossEvent(
         Component.literal("§4§l⚔ 僵尸潮 ⚔"),
@@ -77,6 +80,10 @@ public class ZombieHordeHandler {
 
         // 处理进行中的僵尸潮
         if (hordeActive) {
+            // 白天清除：天亮了（清晨 23000-24000 或 0-1000）自动清除僵尸潮，留少量敌对生物
+            if (timeOfDay >= 23000L || timeOfDay < 1000L) {
+                clearHordeAtDaybreak(overworld);
+            }
             tickCounter++;
             if (tickCounter >= SPAWN_INTERVAL_TICKS) {
                 tickCounter = 0;
@@ -93,6 +100,7 @@ public class ZombieHordeHandler {
         currentWave = 0;
         currentDay = (int) day;
         tickCounter = 0;
+        daybreakCleared = false;
         bigBossEntityId = -1;
         bigBossPhaseMap.clear();
 
@@ -116,7 +124,7 @@ public class ZombieHordeHandler {
 
     private static void spawnWave(ServerLevel level) {
         if (currentWave >= 5) {
-            endHorde(level);
+            endHorde(level, true); // 成功打完5波
             return;
         }
 
@@ -373,6 +381,7 @@ public class ZombieHordeHandler {
         }
 
         mob.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
+        mob.getPersistentData().putBoolean(NBT_HORDE_MOB, true);
         level.addFreshEntity(mob);
 
         // 血量加成
@@ -400,20 +409,88 @@ public class ZombieHordeHandler {
         hordeBossBar.setName(Component.literal("§4§l⚔ 僵尸潮 §7- §e第 " + currentWave + "/5 波"));
     }
 
-    private static void endHorde(ServerLevel level) {
+    /** 白天到来：自动清除僵尸潮，保留少量敌对生物，判定失败并给予一定奖励 */
+    private static void clearHordeAtDaybreak(ServerLevel level) {
+        if (daybreakCleared) return;
+        daybreakCleared = true;
+
+        // 收集所有僵尸潮生物
+        java.util.List<Zombie> hordeMobs = level.getEntitiesOfClass(Zombie.class,
+            new net.minecraft.world.phys.AABB(level.getMinBuildHeight(), level.getMinBuildHeight(), level.getMinBuildHeight(),
+                level.getMaxBuildHeight(), level.getMaxBuildHeight(), level.getMaxBuildHeight()),
+            z -> z.isAlive() && z.getPersistentData().getBoolean(NBT_HORDE_MOB));
+
+        int removed = 0;
+        // 保留 3 只，其余清除
+        for (int i = 3; i < hordeMobs.size(); i++) {
+            hordeMobs.get(i).discard();
+            removed++;
+        }
+        // 保留的 3 只解除标记并弱化
+        for (int i = 0; i < Math.min(3, hordeMobs.size()); i++) {
+            Zombie z = hordeMobs.get(i);
+            z.getPersistentData().remove(NBT_HORDE_MOB);
+            try {
+                var hp = z.getAttribute(Attributes.MAX_HEALTH);
+                if (hp != null) hp.setBaseValue(hp.getBaseValue() * 0.5);
+                z.setHealth(z.getMaxHealth());
+            } catch (Exception ignored) {
+            }
+        }
+
+        QLMZombieMod.LOGGER.info("[僵尸潮] 天亮了，自动清除 {} 只僵尸潮生物（保留少量）", removed);
+        for (ServerPlayer player : level.players()) {
+            player.sendSystemMessage(Component.literal("§e§l☀ 天亮了！僵尸潮撤退，剩余僵尸被清除，只留下少量游荡的敌人。"));
+        }
+        endHorde(level, false);
+    }
+
+    private static void endHorde(ServerLevel level, boolean success) {
         hordeActive = false;
         tickCounter = 0;
         bigBossEntityId = -1;
         bigBossPhaseMap.clear();
         hordeBossBar.setVisible(false);
         hordeBossBar.removeAllPlayers();
+
+        java.util.List<ServerPlayer> rewarded = new java.util.ArrayList<>(hordePlayers);
         hordePlayers.clear();
 
-        QLMZombieMod.LOGGER.info("[僵尸潮] Day {}: 僵尸潮已结束！", currentDay);
+        QLMZombieMod.LOGGER.info("[僵尸潮] Day {}: 僵尸潮已结束！成功={}", currentDay, success);
 
-        for (ServerPlayer player : level.players()) {
-            player.sendSystemMessage(Component.literal("§a§l✔ 僵尸潮已结束！恭喜存活！"));
-            player.sendSystemMessage(Component.literal("§6§l下一次僵尸潮将在 " + (currentDay + HORDE_INTERVAL) + " 天到来"));
+        for (ServerPlayer player : rewarded) {
+            if (success) {
+                // 成功打完5波：丰厚奖励
+                giveReward(player, true);
+                // 解锁成就：僵尸潮征服者 + 幸存者
+                try { com.qlm.zombie.achievement.AchievementManager.unlockHordeWin(player); } catch (Exception ignored) {}
+                player.sendSystemMessage(Component.literal("§a§l✔ 你成功撑过了僵尸潮！获得丰厚奖励！"));
+                player.sendSystemMessage(Component.literal("§6§l+ 附魔金苹果 x1 + 钻石 x8 + 下界合金锭 x2 + 技能点 5"));
+            } else {
+                // 失败（白天清除）：也有一定奖励
+                giveReward(player, false);
+                player.sendSystemMessage(Component.literal("§e§l☀ 你坚持到了天亮，获得撤退奖励！"));
+                player.sendSystemMessage(Component.literal("§6§l+ 金苹果 x1 + 铁锭 x8 + 技能点 2"));
+            }
+            player.sendSystemMessage(Component.literal("§7§l下一次僵尸潮将在第 " + (currentDay + HORDE_INTERVAL) + " 天到来"));
+        }
+    }
+
+    /** 给予僵尸潮奖励（成功丰厚 / 失败一定） */
+    private static void giveReward(ServerPlayer player, boolean big) {
+        try {
+            if (big) {
+                player.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ENCHANTED_GOLDEN_APPLE, 1));
+                player.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND, 8));
+                player.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_INGOT, 2));
+                com.qlm.zombie.skill.SkillPointHandler.addPoints(player, 5);
+            } else {
+                player.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GOLDEN_APPLE, 1));
+                player.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 8));
+                com.qlm.zombie.skill.SkillPointHandler.addPoints(player, 2);
+            }
+        } catch (Exception e) {
+            QLMZombieMod.LOGGER.warn("[僵尸潮] 发放奖励失败: {}", e.getMessage());
         }
     }
 

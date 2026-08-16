@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build37-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build39-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD37%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD39%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build37` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build37.jar` / `qlmzombie-3.0.0.beta.build37-server.jar` |
+| **当前版本** | `3.0.0.beta.build39` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build39.jar` / `qlmzombie-3.0.0.beta.build39-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -768,6 +768,117 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build39 (2026-08-16)
+
+#### 新特殊僵尸/骷髅 + 新手期计分板emoji + 村民守卫不交易
+
+##### 🧟 新增特殊僵尸（血量不同）
+
+| 类型 | 血量 | 攻击 | 护甲 | 特点 |
+|:-----|:-----|:-----|:-----|:-----|
+| 军阀僵尸 | **180** | 18 | 10 | 每8秒鼓舞附近僵尸（力量+加速buff），持铁剑 |
+| 迷你僵尸 | **12** | 3 | 0 | 低血高速小鬼（0.42 移速），成群袭扰 |
+
+> 累计 18 种特殊僵尸（含原有巨人500/木桶150等）
+
+##### 💀 新增特殊骷髅（血量不同）
+
+| 类型 | 血量 | 攻击 | 护甲 | 特点 |
+|:-----|:-----|:-----|:-----|:-----|
+| 狙击骷髅 | **55** | 22 | 4 | 超远射程（索敌48格），狙击箭 15-25 点高伤 |
+| 迅捷骷髅 | **18** | 8 | 2 | 低血高速近战（0.38 移速），连续斩击 |
+
+> 累计 9 种特殊骷髅（含原有凋零/剧毒/爆破/铁甲/剑士/狂战士/守卫）
+
+##### 📊 新手期计分板 emoji 升级
+
+- **新手期（前25天）**：不刷敌对生物，计分板显示基础内容（☀天数/☘安全日/⌚时间/☾月相/⚔阶段/❤生命/⚔攻击）
+- **25天后**：计分板更新为更丰富的 MC 可识别 emoji：
+  - 🧟 在线玩家（X/Y）
+  - ☠ 附近敌对生物数量（32格内）
+  - 🏆 已解锁成就数（X/22）
+  - 原有 ☀/⌚/☾/⚔/❤ 行保留
+
+##### 🛡️ 村民守卫
+
+- 不逃走 ✅、协助铁傀儡反击 ✅（原有）
+- **新增：不会进行交易**（右键拦截并提示，无法打开交易界面）
+
+##### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| `zombie/SpecialZombieHandler.java` | 新增军阀/迷你僵尸 |
+| `zombie/SpecialSkeletonHandler.java` | 新增狙击/迅捷骷髅 |
+| `scoreboard/ScoreboardHandler.java` | 25天后计分板 emoji 升级（🧟/☠/🏆） |
+| `achievement/AchievementManager.java` | 新增 getUnlockedCount |
+| `villager/VillagerGuardHandler.java` | 村民守卫禁止交易 |
+| `QLMZombieMod.kt` | 公告更新 + MOD_VERSION build39 |
+| `gradle.properties` | `mod_version=3.0.0.beta.build39` |
+
+### 3.0.0.beta.build38 (2026-08-16)
+
+#### 昼夜行为 + 骷髅增强 + 战利品刷怪 + 建筑刷怪 + 僵尸潮奖励 + 22项成就
+
+##### 🌗 昼夜行为与 AI 增强
+
+| 项 | 说明 |
+|:---|:-----|
+| 僵尸白天 | 游荡、不燃烧、**不主动攻击玩家**（被攻击才反击） |
+| 僵尸夜晚 | **64 格内锁定玩家追击**（自动索敌并寻路） |
+| 骷髅白天 | **不行动、不燃烧、不主动攻击**；若被招惹会反击 |
+| 骷髅被攻击 | **召唤附近 2-3 只骷髅同伴反击并追击玩家**（追击距离提升到64格） |
+| 铁傀儡 | AI 增强：索敌范围 48、攻击+2、护甲+4、速度+15%；被攻击立即锁定攻击者并让附近铁傀儡协同 |
+| 僵尸破坏/搭建 | 保留：破坏方块（NORMAL+），搭建方块追击（LOCKED_HARD） |
+
+##### 🏹 骷髅增强
+
+- **25% 破甲箭**：无视护甲造成 12-20 点大量伤害 + 随机负面（毒/凋零/瞬间伤害，5秒）
+- **15% 随机效果箭**：剧毒（毒II 5秒）/ 凋零（5秒）/ 瞬间伤害（10点），**不是所有骷髅都有**
+- **骷髅夜间破坏/搭建方块**（与僵尸类似的追平方块能力）
+
+##### 💰 战利品越丰厚，僵尸越多
+
+- 夜晚每 10 秒评估玩家装备/物品栏**财富值**（钻石/下界合金/铁/金/附魔书/品质装备加成）
+- 财富越高刷出的额外僵尸/骷髅越多（最多 4 只在场），财富怪小幅强化
+
+##### 🏚️ 废弃建筑内刷怪
+
+- 已生成的废弃建筑（废墟/加油站/学校/军事基地/高楼）**夜间驻守 1-3 只僵尸/骷髅**
+- 建筑怪比野外怪更强（血量×1.5/伤害×1.3）
+
+##### 💀 僵尸潮白天清除 + 成败奖励
+
+| 情况 | 结果 |
+|:-----|:-----|
+| 成功打完5波 | **丰厚奖励**：附魔金苹果×1 + 钻石×8 + 下界合金锭×2 + 技能点5 + 成就 |
+| 撑到天亮（失败） | **撤退奖励**：金苹果×1 + 铁锭×8 + 技能点2 |
+| 白天清除 | 自动清除僵尸潮生物，**保留 3 只弱化敌人** |
+
+##### 🏆 成就系统扩展（10 → 22 项）
+
+新增成就：骷髅猎手(100)、巨人屠夫、拆桶专家、弓手克星、自爆克星、品质初体验、品质大师(优秀×5)、基岩破坏者、僵尸潮征服者、血月勇者、夜行者(夜间击杀50)、末日幸存者(365天)。
+
+- 所有成就**需完成任务解锁，非进入游戏即可获得**
+- 每项成就都有**技能点奖励**（1~10点）
+- 进入游戏给予 **5 点初始技能点**
+
+##### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| `ai/MobDayNightHandler.java` | 新增（昼夜行为/64格追击/骷髅召唤同伴/铁傀儡增强） |
+| `zombie/SpecialSkeletonHandler.java` | 破甲箭/随机效果箭/骷髅破坏搭建方块 |
+| `zombie/LootWealthHandler.java` | 新增（战利品越丰厚僵尸越多） |
+| `structure/StructureMobHandler.java` | 新增（建筑内刷怪） |
+| `structure/StructureGenSupport.kt` + 各生成器 | 注册建筑中心 |
+| `drop/HeldItemDropHandler.java` | 新增（击杀1%掉落手持物品） |
+| `zombie/ZombieHordeHandler.java` | 白天清除 + 成功/失败奖励 |
+| `achievement/AchievementManager.java` | 22 项成就 + 事件检测 + 奖励 |
+| `advancements/AchievementTracker.java` | 血月成就钩子 |
+| `QLMZombieMod.kt` | 公告更新 + MOD_VERSION build38 |
+| `gradle.properties` | `mod_version=3.0.0.beta.build38` |
 
 ### 3.0.0.beta.build37 (2026-08-16)
 

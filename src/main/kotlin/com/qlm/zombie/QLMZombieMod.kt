@@ -190,19 +190,24 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血月系统：前25天安全期，之后每14天一次血月降临（血月僵尸进化概率翻倍）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸进化系统：随天数增加，僵尸进化概率和血量提升（血月进化更高）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸潮系统：每28天夜晚，5波僵尸潮+小Boss(死亡召唤精英僵尸)+大Boss 3阶段"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7新手保护：前25天不生成敌对生物，安心发育"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7新手保护：前25天不生成敌对生物，安心发育；25天后计分板更新为丰富emoji（🧟在线/☠附近敌人/🏆成就）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7维度封禁：下界/末地无法进入；末影人/苦力怕/女巫/猪灵族/蜘蛛/守卫者族已封禁"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7村民守卫：5%概率村民变守卫（100血/25攻），不逃跑+铁傀儡协助"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7村民守卫：5%概率村民变守卫（100血/25攻），不逃跑+铁傀儡协助反击，不会进行交易"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7自动扫描：每2秒扫描附近20格，僵尸按强度发光标记"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7成就系统：10项任务解锁成就，仅击杀敌对生物计数，奖励技能点"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7成就系统：22项任务解锁成就，非进入游戏即可获得，每项都有技能点奖励"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7技能点：初始5点，成就奖励更多，使用 §b/qlm skill§r 查看"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7AI玩家背包：使用 §b/qlm backpack§r 打开背包（数据持久化）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7Boss死亡掉落宝箱：含原版稀有物品+其他模组随机物品"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸方块破坏/搭建：僵尸可破坏方块+搭建追击玩家"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸双手持物：25%概率手持物品，40%副手持有"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7昼夜行为：僵尸/骷髅白天不主动不燃烧，晚上加速，被攻击才反击"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊骷髅（7种）：远程（凋零/剧毒/爆破/铁甲）×近战（剑士/狂战士/守卫）"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊僵尸（16种）：巨人(500血半血投小鬼)/木桶(死亡爆3-4小鬼)/召唤/烈焰/剧毒/铁甲/跳跃/投掷/吐息/爆破/投手TNT/自爆/弓箭手"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7昼夜行为：僵尸白天游荡不燃烧不主动攻击；夜晚64格锁定追击；骷髅白天不行动，被招惹会召唤同伴反击"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7骷髅：25%破甲箭大量伤害，随机毒/凋零/瞬间伤害箭，夜间可破坏/搭建方块"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7战利品越丰厚僵尸越多：装备越好，夜晚刷出的僵尸/骷髅越多"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7废弃建筑内也会刷僵尸/骷髅（夜间驻守）"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7击杀僵尸/骷髅：1%概率额外掉落其手持物品"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸潮：撑到天亮自动清除（留少量），成功打完5波丰厚奖励，失败也有撤退奖励"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊骷髅（9种）：远程（凋零/剧毒/爆破/铁甲/狙击55血）×近战（剑士/狂战士/守卫/迅捷18血）"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7特殊僵尸（18种）：巨人(500血半血投小鬼)/木桶(死亡爆3-4小鬼)/召唤/烈焰/剧毒/铁甲/跳跃/投掷/吐息/爆破/投手TNT/自爆/弓箭手/军阀(180血鼓舞)/迷你(12血高速)"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7下界合金锭：击杀敌对生物概率掉落（抢夺附魔提高概率，下界已封禁仅此来源）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7废弃建筑：废墟/商店/加油站/9层高楼(每层箱子+楼梯可通行)/学校(5间房含床蜘蛛网箱子)/军事基地/海底遗迹"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7建筑箱子自动包含其他模组物品，无需手动注册"))
@@ -241,7 +246,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build37"
+        const val MOD_VERSION = "3.0.0.beta.build39"
 
         @JvmField
         @Volatile

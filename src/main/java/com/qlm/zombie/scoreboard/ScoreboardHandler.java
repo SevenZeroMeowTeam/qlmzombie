@@ -58,6 +58,9 @@ public class ScoreboardHandler {
     private static final int SLOT_SEP          = 2;
     private static final int SLOT_HP_BONUS     = 1;
     private static final int SLOT_ATK_BONUS    = 0;
+    // 25 天后新增的 emoji 行（新手期后显示）
+    private static final int SLOT_ENEMY        = 8;
+    private static final int SLOT_ACHIEVEMENT  = 9;
 
     private static final String[] COLOR_PREFIXES = new String[] {
             "\u00a70", "\u00a71", "\u00a72", "\u00a73", "\u00a74",
@@ -176,11 +179,39 @@ public class ScoreboardHandler {
                         .append(Component.literal(String.valueOf(displayDay)).withStyle(ChatFormatting.GREEN).withStyle(s -> s.withBold(true)))
                         .append(Component.literal(" 天").withStyle(ChatFormatting.GRAY)));
 
-        // 2. 安全日
-        setEntry(scoreboard, objective, SLOT_SAFE_DAY,
-                Component.literal("☘ ").withStyle(ChatFormatting.DARK_GREEN)
-                        .append(Component.literal("安全日: ").withStyle(ChatFormatting.GRAY))
-                        .append(Component.literal(safeText).withStyle(safeRemain > 0 ? ChatFormatting.GREEN : ChatFormatting.RED)));
+        // 2. 安全日 / 新手期后更新为 emoji 丰富内容
+        boolean afterNewbie = safeRemain <= 0;
+        if (afterNewbie) {
+            // 25 天后：安全日行 → 🧟 在线玩家
+            int online = ServerLifecycleHooks.getCurrentServer() != null
+                    ? ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerCount() : 0;
+            int max = ServerLifecycleHooks.getCurrentServer() != null
+                    ? ServerLifecycleHooks.getCurrentServer().getPlayerList().getMaxPlayers() : 0;
+            setEntry(scoreboard, objective, SLOT_SAFE_DAY,
+                    Component.literal("🧟 ").withStyle(ChatFormatting.DARK_GREEN)
+                            .append(Component.literal("在线: ").withStyle(ChatFormatting.GRAY))
+                            .append(Component.literal(online + "/" + max).withStyle(ChatFormatting.GREEN).withStyle(s -> s.withBold(true))));
+
+            // 顶部新增：☠ 附近敌对生物数量（MC 可识别 emoji）
+            int nearbyEnemies = overworld.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,
+                    player.getBoundingBox().inflate(32.0D), m -> m.isAlive()).size();
+            setEntry(scoreboard, objective, SLOT_ENEMY,
+                    Component.literal("☠ ").withStyle(ChatFormatting.RED)
+                            .append(Component.literal("附近敌人: ").withStyle(ChatFormatting.GRAY))
+                            .append(Component.literal(String.valueOf(nearbyEnemies)).withStyle(ChatFormatting.RED).withStyle(s -> s.withBold(true))));
+
+            // 顶部新增：🏆 已解锁成就数
+            int achCount = com.qlm.zombie.achievement.AchievementManager.getUnlockedCount(player);
+            setEntry(scoreboard, objective, SLOT_ACHIEVEMENT,
+                    Component.literal("🏆 ").withStyle(ChatFormatting.GOLD)
+                            .append(Component.literal("成就: ").withStyle(ChatFormatting.GRAY))
+                            .append(Component.literal(achCount + "/22").withStyle(ChatFormatting.GOLD).withStyle(s -> s.withBold(true))));
+        } else {
+            setEntry(scoreboard, objective, SLOT_SAFE_DAY,
+                    Component.literal("☘ ").withStyle(ChatFormatting.DARK_GREEN)
+                            .append(Component.literal("安全日: ").withStyle(ChatFormatting.GRAY))
+                            .append(Component.literal(safeText).withStyle(safeRemain > 0 ? ChatFormatting.GREEN : ChatFormatting.RED)));
+        }
 
         // 3. 时间
         setEntry(scoreboard, objective, SLOT_TIME,

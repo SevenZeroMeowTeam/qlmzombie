@@ -119,6 +119,12 @@ public class AchievementTracker {
             int survived = bloodMoonSurvived.getOrDefault(playerId, 0) + 1;
             bloodMoonSurvived.put(playerId, survived);
 
+            // 自定义成就系统：血月勇者
+            try {
+                com.qlm.zombie.achievement.AchievementManager.unlockBloodMoon(player);
+            } catch (Exception ignored) {
+            }
+
             for (int milestone : BLOOD_MOON_MILESTONES) {
                 if (survived == milestone) {
                     AdvancementManager.awardAdvancement(player, "blood_moon/survive_" + milestone, "survive_" + milestone);

@@ -171,6 +171,7 @@ object HighriseBuildingGenerator {
         return try {
             generateHighrise(level, chunk, origin)
             generatedChunks.add(chunkKey)
+            StructureGenSupport.registerBuilding(chunkKey, net.minecraft.core.BlockPos(origin.x + BUILDING_WIDTH / 2, origin.y, origin.z + BUILDING_DEPTH / 2))
             QLMZombieMod.LOGGER.info(
                 "[高层建筑] 在区块 ({}, {}) 生成9层高楼", chunkX, chunkZ
             )
