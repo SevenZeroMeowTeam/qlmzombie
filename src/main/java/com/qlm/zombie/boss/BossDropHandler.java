@@ -4,10 +4,12 @@ import com.qlm.zombie.QLMZombieMod;
 import com.qlm.zombie.zombie.ZombieHordeHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -85,10 +87,52 @@ public class BossDropHandler {
                 fillBigBossChest(chest, level);
             } else {
                 fillMiniBossChest(chest, level);
+                // 小Boss死亡：召唤 3-5 只精英僵尸
+                spawnEliteZombies(level, zombie, pos);
             }
         }
 
         QLMZombieMod.LOGGER.info("[Boss掉落] {} 死亡，宝箱已生成于 {}", bossType, pos);
+    }
+
+    /** 小Boss死亡后召唤 3-5 只精英僵尸 */
+    private static void spawnEliteZombies(ServerLevel level, Zombie source, BlockPos pos) {
+        int count = 3 + RANDOM.nextInt(3); // 3-5
+        for (int i = 0; i < count; i++) {
+            Zombie elite = EntityType.ZOMBIE.create(level);
+            if (elite == null) continue;
+            double angle = RANDOM.nextDouble() * 2 * Math.PI;
+            double dist = 3 + RANDOM.nextDouble() * 4;
+            elite.moveTo(pos.getX() + Math.cos(angle) * dist, pos.getY(), pos.getZ() + Math.sin(angle) * dist,
+                    RANDOM.nextFloat() * 360.0F, 0.0F);
+
+            // 精英强化：血量 x3，伤害 x2，护甲 +6，速度提升
+            var healthAttr = elite.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            if (healthAttr != null) {
+                healthAttr.setBaseValue(healthAttr.getBaseValue() * 3.0);
+                elite.setHealth(elite.getMaxHealth());
+            }
+            var damageAttr = elite.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            if (damageAttr != null) damageAttr.setBaseValue(damageAttr.getBaseValue() * 2.0);
+            var armorAttr = elite.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR);
+            if (armorAttr != null) armorAttr.setBaseValue(armorAttr.getBaseValue() + 6.0);
+            var speedAttr = elite.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+            if (speedAttr != null) speedAttr.setBaseValue(speedAttr.getBaseValue() * 1.15);
+
+            elite.setCustomName(Component.literal("§c[精英僵尸] ").withStyle(net.minecraft.ChatFormatting.RED)
+                    .append(Component.literal("§c精英僵尸")));
+            elite.setCustomNameVisible(true);
+            elite.getPersistentData().putBoolean("qlm_elite", true);
+            elite.setPersistenceRequired();
+            if (source.getTarget() != null) elite.setTarget(source.getTarget());
+            level.addFreshEntity(elite);
+        }
+        if (!level.players().isEmpty()) {
+            level.players().forEach(p -> {
+                if (p.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) <= 900)
+                    p.sendSystemMessage(Component.literal("§4§l⚠ 小Boss死亡，召唤了 " + count + " 只精英僵尸！"));
+            });
+        }
     }
 
     private static void fillMiniBossChest(ChestBlockEntity chest, ServerLevel level) {

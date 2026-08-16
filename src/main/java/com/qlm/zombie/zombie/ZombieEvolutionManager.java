@@ -34,23 +34,26 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class ZombieEvolutionManager {
 
-    // 进化概率随天数增加
+    // 进化概率随天数增加（与新5阶段难度对齐：25/50/75/100）
     private static final double[] EVOLUTION_CHANCE_BY_DAY = {
-        0.00,  // Day 0-24:   0%
-        0.10,  // Day 25-49: 10%
-        0.25,  // Day 50-99: 25%
-        0.50,  // Day 100-149: 50%
-        0.75   // Day 150+:   75%
+        0.00,  // Day 0-25:   0%
+        0.12,  // Day 26-50: 12%
+        0.30,  // Day 51-75: 30%
+        0.55,  // Day 76-100: 55%
+        0.80   // Day 101+:   80%
     };
 
-    // 进化血量加成倍率
+    // 进化血量加成倍率（随天数增加进化越高）
     private static final double[] EVOLUTION_HEALTH_MULTIPLIER = {
-        0.0,   // Day 0-24:  无进化
-        1.5,   // Day 25-49: 1.5x 血量
-        2.0,   // Day 50-99: 2.0x 血量
-        3.0,   // Day 100-149: 3.0x 血量
-        5.0    // Day 150+:  5.0x 血量
+        0.0,   // Day 0-25:  无进化
+        1.5,   // Day 26-50: 1.5x 血量
+        2.0,   // Day 51-75: 2.0x 血量
+        3.0,   // Day 76-100: 3.0x 血量
+        5.0    // Day 101+:  5.0x 血量
     };
+
+    // 血月进化概率翻倍倍率
+    private static final double BLOOD_MOON_CHANCE_MULTIPLIER = 2.0;
 
     private static final UUID EVOLUTION_HEALTH_UUID = UUID.fromString("e1e2e3e4-e5e6-4e7e-8e9e-0e1e2e3e4e5e");
     private static final UUID EVOLUTION_DAMAGE_UUID = UUID.fromString("f1f2f3f4-f5f6-4f7f-8f9f-0f1f2f3f4f5f");
@@ -71,13 +74,20 @@ public class ZombieEvolutionManager {
         ServerLevel level = (ServerLevel) mob.level();
         long day = level.getDayTime() / 24000L;
 
-        // 获取进化等级
+        // 获取进化等级（血月期间等级 +1，进化更高）
         int tier = getEvolutionTier(day);
         if (tier <= 0) return;
 
-        // 掷骰决定是否进化
+        boolean bloodMoon = com.qlm.zombie.moon.MoonHelper.isBloodMoon(level);
+        if (bloodMoon) {
+            tier = Math.min(tier + 1, EVOLUTION_CHANCE_BY_DAY.length - 1);
+        }
+
+        // 掷骰决定是否进化（血月概率翻倍）
         RandomSource random = mob.getRandom();
-        if (random.nextDouble() >= EVOLUTION_CHANCE_BY_DAY[tier]) return;
+        double chance = EVOLUTION_CHANCE_BY_DAY[tier];
+        if (bloodMoon) chance = Math.min(1.0, chance * BLOOD_MOON_CHANCE_MULTIPLIER);
+        if (random.nextDouble() >= chance) return;
 
         // 应用进化
         applyEvolution(mob, tier, day);
@@ -90,10 +100,10 @@ public class ZombieEvolutionManager {
     }
 
     private static int getEvolutionTier(long day) {
-        if (day >= 150) return 4;
-        if (day >= 100) return 3;
-        if (day >= 50)  return 2;
-        if (day >= 25)  return 1;
+        if (day >= 101) return 4;
+        if (day >= 76)  return 3;
+        if (day >= 51)  return 2;
+        if (day >= 26)  return 1;
         return 0;
     }
 

@@ -1120,14 +1120,17 @@ public class AIOptimizationHandler {
         double r = zombie.getRandom().nextDouble();
         int count;
         if (r < 0.5D) {
-            // 50% - small zombie pack
-            count = 2 + zombie.getRandom().nextInt(2);
+            // 50% - 释放 3-4 只小鬼僵尸
+            count = 3 + zombie.getRandom().nextInt(2);
             for (int i = 0; i < count; i++) {
                 Zombie newZombie = EntityType.ZOMBIE.create(level);
                 if (newZombie != null) {
                     double ox = (zombie.getRandom().nextDouble() - 0.5D) * 1.5D;
                     double oz = (zombie.getRandom().nextDouble() - 0.5D) * 1.5D;
                     newZombie.moveTo(zombie.getX() + ox, zombie.getY(), zombie.getZ() + oz, zombie.getRandom().nextFloat() * 360.0F, 0.0F);
+                    newZombie.setBaby(true);
+                    newZombie.setCustomName(net.minecraft.network.chat.Component.literal("§e[小鬼僵尸]"));
+                    newZombie.setCustomNameVisible(true);
                     try {
                         AttributeInstance hp = newZombie.getAttribute(Attributes.MAX_HEALTH);
                         if (hp != null) hp.setBaseValue(hp.getBaseValue() * 0.7D);

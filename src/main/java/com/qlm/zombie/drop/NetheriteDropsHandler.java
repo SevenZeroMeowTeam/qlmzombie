@@ -18,27 +18,35 @@ import net.minecraftforge.registries.ForgeRegistries;
  * 击杀敌对生物掉落下界合金锭：
  * - 排除：玩家、村民、铁傀儡
  * - 包含：骷髅、僵尸、苦力怕、蜘蛛、洞穴蜘蛛、女巫、末影人、僵尸猪灵等所有敌对生物
- * - 概率掉落：每个敌对生物约 1% ~ 3% 概率，品质越高掉落越好？ → 直接固定 1.5% 概率
+ * - 基础概率 2.5%，每级抢夺附魔 +1%，最多 6.5%（下界被封禁，这是下界合金锭的唯一来源）
  */
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class NetheriteDropsHandler {
 
-    private static final double DROP_CHANCE = 0.015; // 1.5%
+    private static final double BASE_DROP_CHANCE = 0.025; // 2.5%
+    private static final double LOOTING_PER_LEVEL = 0.01; // 每级抢夺 +1%
 
     @SubscribeEvent
     public static void onLivingDrops(LivingDropsEvent event) {
         LivingEntity victim = event.getEntity();
         Entity killer = event.getSource().getEntity();
-        if (!(killer instanceof Player)) return; // 只有玩家击杀掉
+        if (!(killer instanceof Player player)) return; // 只有玩家击杀掉
 
         if (isExcluded(victim)) return;
 
+        // 抢夺附魔提高掉落概率与数量
+        int looting = 0;
+        ItemStack weapon = player.getMainHandItem();
+        looting = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
+                net.minecraft.world.item.enchantment.Enchantments.MOB_LOOTING, weapon);
+        double chance = BASE_DROP_CHANCE + looting * LOOTING_PER_LEVEL;
         RandomSource random = victim.getRandom();
-        if (random.nextDouble() < DROP_CHANCE) {
-            ItemStack drop = new ItemStack(Items.NETHERITE_INGOT, 1);
+        if (random.nextDouble() < chance) {
+            int count = 1 + (looting > 0 && random.nextDouble() < 0.25 ? 1 : 0);
+            ItemStack drop = new ItemStack(Items.NETHERITE_INGOT, count);
             event.getDrops().add(victim.spawnAtLocation(drop));
-            QLMZombieMod.LOGGER.debug("[QLM Zombie] Netherite ingot dropped by {} at {}",
-                    ForgeRegistries.ENTITY_TYPES.getKey(victim.getType()), victim.blockPosition());
+            QLMZombieMod.LOGGER.debug("[QLM Zombie] Netherite ingot x{} dropped by {} at {}",
+                    count, ForgeRegistries.ENTITY_TYPES.getKey(victim.getType()), victim.blockPosition());
         }
     }
 

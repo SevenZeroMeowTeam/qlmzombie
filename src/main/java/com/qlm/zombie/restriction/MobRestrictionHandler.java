@@ -73,11 +73,21 @@ public class MobRestrictionHandler {
     }
 
     private static boolean isBannedMob(Entity entity) {
-        return entity.getType() == EntityType.WITCH || 
-               entity.getType() == EntityType.SPIDER || 
-               entity.getType() == EntityType.CAVE_SPIDER ||
-               entity.getType() == EntityType.ENDERMAN ||
-               entity.getType() == EntityType.CREEPER;
+        EntityType<?> type = entity.getType();
+        return type == EntityType.WITCH || 
+               type == EntityType.SPIDER || 
+               type == EntityType.CAVE_SPIDER ||
+               type == EntityType.ENDERMAN ||
+               type == EntityType.CREEPER ||
+               // 猪灵族
+               type == EntityType.PIGLIN ||
+               type == EntityType.ZOMBIFIED_PIGLIN ||
+               type == EntityType.HOGLIN ||
+               type == EntityType.ZOGLIN ||
+               type == EntityType.PIGLIN_BRUTE ||
+               // 守卫者族
+               type == EntityType.GUARDIAN ||
+               type == EntityType.ELDER_GUARDIAN;
     }
 
     private static boolean isBannedDimension(Level level) {

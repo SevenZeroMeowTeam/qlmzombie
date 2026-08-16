@@ -25,9 +25,19 @@ object HighriseBuildingGenerator {
     private const val FLOORS = 9
     private const val FLOOR_HEIGHT = 4
     private const val STAIRCASE_SIZE = 3
-    private const val MOD_ITEM_CHANCE = 0.15
+    private const val MOD_ITEM_CHANCE = 0.5
     // 玩家登录时扫描周围已加载区块的半径（半径 3 = 7x7 = 49 个区块）
     private const val LOGIN_SCAN_RADIUS = 3
+
+    /** 高楼样式（每栋高楼样式不同）：外墙材质 + 内部房间材质 */
+    private data class BuildingStyle(val wall: net.minecraft.world.level.block.Block, val room: net.minecraft.world.level.block.Block)
+    private val STYLES = listOf(
+        BuildingStyle(Blocks.STONE_BRICKS, Blocks.OAK_PLANKS),          // 石砖办公楼
+        BuildingStyle(Blocks.BRICKS, Blocks.SPRUCE_PLANKS),             // 红砖公寓
+        BuildingStyle(Blocks.QUARTZ_BLOCK, Blocks.WHITE_WOOL),          // 石英写字楼
+        BuildingStyle(Blocks.LIGHT_GRAY_CONCRETE, Blocks.SMOOTH_STONE), // 现代混凝土楼
+        BuildingStyle(Blocks.PRISMARINE, Blocks.DARK_OAK_PLANKS),       // 海晶石复古楼
+    )
 
     private val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
 
@@ -211,33 +221,29 @@ object HighriseBuildingGenerator {
         val groundY = origin.y
         val random = level.random
 
+        // 每栋高楼样式不同（随机选择一种风格）
+        val style = STYLES[random.nextInt(STYLES.size)]
+
         val staircaseMinX = BUILDING_WIDTH / 2 - STAIRCASE_SIZE / 2
         val staircaseMaxX = staircaseMinX + STAIRCASE_SIZE - 1
         val staircaseMinZ = BUILDING_DEPTH / 2 - STAIRCASE_SIZE / 2
         val staircaseMaxZ = staircaseMinZ + STAIRCASE_SIZE - 1
 
-        val ladderX = staircaseMinX
-        val ladderZ = staircaseMinZ
-        val ladderWallX = ladderX - 1
-
         for (floor in 0 until FLOORS) {
             val floorY = groundY + floor * FLOOR_HEIGHT
 
+            // 地板：楼梯井区域留空（可通行楼梯通道），其余铺地板
             for (dx in 0 until BUILDING_WIDTH) {
                 for (dz in 0 until BUILDING_DEPTH) {
                     val floorPos = BlockPos.MutableBlockPos(x0 + dx, floorY, z0 + dz)
                     val isStaircaseArea = dx in staircaseMinX..staircaseMaxX &&
                         dz in staircaseMinZ..staircaseMaxZ
-                    val isLadderHole = dx == ladderX && dz == ladderZ
-
-                    if (isStaircaseArea && floor > 0 && isLadderHole) {
-                        continue
-                    }
-
+                    if (isStaircaseArea) continue
                     level.setBlock(floorPos, Blocks.STONE.defaultBlockState(), 3)
                 }
             }
 
+            // 外墙（按样式）
             for (dx in 0 until BUILDING_WIDTH) {
                 for (dz in 0 until BUILDING_DEPTH) {
                     val isPerimeter = dx == 0 || dx == BUILDING_WIDTH - 1 ||
@@ -256,36 +262,21 @@ object HighriseBuildingGenerator {
                             isWindow ->
                                 level.setBlock(wallPos, Blocks.GLASS.defaultBlockState(), 3)
                             else ->
-                                level.setBlock(wallPos, Blocks.STONE_BRICKS.defaultBlockState(), 3)
+                                level.setBlock(wallPos, style.wall.defaultBlockState(), 3)
                         }
                     }
                 }
             }
 
+            // 楼梯井：每层建造可通行楼梯（从本层通到上一层）
+            buildStaircase(level, x0, floorY, z0, staircaseMinX, staircaseMinZ, style, random)
+
             if (floor == 0) {
                 buildFirstFloorRooms(level, x0, floorY, z0, staircaseMinX, staircaseMaxX,
-                    staircaseMinZ, staircaseMaxZ, random)
+                    staircaseMinZ, staircaseMaxZ, random, style)
             } else {
                 buildUpperFloorRooms(level, x0, floorY, z0, staircaseMinX, staircaseMaxX,
-                    staircaseMinZ, staircaseMaxZ, random, floor)
-            }
-
-            for (dy in 1 until FLOOR_HEIGHT) {
-                val ladderPos = BlockPos.MutableBlockPos(
-                    x0 + ladderX,
-                    floorY + dy,
-                    z0 + ladderZ
-                )
-                level.setBlock(ladderPos, Blocks.LADDER.defaultBlockState(), 3)
-            }
-
-            val ladderWallPos = BlockPos.MutableBlockPos(
-                x0 + ladderWallX,
-                floorY + 1,
-                z0 + ladderZ
-            )
-            if (floor > 0 && level.getBlockState(ladderWallPos).isAir) {
-                level.setBlock(ladderWallPos, Blocks.STONE_BRICKS.defaultBlockState(), 3)
+                    staircaseMinZ, staircaseMaxZ, random, floor, style)
             }
         }
 
@@ -299,19 +290,81 @@ object HighriseBuildingGenerator {
 
         for (dx in 0 until BUILDING_WIDTH) {
             val parapetPos = BlockPos.MutableBlockPos(x0 + dx, roofY + 1, z0)
-            level.setBlock(parapetPos, Blocks.STONE_BRICKS.defaultBlockState(), 3)
+            level.setBlock(parapetPos, style.wall.defaultBlockState(), 3)
             val parapetPos2 = BlockPos.MutableBlockPos(x0 + dx, roofY + 1, z0 + BUILDING_DEPTH - 1)
-            level.setBlock(parapetPos2, Blocks.STONE_BRICKS.defaultBlockState(), 3)
+            level.setBlock(parapetPos2, style.wall.defaultBlockState(), 3)
         }
         for (dz in 0 until BUILDING_DEPTH) {
             val parapetPos = BlockPos.MutableBlockPos(x0, roofY + 1, z0 + dz)
-            level.setBlock(parapetPos, Blocks.STONE_BRICKS.defaultBlockState(), 3)
+            level.setBlock(parapetPos, style.wall.defaultBlockState(), 3)
             val parapetPos2 = BlockPos.MutableBlockPos(x0 + BUILDING_WIDTH - 1, roofY + 1, z0 + dz)
-            level.setBlock(parapetPos2, Blocks.STONE_BRICKS.defaultBlockState(), 3)
+            level.setBlock(parapetPos2, style.wall.defaultBlockState(), 3)
         }
 
         QLMZombieMod.LOGGER.debug(
-            "[高层建筑] 完成9层高楼生成, 位置: {}, {}, {}", x0, groundY, z0
+            "[高层建筑] 完成9层高楼生成(样式: {}), 位置: {}, {}, {}", style.wall, x0, groundY, z0
+        )
+    }
+
+    /**
+     * 楼梯井：在 3×3 楼梯井内建造可通行的 L 形旋转楼梯（每层升高 FLOOR_HEIGHT=4）
+     * 地板已在 generateHighrise 中为楼梯井留空。
+     */
+    private fun buildStaircase(
+        level: net.minecraft.world.level.Level,
+        x0: Int,
+        floorY: Int,
+        z0: Int,
+        stairMinX: Int,
+        stairMinZ: Int,
+        style: BuildingStyle,
+        random: net.minecraft.util.RandomSource
+    ) {
+        // 楼梯井局部坐标 (0..2, 0..2)，两种飞行交替，每飞行 4 级台阶
+        // 飞行 A（偶数层）：(0,2)->(1,2)->(2,2)->(2,1)
+        // 飞行 B（奇数层）：(2,0)->(1,0)->(0,0)->(0,1)
+        // 因 floorY 可能不是从 0 开始，用 (floorY / FLOOR_HEIGHT) % 2 判断奇偶层
+        val evenFlight = ((floorY / FLOOR_HEIGHT) % 2) == 0
+
+        // 楼梯井中心立柱（防止跳下楼梯井）
+        level.setBlock(
+            BlockPos.MutableBlockPos(x0 + stairMinX + 1, floorY, z0 + stairMinZ + 1),
+            style.wall.defaultBlockState(), 3
+        )
+        // 中心立柱向上延伸（每层一层）
+        level.setBlock(
+            BlockPos.MutableBlockPos(x0 + stairMinX + 1, floorY + 1, z0 + stairMinZ + 1),
+            style.wall.defaultBlockState(), 3
+        )
+
+        if (evenFlight) {
+            // 飞行 A：东侧上行 (0,2)->(1,2)->(2,2)，再转南 (2,1) 到上一层
+            placeStair(level, x0 + stairMinX + 0, floorY + 1, z0 + stairMinZ + 2, net.minecraft.core.Direction.EAST)
+            placeStair(level, x0 + stairMinX + 1, floorY + 2, z0 + stairMinZ + 2, net.minecraft.core.Direction.EAST)
+            placeStair(level, x0 + stairMinX + 2, floorY + 3, z0 + stairMinZ + 2, net.minecraft.core.Direction.SOUTH)
+            placeStair(level, x0 + stairMinX + 2, floorY + 4, z0 + stairMinZ + 1, net.minecraft.core.Direction.SOUTH)
+        } else {
+            // 飞行 B：西侧上行 (2,0)->(1,0)->(0,0)，再转北 (0,1) 到上一层
+            placeStair(level, x0 + stairMinX + 2, floorY + 1, z0 + stairMinZ + 0, net.minecraft.core.Direction.WEST)
+            placeStair(level, x0 + stairMinX + 1, floorY + 2, z0 + stairMinZ + 0, net.minecraft.core.Direction.WEST)
+            placeStair(level, x0 + stairMinX + 0, floorY + 3, z0 + stairMinZ + 0, net.minecraft.core.Direction.NORTH)
+            placeStair(level, x0 + stairMinX + 0, floorY + 4, z0 + stairMinZ + 1, net.minecraft.core.Direction.NORTH)
+        }
+    }
+
+    private fun placeStair(
+        level: net.minecraft.world.level.Level,
+        x: Int,
+        y: Int,
+        z: Int,
+        facing: net.minecraft.core.Direction
+    ) {
+        level.setBlock(
+            BlockPos.MutableBlockPos(x, y, z),
+            Blocks.STONE_STAIRS.defaultBlockState().setValue(
+                net.minecraft.world.level.block.StairBlock.FACING, facing
+            ),
+            3
         )
     }
 
@@ -322,7 +375,8 @@ object HighriseBuildingGenerator {
         z0: Int,
         stairMinX: Int, stairMaxX: Int,
         stairMinZ: Int, stairMaxZ: Int,
-        random: net.minecraft.util.RandomSource
+        random: net.minecraft.util.RandomSource,
+        style: BuildingStyle
     ) {
         val halfWidth = BUILDING_WIDTH / 2
         val halfDepth = BUILDING_DEPTH / 2
@@ -339,17 +393,17 @@ object HighriseBuildingGenerator {
                 val wx = start.first
                 for (wz in start.second..end.second) {
                     val wallPos = BlockPos.MutableBlockPos(x0 + wx, floorY + 1, z0 + wz)
-                    level.setBlock(wallPos, Blocks.OAK_PLANKS.defaultBlockState(), 3)
+                    level.setBlock(wallPos, style.room.defaultBlockState(), 3)
                     val wallPos2 = BlockPos.MutableBlockPos(x0 + wx, floorY + 2, z0 + wz)
-                    level.setBlock(wallPos2, Blocks.OAK_PLANKS.defaultBlockState(), 3)
+                    level.setBlock(wallPos2, style.room.defaultBlockState(), 3)
                 }
             } else {
                 val wz = start.second
                 for (wx in start.first..end.first) {
                     val wallPos = BlockPos.MutableBlockPos(x0 + wx, floorY + 1, z0 + wz)
-                    level.setBlock(wallPos, Blocks.OAK_PLANKS.defaultBlockState(), 3)
+                    level.setBlock(wallPos, style.room.defaultBlockState(), 3)
                     val wallPos2 = BlockPos.MutableBlockPos(x0 + wx, floorY + 2, z0 + wz)
-                    level.setBlock(wallPos2, Blocks.OAK_PLANKS.defaultBlockState(), 3)
+                    level.setBlock(wallPos2, style.room.defaultBlockState(), 3)
                 }
             }
         }
@@ -377,7 +431,8 @@ object HighriseBuildingGenerator {
         stairMinX: Int, stairMaxX: Int,
         stairMinZ: Int, stairMaxZ: Int,
         random: net.minecraft.util.RandomSource,
-        floor: Int
+        floor: Int,
+        style: BuildingStyle
     ) {
         val halfWidth = BUILDING_WIDTH / 2
         val halfDepth = BUILDING_DEPTH / 2
@@ -394,17 +449,17 @@ object HighriseBuildingGenerator {
                 val wx = start.first
                 for (wz in start.second..end.second) {
                     val wallPos = BlockPos.MutableBlockPos(x0 + wx, floorY + 1, z0 + wz)
-                    level.setBlock(wallPos, Blocks.OAK_PLANKS.defaultBlockState(), 3)
+                    level.setBlock(wallPos, style.room.defaultBlockState(), 3)
                     val wallPos2 = BlockPos.MutableBlockPos(x0 + wx, floorY + 2, z0 + wz)
-                    level.setBlock(wallPos2, Blocks.OAK_PLANKS.defaultBlockState(), 3)
+                    level.setBlock(wallPos2, style.room.defaultBlockState(), 3)
                 }
             } else {
                 val wz = start.second
                 for (wx in start.first..end.first) {
                     val wallPos = BlockPos.MutableBlockPos(x0 + wx, floorY + 1, z0 + wz)
-                    level.setBlock(wallPos, Blocks.OAK_PLANKS.defaultBlockState(), 3)
+                    level.setBlock(wallPos, style.room.defaultBlockState(), 3)
                     val wallPos2 = BlockPos.MutableBlockPos(x0 + wx, floorY + 2, z0 + wz)
-                    level.setBlock(wallPos2, Blocks.OAK_PLANKS.defaultBlockState(), 3)
+                    level.setBlock(wallPos2, style.room.defaultBlockState(), 3)
                 }
             }
         }
@@ -442,20 +497,9 @@ object HighriseBuildingGenerator {
         pos: BlockPos,
         random: net.minecraft.util.RandomSource
     ) {
-        val chest = level.getBlockEntity(pos) as? net.minecraft.world.level.block.entity.ChestBlockEntity
-            ?: return
-
-        val useModLoot = random.nextDouble() < MOD_ITEM_CHANCE
-        val lootPool = if (useModLoot) modLoot else vanillaLoot
-
-        val itemsToAdd = 2 + random.nextInt(4)
-        for (i in 0 until itemsToAdd) {
-            val item = lootPool.random()
-            val stack = ItemStack(item)
-            stack.count = 1 + random.nextInt(6)
-            chest.setItem(i % chest.containerSize, stack)
-        }
-        chest.setChanged()
+        // 主题战利品（本模组 + 原版）+ 自动扫描的其他模组物品
+        val combinedThemed = modLoot + vanillaLoot
+        StructureGenSupport.fillChest(level, pos, random, combinedThemed, MOD_ITEM_CHANCE, 2, 5)
     }
 
     private fun chunkKey(x: Int, z: Int): Long {

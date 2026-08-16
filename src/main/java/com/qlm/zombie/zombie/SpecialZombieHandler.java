@@ -102,11 +102,21 @@ public class SpecialZombieHandler {
         }
     }
 
-    /** 巨人僵尸：每5秒范围震地 */
+    /** 巨人僵尸：每5秒范围震地；血量降至250时投掷小鬼僵尸 */
     private static void handleGiantZombie(Zombie zombie, ServerLevel level, long gameTime) {
+        CompoundTag tag = zombie.getPersistentData();
+
+        // 血量 <= 250：投掷小鬼僵尸（巨人共500血，半血即触发）
+        if (zombie.getHealth() <= 250.0f && zombie.getTarget() != null) {
+            long lastThrow = tag.getLong("qlm_giant_throw_time");
+            if (gameTime - lastThrow >= 300) { // 每15秒投掷
+                tag.putLong("qlm_giant_throw_time", gameTime);
+                throwImpZombie(zombie, level);
+            }
+        }
+
         if (zombie.getTarget() == null) return;
 
-        CompoundTag tag = zombie.getPersistentData();
         long lastSlam = tag.getLong("qlm_giant_slam_time");
         if (gameTime - lastSlam < 100) return;
         tag.putLong("qlm_giant_slam_time", gameTime);
@@ -123,6 +133,40 @@ public class SpecialZombieHandler {
 
         level.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION,
             zombie.getX(), zombie.getY(), zombie.getZ(), 10, 1.5, 0.5, 1.5, 0.1);
+    }
+
+    /** 巨人投掷小鬼僵尸：生成1-2只小鬼并向目标方向抛射 */
+    private static void throwImpZombie(Zombie giant, ServerLevel level) {
+        LivingEntity target = giant.getTarget();
+        int count = 1 + giant.getRandom().nextInt(2);
+        for (int i = 0; i < count; i++) {
+            Zombie imp = EntityType.ZOMBIE.create(level);
+            if (imp == null) continue;
+            imp.setBaby(true);
+            imp.setPos(giant.getX(), giant.getEyeY() - 0.3, giant.getZ());
+            imp.setCustomName(Component.literal("§e[小鬼僵尸]"));
+            imp.setCustomNameVisible(true);
+            var speedAttr = imp.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (speedAttr != null) speedAttr.setBaseValue(0.35);
+            if (target != null) {
+                imp.setTarget(target);
+                // 向目标方向抛射
+                double dx = target.getX() - giant.getX();
+                double dy = target.getEyeY() - giant.getEyeY();
+                double dz = target.getZ() - giant.getZ();
+                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                if (dist > 0) {
+                    imp.setDeltaMovement(dx / dist * 1.1, dy / dist * 1.1 + 0.4, dz / dist * 1.1);
+                    imp.hurtMarked = true;
+                }
+            }
+            level.addFreshEntity(imp);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                imp.getX(), imp.getY(), imp.getZ(), 8, 0.3, 0.5, 0.3, 0.05);
+        }
+        if (target instanceof ServerPlayer sp) {
+            sp.sendSystemMessage(Component.literal("§c§l⚠ 巨人僵尸向你投掷了小鬼僵尸！"));
+        }
     }
 
     /** 木桶僵尸：半血丢出小鬼僵尸 */
@@ -478,9 +522,11 @@ public class SpecialZombieHandler {
         String type = tag.getString(NBT_ZOMBIE_TYPE);
         if (type.isEmpty()) return;
 
-        if (TYPE_BARREL.equals(type) || TYPE_GIANT.equals(type)) {
+        if (TYPE_BARREL.equals(type)) {
             if (zombie.level() instanceof ServerLevel level) {
-                for (int i = 0; i < 2; i++) {
+                // 木桶僵尸死亡：释放 3-4 只小鬼
+                int count = 3 + zombie.getRandom().nextInt(2);
+                for (int i = 0; i < count; i++) {
                     Zombie baby = EntityType.ZOMBIE.create(level);
                     if (baby != null) {
                         baby.setPos(zombie.getX() + (zombie.getRandom().nextDouble() - 0.5),
@@ -488,8 +534,29 @@ public class SpecialZombieHandler {
                         baby.setBaby(true);
                         baby.setCustomName(Component.literal("§e[小鬼僵尸]"));
                         baby.setCustomNameVisible(true);
+                        if (zombie.getTarget() != null) baby.setTarget(zombie.getTarget());
                         level.addFreshEntity(baby);
+                        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                            baby.getX(), baby.getY(), baby.getZ(), 6, 0.3, 0.5, 0.3, 0.05);
                     }
+                }
+                for (var p : level.players()) {
+                    if (p.distanceToSqr(zombie) <= 400)
+                        p.sendSystemMessage(Component.literal("§e§l⚠ 木桶僵尸被击杀，释放了 " + count + " 只小鬼僵尸！"));
+                }
+            }
+        }
+        if (TYPE_GIANT.equals(type) && zombie.level() instanceof ServerLevel level) {
+            // 巨人僵尸死亡：释放 2 只小鬼
+            for (int i = 0; i < 2; i++) {
+                Zombie baby = EntityType.ZOMBIE.create(level);
+                if (baby != null) {
+                    baby.setPos(zombie.getX() + (zombie.getRandom().nextDouble() - 0.5),
+                        zombie.getY(), zombie.getZ() + (zombie.getRandom().nextDouble() - 0.5));
+                    baby.setBaby(true);
+                    baby.setCustomName(Component.literal("§e[小鬼僵尸]"));
+                    baby.setCustomNameVisible(true);
+                    level.addFreshEntity(baby);
                 }
             }
         }
@@ -555,7 +622,7 @@ public class SpecialZombieHandler {
         CompoundTag tag = zombie.getPersistentData();
 
         if (rand < giantChance) {
-            applySpecialType(zombie, tag, TYPE_GIANT, "§c§l巨人僵尸", 200.0, 15.0, 8.0);
+            applySpecialType(zombie, tag, TYPE_GIANT, "§c§l巨人僵尸", 500.0, 20.0, 10.0);
         } else if (rand < giantChance + barrelChance) {
             applySpecialType(zombie, tag, TYPE_BARREL, "§6木桶僵尸", 150.0, 10.0, 4.0);
         } else if (rand < giantChance + barrelChance + summonerChance) {

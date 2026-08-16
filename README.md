@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build36-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build37-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD36%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD37%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build36` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build36.jar` / `qlmzombie-3.0.0.beta.build36-server.jar` |
+| **当前版本** | `3.0.0.beta.build37` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build37.jar` / `qlmzombie-3.0.0.beta.build37-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -391,7 +391,7 @@ D:\mcmod\
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build36.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build36-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
+成功构建后，`qlmzombie-3.0.0.beta.build37.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build37-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
 
 ---
 
@@ -603,9 +603,9 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build36.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
-├── qlmzombie-3.0.0.beta.build36-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
-└── qlmzombie-3.0.0.beta.build36-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build37.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
+├── qlmzombie-3.0.0.beta.build37-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
+└── qlmzombie-3.0.0.beta.build37-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -616,8 +616,8 @@ D:\mcmod\build\libs\
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
 2. 选择对应发行包放入 `.minecraft/mods/` 目录：
-   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build36.jar`（完整包含 crafting-dead 4 个模组）
-   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build36-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
+   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build37.jar`（完整包含 crafting-dead 4 个模组）
+   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build37-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -688,7 +688,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build36` (精确到 build)
+1. **版本号**：`3.0.0.beta.build37` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -768,6 +768,69 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build37 (2026-08-16)
+
+#### 生物封禁扩展 + 特殊僵尸强化 + 血月进化 + 废弃建筑群
+
+##### 🚫 生物/维度封禁
+
+| 项 | 说明 |
+|:---|:-----|
+| 维度 | 下界/末地完全封禁（传送门/指令均无法进入，强制拉回主世界） |
+| 生物 | 新增封禁：**猪灵/僵尸猪灵/猪灵蛮兵/疣猪/僵尸疣猪/守卫者/远古守卫者**（原有：末影人/苦力怕/女巫/蜘蛛/洞穴蜘蛛） |
+
+##### ⛏️ 下界合金锭掉落
+
+- 击杀敌对生物概率掉落（基础 2.5%，每级抢夺附魔 +1%，最高 6.5%）
+- 下界已被封禁，这是下界合金锭的**唯一来源**
+
+##### 🧟 特殊僵尸强化
+
+| 僵尸 | 增强 |
+|:-----|:-----|
+| 木桶僵尸 | 死亡时**释放 3-4 只小鬼僵尸**（原 2 只），并全服提示 |
+| 巨人僵尸 | 血量 200 → **500**，攻击 20/护甲 10；**血量降至 250 时向玩家投掷小鬼僵尸**（每 15 秒） |
+
+##### 🌕 血月进化
+
+- 进化天数与新 5 阶段对齐：26/51/76/101 天
+- **血月期间进化概率翻倍、进化等级 +1**（进化更高）
+- 概率随天数提升：12% → 30% → 55% → 80%
+
+##### 💀 僵尸潮小Boss
+
+- **第 4 波小Boss死亡后召唤 3-5 只精英僵尸**（血量×3/伤害×2/护甲+6/加速，`[精英僵尸]` 命名）
+
+##### 🏚️ 废弃建筑群（新增 4 类 + 高楼增强）
+
+| 建筑 | 说明 |
+|:-----|:-----|
+| 废墟 | 断壁残垣/破损柱子/碎石地面/蜘蛛网，1-3 个箱子 |
+| 废弃加油站 | 混凝土便利店/加油棚/加油机/收银台/货架，2-4 个箱子 |
+| 废弃学校 | 16×12 教学楼，**5 间教室各含床+蜘蛛网+箱子（每间主题不同）**，校长室大箱子 |
+| 废弃军事基地 | 围墙+铁丝网+四角岗楼+营房+沙袋+TNT板条箱，4-6 个军火箱 |
+| 9层高楼 | **每栋样式不同**（石砖/红砖/石英/混凝土/海晶石 5 种风格）；**可通行旋转楼梯**；每层 5 房间各 1 箱子（物品不同） |
+| 已有 | 废弃商店/海底遗迹/小屋（保留） |
+
+- **所有建筑箱子自动包含其他模组物品**（`StructureGenSupport` 自动扫描注册，无需手动注册）
+- 新建筑共享生成区块集合，互不重叠
+
+##### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| `MobRestrictionHandler.java` | 扩展生物封禁（猪灵族/守卫者族） |
+| `NetheriteDropsHandler.java` | 下界合金锭掉落（概率+抢夺） |
+| `SpecialZombieHandler.java` | 木桶死亡3-4小鬼、巨人500血/250血投小鬼 |
+| `AIOptimizationHandler.java` | 木桶死亡小鬼3-4只 |
+| `ZombieEvolutionManager.java` | 血月进化翻倍+天数对齐 |
+| `BossDropHandler.java` | 小Boss死亡召唤精英僵尸 |
+| `structure/StructureGenSupport.kt` | 新增（共享区块集+自动扫描模组物品） |
+| `structure/RuinsGenerator.kt` 等 | 新增（废墟/加油站/学校/军事基地） |
+| `structure/HighriseBuildingGenerator.kt` | 多风格+可通行楼梯+每层箱子不同 |
+| `QLMZombieMod.kt` | 公告更新 + MOD_VERSION build37 |
+| `gradle.properties` | `mod_version=3.0.0.beta.build37` |
 
 ### 3.0.0.beta.build36 (2026-08-16)
 
@@ -852,7 +915,7 @@ SOFTWARE.
 | `data/qlmzombie/recipes/mythic_*.json` | 9 个神话合成配方（新增） |
 | `en_us.json` / `zh_cn.json` | 品质翻译键更新 |
 | `QLMZombieMod.kt` | 公告更新 + MOD_VERSION build36 |
-| `gradle.properties` | `mod_version=3.0.0.beta.build36` |
+| `gradle.properties` | `mod_version=3.0.0.beta.build37` |
 
 ### 3.0.0.beta.build35 (2026-08-16)
 
@@ -2528,4 +2591,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build36` · 构建日期：2026-08-16 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build37` · 构建日期：2026-08-16 · Minecraft 1.20.1
