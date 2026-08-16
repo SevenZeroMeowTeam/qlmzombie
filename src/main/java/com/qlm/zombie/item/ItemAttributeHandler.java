@@ -28,6 +28,22 @@ public class ItemAttributeHandler {
     private static final UUID QUALITY_DAMAGE_UUID     = UUID.fromString("c3d4e5f6-a7b8-9012-cdef-234567890123");
     private static final UUID QUALITY_ARMOR_UUID      = UUID.fromString("d4e5f6a7-b8c9-0123-def0-345678901234");
     private static final UUID QUALITY_TOUGHNESS_UUID  = UUID.fromString("e5f6a7b8-c9d0-1234-ef01-456789012345");
+    // ===== Apotheosis 风格词缀属性 UUID（品质越高词缀越强） =====
+    private static final UUID AFFIX_ATTACK_SPEED_UUID = UUID.fromString("a1b2c3d4-0001-4a5b-9c1d-111111111111");
+    private static final UUID AFFIX_MOVE_SPEED_UUID   = UUID.fromString("a1b2c3d4-0002-4a5b-9c1d-222222222222");
+    private static final UUID AFFIX_KNOCKBACK_UUID    = UUID.fromString("a1b2c3d4-0003-4a5b-9c1d-333333333333");
+    private static final UUID AFFIX_LUCK_UUID         = UUID.fromString("a1b2c3d4-0004-4a5b-9c1d-444444444444");
+    private static final UUID AFFIX_MAX_HEALTH_UUID   = UUID.fromString("a1b2c3d4-0005-4a5b-9c1d-555555555555");
+
+    /**
+     * Apotheosis 风格词缀：根据品质等级计算属性加成（0-9 级）
+     * 词缀：攻击速度 / 移动速度 / 击退 / 幸运 / 生命上限
+     */
+    private static double affixSpeed(EquipmentQuality q)  { return q.getId() * 0.05; }        // 每级 +5% 攻击速度
+    private static double affixMove(EquipmentQuality q)   { return q.getId() * 0.004; }      // 每级 +0.4% 移动速度
+    private static double affixKnock(EquipmentQuality q)  { return q.getId() >= 5 ? (q.getId() - 4) * 0.25 : 0; } // 稀有+ 击退
+    private static double affixLuck(EquipmentQuality q)   { return q.getId() >= 4 ? (q.getId() - 3) : 0; }        // 优秀+ 幸运
+    private static double affixHealth(EquipmentQuality q) { return q.getId() >= 2 ? q.getId() * 0.5 : 0; }        // 普通+ 生命
 
     private static boolean isQualityItem(Item item) {
         return item instanceof SwordItem
@@ -155,6 +171,38 @@ public class ItemAttributeHandler {
                 }
             }
         }
+
+        // ===== Apotheosis 风格词缀属性（结合品质给予） =====
+        if (q.getId() > 0) {
+            // 武器/工具：攻击速度 + 击退 + 幸运
+            if (item instanceof SwordItem || item instanceof DiggerItem || item instanceof TridentItem
+                    || item instanceof BowItem || item instanceof CrossbowItem) {
+                double spd = affixSpeed(q);
+                if (spd > 0) event.addModifier(Attributes.ATTACK_SPEED,
+                        new AttributeModifier(AFFIX_ATTACK_SPEED_UUID, "QLM Affix Attack Speed",
+                                spd, AttributeModifier.Operation.MULTIPLY_TOTAL));
+                double knock = affixKnock(q);
+                if (knock > 0) event.addModifier(Attributes.ATTACK_KNOCKBACK,
+                        new AttributeModifier(AFFIX_KNOCKBACK_UUID, "QLM Affix Knockback",
+                                knock, AttributeModifier.Operation.ADDITION));
+            }
+            // 全部装备：幸运
+            double luck = affixLuck(q);
+            if (luck > 0) event.addModifier(Attributes.LUCK,
+                    new AttributeModifier(AFFIX_LUCK_UUID, "QLM Affix Luck",
+                            luck, AttributeModifier.Operation.ADDITION));
+            // 盔甲：移动速度 + 生命上限
+            if (item instanceof ArmorItem) {
+                double move = affixMove(q);
+                if (move > 0) event.addModifier(Attributes.MOVEMENT_SPEED,
+                        new AttributeModifier(AFFIX_MOVE_SPEED_UUID, "QLM Affix Move Speed",
+                                move, AttributeModifier.Operation.MULTIPLY_TOTAL));
+                double hp = affixHealth(q);
+                if (hp > 0) event.addModifier(Attributes.MAX_HEALTH,
+                        new AttributeModifier(AFFIX_MAX_HEALTH_UUID, "QLM Affix Health",
+                                hp, AttributeModifier.Operation.ADDITION));
+            }
+        }
     }
 
     private static void applyVanillaOverrides(ItemAttributeModifierEvent event, ItemStack stack) {
@@ -245,7 +293,41 @@ public class ItemAttributeHandler {
                     .append(Component.literal("  ✦ 耐久: 无限制").withStyle(ChatFormatting.GOLD)));
             if (stack.getItem() instanceof ArmorItem) {
                 tip.add(Component.empty()
-                        .append(Component.literal("  ✦ 虚空免伤（需全套神话盔甲）").withStyle(ChatFormatting.AQUA)));
+                        .append(Component.literal("  ✦ 虚空免伤（需全套神话盔甲，缺一不可）").withStyle(ChatFormatting.AQUA)));
+            }
+        }
+
+        // ===== Apotheosis 风格词缀属性显示 =====
+        if (q.getId() > 0) {
+            boolean isWeapon2 = stack.getItem() instanceof SwordItem || stack.getItem() instanceof DiggerItem
+                    || stack.getItem() instanceof TridentItem || stack.getItem() instanceof BowItem
+                    || stack.getItem() instanceof CrossbowItem;
+            if (isWeapon2) {
+                double spd = affixSpeed(q);
+                if (spd > 0) tip.add(Component.empty()
+                        .append(Component.literal("  ⚡ 攻击速度 +").withStyle(ChatFormatting.YELLOW))
+                        .append(Component.literal(String.format("%.0f%%", spd * 100)).withStyle(ChatFormatting.YELLOW)));
+                double knock = affixKnock(q);
+                if (knock > 0) tip.add(Component.empty()
+                        .append(Component.literal("  💥 击退 +").withStyle(ChatFormatting.YELLOW))
+                        .append(Component.literal(String.format("%.1f", knock)).withStyle(ChatFormatting.YELLOW)));
+            }
+            double luck = affixLuck(q);
+            if (luck > 0) tip.add(Component.empty()
+                    .append(Component.literal("  🍀 幸运 +").withStyle(ChatFormatting.GREEN))
+                    .append(Component.literal(String.format("%.0f", luck)).withStyle(ChatFormatting.GREEN)));
+            if (stack.getItem() instanceof ArmorItem) {
+                double move = affixMove(q);
+                if (move > 0) tip.add(Component.empty()
+                        .append(Component.literal("  🏃 移动速度 +").withStyle(ChatFormatting.AQUA))
+                        .append(Component.literal(String.format("%.0f%%", move * 100)).withStyle(ChatFormatting.AQUA)));
+                double hp = affixHealth(q);
+                if (hp > 0) tip.add(Component.empty()
+                        .append(Component.literal("  ❤ 生命上限 +").withStyle(ChatFormatting.GREEN))
+                        .append(Component.literal(String.format("%.1f", hp)).withStyle(ChatFormatting.GREEN)));
+            }
+            if (q.getId() >= 5) {
+                tip.add(Component.literal("  ✨ Apotheosis 风格词缀").withStyle(ChatFormatting.LIGHT_PURPLE));
             }
         }
 

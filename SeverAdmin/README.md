@@ -1,0 +1,99 @@
+# 🧟 七零喵僵尸末日生存 · SeverAdmin 服务器部署平台
+
+> 域名：**mc.sh197.dpdns.org**（Minecraft 25565 / 网站 80,443）
+> 版本：Minecraft Java 1.20.1 · Forge 47.4.22
+
+服务器专用的一体化部署与管理平台，支持 **Docker** 或 **Java(systemd)** 两种部署方式，包含网站（服务器介绍、下载中心、后台管理）与 Minecraft 服务器的一键部署与监控。
+
+## 📁 目录结构
+
+```
+SeverAdmin/
+├── deploy.sh               # 一键部署脚本（docker|java|auto）
+├── docker-compose.yml      # Docker 编排（MC + Web + Nginx + certbot）
+├── .env.example            # 环境配置模板（复制为 .env）
+├── mc/                     # Minecraft 服务器文件
+│   ├── entrypoint-wrapper.sh   # 启动包装（依赖自动释放/EULA/补丁）
+│   ├── server.properties       # 服务器配置（后台可改）
+│   ├── libs-list.txt           # 依赖白名单（119 个模组）
+│   ├── mods/ kubejs/ agent/ libs/
+├── web/                    # Node.js Web 后台
+│   ├── server.js           # 后台服务（认证/配置/OP/监控/静默重启/下载）
+│   └── public/             # 前端页面（主页/下载中心/后台管理）
+├── nginx/                  # Nginx 反向代理（域名统一入口 + SSL）
+├── scripts/                # 辅助脚本（同步/监控）
+├── java-deploy/            # Java(systemd) 模式部署
+└── logs/
+```
+
+## 🚀 快速部署
+
+### 方式一：Docker（推荐）
+
+```bash
+cp .env.example .env        # 修改密码
+./deploy.sh docker          # 一键部署
+# 首次 SSL 证书（可选）：
+docker compose --profile ssl run --rm certbot
+docker compose restart nginx
+```
+
+### 方式二：Java(systemd)
+
+```bash
+cp .env.example .env        # 修改密码
+./deploy.sh java            # 需要 root/sudo
+```
+
+## 🖥️ 后台功能
+
+| 功能 | 说明 |
+|------|------|
+| 仪表盘 | Docker 容器 / Java 服务状态、CPU/内存、在线玩家 |
+| 服务器配置 | 可视化编辑 `server.properties`，保存自动同步 |
+| 游戏管理员 | OP / 白名单 / 封禁管理（写文件 + RCON 同步） |
+| 控制台 | RCON 游戏内命令执行 |
+| 下载中心 | 文件上传/下载/删除，**单文件上限 500MB** |
+| 日志 | Docker logs / journalctl 实时查看 |
+| 静默重启 | 先公告 + 保存世界 → 优雅重启，**面板不中断** |
+
+## 🔄 静默重启原理
+
+1. 后台通过 RCON 广播 `[SeverAdmin] 服务器将在 N 秒后重启`
+2. 执行 `save-all` 保存世界
+3. 等待 N 秒（玩家正常退出，不被强踢）
+4. 后台（独立进程/容器）调用 `docker restart qlm-minecraft` 或 `systemctl restart qlm-minecraft`
+5. 玩家重新加入即恢复 —— 后台面板全程在线
+
+## 🛡️ 兼容性保障（防止服务器无法启动 / 玩家无法加入）
+
+- **依赖自动释放**：`entrypoint-wrapper.sh` 从 `mc/libs`（= `mcmod/src/main/libs` 白名单）自动复制全部 119 个依赖模组到 `mods/`
+- **EULA 强制写入**：自动 `eula=true`
+- **注册表修复**：`-Dfml.ignoreMissingRegistries=true` 等 JVM 参数修复 CraftingDead Missing registry
+- **CraftingDead 补丁**：`mc/agent/patch_cd_jar.sh` 移除 `disableSaving()` 调用
+- **端口自动检测**：25565 被占用时自动 +10 查找空闲端口
+- **后台同步**：网站修改配置 → 写入挂载卷 / 服务目录 → RCON 即时生效
+
+## ⚙️ 环境变量（.env）
+
+| 变量 | 说明 | 默认 |
+|------|------|------|
+| `DOMAIN` | 站点域名 | `mc.sh197.dpdns.org` |
+| `RCON_PASSWORD` | RCON 密码（必改） | - |
+| `JWT_SECRET` | 后台 JWT 密钥（必改） | - |
+| `ADMIN_USER` / `ADMIN_PASS` | 后台登录账号（必改） | admin / - |
+| `ADMIN_TOKEN` | 备用 API Token | - |
+| `MAX_UPLOAD_MB` | 下载中心单文件上限 | 500 |
+| `NGINX_MC_PORT` | MC 入口端口 | 25565 |
+| `MC_MAX_MEMORY` | 内存上限 | 2G |
+
+## 🔧 常用命令
+
+```bash
+./deploy.sh status      # 查看状态
+./deploy.sh restart     # 静默重启服务器
+./deploy.sh sync        # 重新同步依赖模组
+./scripts/monitor.sh    # 实时监控（docker|java 双模式）
+```
+
+> 依赖源：`../src/main/libs`（mcmod 项目）→ 构建产物 `../build/libs/qlmzombie-*.jar`

@@ -177,8 +177,9 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6§l[七零喵僵尸末日] §b§l v$MOD_VERSION §r§7- §a末日求生·品质时代"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7侧边栏计分板实时同步：☀天数 ☘安全日 ⌚时间 ☾月相 ⚔阶段 ❤生命 ⚔攻击"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7计分板每秒自动刷新，生命/攻击上限实时读取真实属性，击杀永久加成自动同步"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§710级装备品质：劣质→一般→精良→普通→高级→稀有→神器→史诗→传说→神话"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7神话级武器攻击力/耐久无限；全套神话盔甲无视虚空伤害、可破坏基岩"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§710级装备品质：劣质→一般→普通→精良→优秀→稀有→卓越→史诗→传说→神话"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7动态难度：0-25天和平·26-50天简单·51-75天普通·76-100天困难·100天+锁定困难"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7神话级武器攻击力/耐久无限；神话盔甲套装缺一不可，全套无视虚空伤害、可破坏基岩"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7镐子能力：3×3~11×11范围挖掘，可破坏黑曜石/哭泣黑曜石/基岩"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7击杀敌对生物（除玩家/村民/铁傀儡）获得永久随机生命上限和攻击力上限"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备：铁质全套+5附魔+弓满附魔+64附魔金苹果+64面包"))
@@ -236,7 +237,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build35"
+        const val MOD_VERSION = "3.0.0.beta.build36"
 
         @JvmField
         @Volatile

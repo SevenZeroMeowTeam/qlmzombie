@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * 装备品质系统 — 10 级品质。
- * 劣质 → 一般 → 精良 → 普通 → 高级 → 稀有 → 神器 → 史诗 → 传说 → 神话
+ * 劣质 → 一般 → 普通 → 精良 → 优秀 → 稀有 → 卓越 → 史诗 → 传说 → 神话
  *
  * 神话品质：攻击力无限，无耐久，可破坏基岩，全套盔甲虚空免伤。
  *
@@ -26,11 +26,11 @@ import java.util.List;
 public enum EquipmentQuality {
     INFERIOR (0, "劣质", "qlmzombie.quality.inferior",  ChatFormatting.GRAY,        0.40F,   0,   0,   0, false,  25,   0.5,    2.0),
     COMMON   (1, "一般", "qlmzombie.quality.common",    ChatFormatting.WHITE,       1.00F,   2,   0,   1, false,  22,   1.0,    5.0),
-    FINE     (2, "精良", "qlmzombie.quality.fine",      ChatFormatting.DARK_GREEN,  1.30F,   3,   0,   1, false,  18,   1.5,    7.0),
-    NORMAL   (3, "普通", "qlmzombie.quality.normal",    ChatFormatting.GREEN,       1.60F,   5,   1,   2, false,  15,   2.0,   10.0),
-    ADVANCED (4, "高级", "qlmzombie.quality.advanced",  ChatFormatting.AQUA,        2.50F,  10,   2,   4, false,  10,   3.0,   18.0),
+    NORMAL   (2, "普通", "qlmzombie.quality.normal",    ChatFormatting.GREEN,       1.30F,   3,   0,   1, false,  18,   1.5,    7.0),
+    FINE     (3, "精良", "qlmzombie.quality.fine",      ChatFormatting.DARK_GREEN,  1.60F,   5,   1,   2, false,  15,   2.0,   10.0),
+    EXCELLENT(4, "优秀", "qlmzombie.quality.excellent", ChatFormatting.AQUA,        2.50F,  10,   2,   4, false,  10,   3.0,   18.0),
     RARE     (5, "稀有", "qlmzombie.quality.rare",      ChatFormatting.LIGHT_PURPLE,4.00F,  18,   4,   8, false,   7,   6.0,   30.0),
-    ARTIFACT (6, "神器", "qlmzombie.quality.artifact",  ChatFormatting.GOLD,        7.00F,  40,   8,  15, false,   4,  10.0,   60.0),
+    EXCEPTIONAL(6, "卓越", "qlmzombie.quality.exceptional", ChatFormatting.GOLD,    7.00F,  40,   8,  15, false,   4,  10.0,   60.0),
     EPIC     (7, "史诗", "qlmzombie.quality.epic",      ChatFormatting.RED,        15.00F, 100,  15,  30, false,   2.5F,20.0,  150.0),
     LEGENDARY(8, "传说", "qlmzombie.quality.legendary", ChatFormatting.DARK_RED,   40.00F, 500,  30,  60, false,   1.2F,50.0,  500.0),
     MYTHIC   (9, "神话", "qlmzombie.quality.mythic",    ChatFormatting.DARK_PURPLE, Float.MAX_VALUE, 99999, 100, 100, true, 0.3F, 99999.0, Double.MAX_VALUE);
@@ -101,7 +101,7 @@ public enum EquipmentQuality {
         if (this.id >= 9) return 5; // 神话 11x11
         if (this.id >= 8) return 4; // 传说 9x9
         if (this.id >= 7) return 3; // 史诗 7x7
-        if (this.id >= 6) return 2; // 神器 5x5
+        if (this.id >= 6) return 2; // 卓越 5x5
         if (this.id >= 5) return 1; // 稀有 3x3
         return 0;
     }

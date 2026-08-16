@@ -1,0 +1,11 @@
+# SeverAdmin - 忽略运行时/敏感文件
+.env
+node_modules/
+web/downloads/*
+!web/downloads/README.txt
+logs/
+mc/mods/*.jar
+mc/libs/*.jar
+certs/
+__pycache__/
+*.pyc

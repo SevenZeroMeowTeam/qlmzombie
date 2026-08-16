@@ -298,6 +298,34 @@ public class QLMCommands {
                     ctx.getSource().sendSuccess(() -> msg, false);
                     return 1;
                 })
+                .then(Commands.literal("set")
+                    .then(Commands.argument("value", StringArgumentType.word())
+                        .executes(ctx -> {
+                            // 100 天+ 锁定困难，无法更改
+                            if (DayPhaseManager.blockDifficultyChange()) {
+                                ctx.getSource().sendFailure(Component.literal("§4无法更改难度：服务器已进入锁定困难阶段（第 100 天+），难度锁定为困难！"));
+                                return 0;
+                            }
+                            ServerLevel overworld = ctx.getSource().getServer().getLevel(Level.OVERWORLD);
+                            if (overworld == null) return 0;
+                            String value = StringArgumentType.getString(ctx, "value").toLowerCase(java.util.Locale.ROOT);
+                            Difficulty target = switch (value) {
+                                case "peaceful" -> Difficulty.PEACEFUL;
+                                case "easy" -> Difficulty.EASY;
+                                case "normal" -> Difficulty.NORMAL;
+                                case "hard" -> Difficulty.HARD;
+                                default -> null;
+                            };
+                            if (target == null) {
+                                ctx.getSource().sendFailure(Component.literal("§c无效难度: " + value + " (可选: peaceful/easy/normal/hard)"));
+                                return 0;
+                            }
+                            ctx.getSource().getServer().setDifficulty(target, true);
+                            ctx.getSource().sendSuccess(() -> Component.literal("§a难度已设置为: §c" + target.getKey()), true);
+                            return 1;
+                        })
+                    )
+                )
             )
             .then(Commands.literal("info")
                 .executes(ctx -> {
@@ -579,7 +607,7 @@ public class QLMCommands {
             source.sendSuccess(() -> Component.literal("§b/qlm day§7 - 查看/设置当前天数"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm day <天数>§7 - 设置天数"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm phase§7 - 查看当前难度阶段"), false);
-            source.sendSuccess(() -> Component.literal("§b/qlm difficulty§7 - 查看当前难度配置"), false);
+            source.sendSuccess(() -> Component.literal("§b/qlm difficulty [set <peaceful|easy|normal|hard>]§7 - 查看/设置难度(100天+锁定困难无法更改)"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm info§7 - 查看模组完整状态"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm phases§7 - 查看所有难度阶段一览"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm mods§7 - 列出内部Mod及安装状态"), false);

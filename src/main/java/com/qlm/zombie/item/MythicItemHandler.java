@@ -3,6 +3,7 @@ package com.qlm.zombie.item;
 import com.qlm.zombie.QLMZombieMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -59,11 +60,22 @@ public class MythicItemHandler {
         }
     }
 
+    /**
+     * 神话能力判定：
+     *  - 手持/副手神话武器或工具 → 立即生效（无视游戏规则、破坏基岩）
+     *  - 神话盔甲 → 必须全套 4 件皆为神话品质才生效（缺一不可，少一个都不行）
+     */
     public static boolean hasMythic(Player player) {
         if (isMythic(player.getMainHandItem())) return true;
         if (isMythic(player.getOffhandItem())) return true;
-        for (ItemStack s : player.getArmorSlots()) if (isMythic(s)) return true;
+        // 神话盔甲套装：必须 4 件全套
+        if (QualityEquipmentHandler.hasFullMythicArmor(player)) return true;
         return false;
+    }
+
+    /** 检查玩家神话盔甲套装完整性（缺一不可） */
+    public static boolean hasFullMythicArmorSet(Player player) {
+        return QualityEquipmentHandler.hasFullMythicArmor(player);
     }
 
     public static boolean isMythic(ItemStack s) {
@@ -71,5 +83,16 @@ public class MythicItemHandler {
         EquipmentQuality q = EquipmentQuality.fromStack(s);
         if (q != null && q.isIndestructible()) return true;
         return s.getTag() != null && s.getTag().getBoolean(EquipmentQuality.NBT_INDESTRUCT);
+    }
+
+    /** 判断某物品是否为神话武器/工具（非盔甲） */
+    public static boolean isMythicWeaponOrTool(ItemStack s) {
+        if (!isMythic(s)) return false;
+        Item item = s.getItem();
+        return item instanceof net.minecraft.world.item.SwordItem
+                || item instanceof net.minecraft.world.item.DiggerItem
+                || item instanceof net.minecraft.world.item.BowItem
+                || item instanceof net.minecraft.world.item.CrossbowItem
+                || item instanceof net.minecraft.world.item.TridentItem;
     }
 }

@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build34-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build36-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD35%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD36%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build35` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build35.jar` / `qlmzombie-3.0.0.beta.build35-server.jar` |
+| **当前版本** | `3.0.0.beta.build36` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build36.jar` / `qlmzombie-3.0.0.beta.build36-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -391,7 +391,7 @@ D:\mcmod\
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build35.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build35-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
+成功构建后，`qlmzombie-3.0.0.beta.build36.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build36-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
 
 ---
 
@@ -603,9 +603,9 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build35.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
-├── qlmzombie-3.0.0.beta.build35-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
-└── qlmzombie-3.0.0.beta.build35-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build36.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
+├── qlmzombie-3.0.0.beta.build36-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
+└── qlmzombie-3.0.0.beta.build36-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -616,8 +616,8 @@ D:\mcmod\build\libs\
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
 2. 选择对应发行包放入 `.minecraft/mods/` 目录：
-   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build35.jar`（完整包含 crafting-dead 4 个模组）
-   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build35-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
+   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build36.jar`（完整包含 crafting-dead 4 个模组）
+   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build36-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -688,7 +688,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build35` (精确到 build)
+1. **版本号**：`3.0.0.beta.build36` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -768,6 +768,91 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build36 (2026-08-16)
+
+#### SeverAdmin 服务器部署平台 + 动态难度 + 品质重做 + 神话合成
+
+新增服务器专用一体化部署平台 **`SeverAdmin/`**，并对模组玩法进行大规模增强：
+
+##### 🖥️ SeverAdmin 服务器部署平台
+
+| 功能 | 说明 |
+|:-----|:-----|
+| 部署方式 | Docker（docker compose）或 Java（systemd）双模式，`deploy.sh` 自动检测 |
+| 域名站点 | `mc.sh197.dpdns.org`：服务器介绍页 + 下载中心 + 后台管理（Nginx 统一入口 + SSL） |
+| 后台管理 | 可视化编辑 `server.properties`、OP/白名单/封禁管理（写文件 + RCON 同步） |
+| 监控 | Docker（docker stats/ps）或 Java（systemd/进程/日志）双模式监控 |
+| 静默重启 | RCON 公告 + `save-all` → 等待 N 秒 → 优雅重启，**后台面板全程在线** |
+| 下载中心 | 文件上传/下载/删除，**单文件上限 500MB**（`MAX_UPLOAD_MB` 可调） |
+| 兼容性 | 依赖自动释放（119 JAR）、EULA 强制、注册表修复 JVM 参数、CraftingDead 补丁、端口自动检测 |
+| 文件 | `SeverAdmin/deploy.sh`、`docker-compose.yml`、`web/`（Node.js 后台+前端）、`nginx/`、`mc/`、`java-deploy/`、`scripts/` |
+
+##### 🌍 动态难度（5 阶段，100 天+锁定困难）
+
+| 天数 | 阶段 | 难度乘数 |
+|:-----|:-----|:---------|
+| 0-25 天 | 和平 | 0.5x |
+| 26-50 天 | 简单 | 1.0x |
+| 51-75 天 | 普通 | 1.5x |
+| 76-100 天 | 困难 | 2.0x |
+| 100 天+ | **锁定困难**（无法更改，强制困难难度并持久化） | 2.0x |
+
+- 移除旧的 8 阶段（含极限/锁定空档），统一为 5 阶段；`EXTREME` 更名为 `LOCKED_HARD`
+- 进入 100 天+ 后：`DifficultyLockState` 持久化锁定 + 强制 `HARD` 难度 + 全服公告
+- 新增 `/qlm difficulty set <peaceful|easy|normal|hard>`，锁定后拒绝修改
+
+##### ⚔️ 品质系统重做（10 级新命名）
+
+| 等级 | 旧名称 | 新名称 |
+|:-----|:-------|:-------|
+| 2 | 精良 | **普通** |
+| 3 | 普通 | **精良** |
+| 4 | 高级 | **优秀** |
+| 6 | 神器 | **卓越** |
+
+完整序列：劣质 → 一般 → 普通 → 精良 → 优秀 → 稀有 → 卓越 → 史诗 → 传说 → 神话
+
+##### ✨ Apotheosis 风格属性词缀
+
+结合品质等级给予属性（无需安装 Apotheosis 本体，原生实现）：
+
+| 词缀 | 适用 | 加成 |
+|:-----|:-----|:-----|
+| 攻击速度 | 武器/工具 | 每级 +5% |
+| 移动速度 | 盔甲 | 每级 +0.4% |
+| 击退 | 武器（稀有+） | 稀有 0.25，逐级 +0.25 |
+| 幸运 | 全部（优秀+） | 优秀 +1，逐级 +1 |
+| 生命上限 | 盔甲（普通+） | 每级 +0.5 |
+
+##### 🔱 神话系统增强
+
+- **神话盔甲套装缺一不可**：虚空免伤 / 无视游戏规则等盔甲神效必须 **4 件全套皆为神话** 才生效（少一件都不行）
+- **神话合成配方**（按图 3×3，仅神话系列需对应核心）：
+
+```
+下界合金锭 │ 钻石 │ 下界合金锭
+钻石      │ 核心 │ 钻石          （核心=对应下界合金剑/镐/斧/锹/锄/头盔/胸甲/护腿/靴子）
+下界合金锭 │ 钻石 │ 下界合金锭
+```
+
+- 9 个配方：神话剑/镐/斧/锹/锄/头盔/胸甲/护腿/靴子（`data/qlmzombie/recipes/mythic_*.json`）
+- 常规合成仍按材料等级 + 月相**随机品质**（无固定概率）
+
+##### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| `SeverAdmin/**` | 新增（部署平台） |
+| `DayPhase.kt` / `DayPhaseManager.kt` / `DifficultyLockState.java` | 5 阶段 + 锁定困难 |
+| `QLMCommands.java` | `/qlm difficulty set` + 阶段一览更新 |
+| `EquipmentQuality.java` | 10 级新命名（普通/精良交换、优秀/卓越） |
+| `ItemAttributeHandler.java` | Apotheosis 风格词缀属性 + tooltip |
+| `MythicItemHandler.java` / `MythicCraftHandler.java` | 神话盔甲套装缺一不可 + 合成提示 |
+| `data/qlmzombie/recipes/mythic_*.json` | 9 个神话合成配方（新增） |
+| `en_us.json` / `zh_cn.json` | 品质翻译键更新 |
+| `QLMZombieMod.kt` | 公告更新 + MOD_VERSION build36 |
+| `gradle.properties` | `mod_version=3.0.0.beta.build36` |
 
 ### 3.0.0.beta.build35 (2026-08-16)
 
@@ -2443,4 +2528,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build35` · 构建日期：2026-08-16 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build36` · 构建日期：2026-08-16 · Minecraft 1.20.1

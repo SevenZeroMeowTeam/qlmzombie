@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>下载中心 - 七零喵僵尸末日生存</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d; --accent: #f85149;
+    --accent2: #58a6ff; --text: #e6edf3; --muted: #8b949e; --gold: #d29922;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header { border-bottom: 1px solid var(--border); background: rgba(13,17,23,.9); position: sticky; top: 0; z-index: 10; }
+  nav { display: flex; align-items: center; gap: 24px; padding: 14px 0; }
+  .logo { font-weight: 700; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  nav a:hover, nav a.active { color: var(--text); }
+  nav .right { margin-left: auto; }
+  h2 { padding: 36px 0 8px; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  .files { display: flex; flex-direction: column; gap: 12px; padding-bottom: 60px; }
+  .file { display: flex; align-items: center; gap: 16px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px; transition: border-color .2s; }
+  .file:hover { border-color: var(--accent2); }
+  .file .icon { font-size: 26px; }
+  .file .meta { flex: 1; min-width: 0; }
+  .file .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file .info { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .file .dl { padding: 8px 20px; border-radius: 6px; background: var(--accent2); color: #fff; text-decoration: none; font-size: 14px; }
+  .file .dl:hover { opacity: .85; }
+  .empty { text-align: center; color: var(--muted); padding: 60px 0; }
+  .limit { text-align: center; color: var(--muted); font-size: 13px; padding-bottom: 30px; }
+  footer { text-align: center; padding: 30px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <nav>
+      <span class="logo">🧟 七零喵 · 僵尸末日生存</span>
+      <a href="/">主页</a>
+      <a href="/downloads" class="active">下载中心</a>
+      <div class="right"><a href="/admin">后台管理</a></div>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  <h2>📦 下载中心</h2>
+  <p class="sub">整合包 / 客户端 / 资源包等文件下载（单文件上限 <b id="maxSize">500</b>MB）</p>
+  <div id="files" class="files"></div>
+  <div class="limit">文件由服务器管理员上传维护 · 如遇问题请联系管理员</div>
+</div>
+
+<footer>© 七零喵 · 僵尸末日生存 SeverAdmin</footer>
+
+<script>
+function formatSize(bytes) {
+  if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(2) + ' GB';
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + ' MB';
+  if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return bytes + ' B';
+}
+function formatDate(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function iconFor(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (['zip','rar','7z'].includes(ext)) return '🗜️';
+  if (['jar'].includes(ext)) return '📦';
+  if (['png','jpg','jpeg','webp'].includes(ext)) return '🖼️';
+  if (['txt','md'].includes(ext)) return '📄';
+  return '📁';
+}
+async function load() {
+  try {
+    const r = await fetch('/api/downloads');
+    const d = await r.json();
+    document.getElementById('maxSize').textContent = d.maxUploadMB || 500;
+    const box = document.getElementById('files');
+    if (!d.files || !d.files.length) {
+      box.innerHTML = '<div class="empty">暂无下载文件</div>';
+      return;
+    }
+    box.innerHTML = d.files.map(f => `
+      <div class="file">
+        <span class="icon">${iconFor(f.name)}</span>
+        <div class="meta">
+          <div class="name">${f.name}</div>
+          <div class="info">${formatSize(f.size)} · ${formatDate(f.mtime)}</div>
+        </div>
+        <a class="dl" href="/downloads/${encodeURIComponent(f.name)}">下载</a>
+      </div>`).join('');
+  } catch (e) {
+    document.getElementById('files').innerHTML = '<div class="empty">加载失败：' + e.message + '</div>';
+  }
+}
+load();
+</script>
+</body>
+</html>

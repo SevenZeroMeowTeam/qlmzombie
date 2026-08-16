@@ -110,7 +110,7 @@ public class AIOptimizationHandler {
                 if (chance <= 0) return;
                 DayPhase phase = getCurrentDayPhase(level);
                 double effectiveChance = chance;
-                if (phase == DayPhase.EXTREME) effectiveChance *= 2.0D;
+                if (phase == DayPhase.LOCKED_HARD) effectiveChance *= 2.0D;
                 else if (phase == DayPhase.HARD) effectiveChance *= 1.5D;
                 else if (phase == DayPhase.EASY || phase == DayPhase.PEACE) effectiveChance *= 0.3D;
                 if (skeleton.getRandom().nextDouble() < effectiveChance) {
@@ -157,7 +157,7 @@ public class AIOptimizationHandler {
         removeGoalsByType(zombie, MeleeAttackGoal.class);
         zombie.goalSelector.addGoal(2, new OptimizedZombieAttackGoal(zombie, 1.0D, false));
 
-        if (QLMConfig.ZOMBIE_BREAK_DOORS.get() && (phase == DayPhase.NORMAL || phase == DayPhase.HARD || phase == DayPhase.EXTREME)) {
+        if (QLMConfig.ZOMBIE_BREAK_DOORS.get() && (phase == DayPhase.NORMAL || phase == DayPhase.HARD || phase == DayPhase.LOCKED_HARD)) {
             try {
                 GroundPathNavigation navigation = (GroundPathNavigation) zombie.getNavigation();
                 navigation.setCanOpenDoors(true);
@@ -166,7 +166,7 @@ public class AIOptimizationHandler {
             }
         }
 
-        if (phase == DayPhase.HARD || phase == DayPhase.EXTREME) {
+        if (phase == DayPhase.HARD || phase == DayPhase.LOCKED_HARD) {
             double r = zombie.getRandom().nextDouble();
             double s = QLMConfig.SUICIDE_ZOMBIE_CHANCE.get();
             double b = QLMConfig.BARREL_ZOMBIE_CHANCE.get();
@@ -236,8 +236,7 @@ public class AIOptimizationHandler {
                     case PEACE, EASY -> 0.0;
                     case NORMAL -> 1.0;
                     case HARD -> 2.0;
-                    case EXTREME -> 3.0;
-                    case LOCKED -> 0.0;
+                    case LOCKED_HARD -> 3.0;
                 };
                 if (bonus > 0) {
                     attackDamage.setBaseValue(attackDamage.getBaseValue() + bonus);
@@ -285,8 +284,7 @@ public class AIOptimizationHandler {
                         case PEACE, EASY -> 0.0;
                         case NORMAL -> 0.5;
                         case HARD -> 1.0;
-                        case EXTREME -> 1.5;
-                        case LOCKED -> 0.0;
+                        case LOCKED_HARD -> 1.5;
                     };
                     if (bonus > 0) {
                         attackDamage.setBaseValue(attackDamage.getBaseValue() + bonus);
@@ -295,7 +293,7 @@ public class AIOptimizationHandler {
             } catch (Exception ignored) {
             }
 
-            if ((phase == DayPhase.NORMAL || phase == DayPhase.HARD || phase == DayPhase.EXTREME)) {
+            if ((phase == DayPhase.NORMAL || phase == DayPhase.HARD || phase == DayPhase.LOCKED_HARD)) {
                 double modChance = QLMConfig.SKELETON_MOD_WEAPON_CHANCE.get();
                 if (modChance > 0 && skeleton.getRandom().nextDouble() < modChance) {
                     equipSkeletonModWeapon(skeleton);
@@ -508,7 +506,7 @@ public class AIOptimizationHandler {
                 }
             } else {
                 DayPhase phase = getCurrentDayPhase(level);
-                float radius = phase == DayPhase.EXTREME ? 5.0F : 3.5F;
+                float radius = phase == DayPhase.LOCKED_HARD ? 5.0F : 3.5F;
                 level.explode(zombie, zombie.getX(), zombie.getY(), zombie.getZ(), radius, Level.ExplosionInteraction.MOB);
                 zombie.discard();
             }
@@ -651,7 +649,7 @@ public class AIOptimizationHandler {
         if (breakCd > 0) {
             zombie.getPersistentData().putInt(BLOCK_BREAK_COOLDOWN, breakCd - 1);
         } else {
-            if (QLMConfig.ZOMBIE_BREAK_BLOCKS.get() && (phase == DayPhase.NORMAL || phase == DayPhase.HARD || phase == DayPhase.EXTREME)) {
+            if (QLMConfig.ZOMBIE_BREAK_BLOCKS.get() && (phase == DayPhase.NORMAL || phase == DayPhase.HARD || phase == DayPhase.LOCKED_HARD)) {
                 if (tryBreakBlockingBlock(zombie, target, level, phase)) {
                     zombie.getPersistentData().putInt(BLOCK_BREAK_COOLDOWN, QLMConfig.ZOMBIE_BREAK_INTERVAL.get());
                 }
@@ -662,7 +660,7 @@ public class AIOptimizationHandler {
         if (placeCd > 0) {
             zombie.getPersistentData().putInt(BLOCK_PLACE_COOLDOWN, placeCd - 1);
         } else {
-            if (QLMConfig.ZOMBIE_PLACE_BLOCKS.get() && phase == DayPhase.EXTREME) {
+            if (QLMConfig.ZOMBIE_PLACE_BLOCKS.get() && phase == DayPhase.LOCKED_HARD) {
                 if (tryPlaceBlockTowardsTarget(zombie, target, level)) {
                     zombie.getPersistentData().putInt(BLOCK_PLACE_COOLDOWN, QLMConfig.ZOMBIE_PLACE_INTERVAL.get());
                 }
@@ -849,7 +847,7 @@ public class AIOptimizationHandler {
         ServerLevel level = getServerLevel(zombie.level());
         if (level == null) return;
         DayPhase phase = getCurrentDayPhase(level);
-        if (phase != DayPhase.NORMAL && phase != DayPhase.HARD && phase != DayPhase.EXTREME) return;
+        if (phase != DayPhase.NORMAL && phase != DayPhase.HARD && phase != DayPhase.LOCKED_HARD) return;
 
         BlockPos doorPos = findNearbyDoor(zombie, target);
         if (doorPos == null) {
@@ -879,7 +877,7 @@ public class AIOptimizationHandler {
         int breakTime = switch (phase) {
             case NORMAL -> 240;
             case HARD -> 160;
-            case EXTREME -> 100;
+            case LOCKED_HARD -> 100;
             default -> 99999;
         };
 
@@ -1294,8 +1292,7 @@ public class AIOptimizationHandler {
             case EASY -> 0;
             case NORMAL -> 1;
             case HARD -> 2;
-            case EXTREME -> 3;
-            case LOCKED -> 0;
+            case LOCKED_HARD -> 3;
         };
 
         if (phaseIndex == 0) return;
@@ -1349,7 +1346,7 @@ public class AIOptimizationHandler {
             }
 
             if (mob instanceof Zombie zombie) {
-                if (phase == DayPhase.EXTREME) {
+                if (phase == DayPhase.LOCKED_HARD) {
                     zombie.getPersistentData().putBoolean("qlmzombie.can_place_blocks", true);
                 }
             }

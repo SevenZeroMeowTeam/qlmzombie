@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SeverAdmin 后台管理 - 七零喵僵尸末日生存</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d; --accent: #f85149;
+    --accent2: #58a6ff; --green: #3fb950; --text: #e6edf3; --muted: #8b949e; --gold: #d29922;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .layout { display: flex; min-height: 100vh; }
+  /* 侧边栏 */
+  .sidebar { width: 220px; background: #11161d; border-right: 1px solid var(--border); padding: 20px 0; flex-shrink: 0; }
+  .sidebar .brand { padding: 0 20px 20px; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); }
+  .sidebar a { display: block; padding: 12px 20px; color: var(--muted); text-decoration: none; font-size: 14px; cursor: pointer; }
+  .sidebar a:hover, .sidebar a.active { color: var(--text); background: rgba(88,166,255,.08); border-left: 3px solid var(--accent2); }
+  .main { flex: 1; padding: 24px; overflow-x: hidden; }
+  .page { display: none; }
+  .page.active { display: block; }
+  h2 { margin-bottom: 20px; font-size: 20px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+  .card h3 { font-size: 15px; margin-bottom: 14px; color: var(--accent2); }
+  .btn { padding: 8px 18px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; font-size: 14px; }
+  .btn:hover { border-color: var(--accent2); }
+  .btn.primary { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .btn.danger { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.green { background: var(--green); border-color: var(--green); color: #fff; }
+  .btn.gold { background: var(--gold); border-color: var(--gold); color: #fff; }
+  input, select, textarea {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px;
+    padding: 8px 12px; font-size: 14px; width: 100%; margin-bottom: 10px;
+  }
+  textarea { font-family: Consolas, monospace; resize: vertical; }
+  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .stat { text-align: center; padding: 14px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
+  .stat .num { font-size: 24px; font-weight: 700; color: var(--accent2); }
+  .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .row .grow { flex: 1; }
+  .mono { font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+  #logBox { height: 320px; overflow-y: auto; background: #0a0e14; border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+  #consoleBox { height: 280px; overflow-y: auto; background: #0a0e14; border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); }
+  .badge.on { color: var(--green); border-color: var(--green); }
+  .badge.off { color: var(--accent); border-color: var(--accent); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); padding: 12px 24px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 100; }
+  .toast.show { opacity: 1; }
+  /* 登录 */
+  #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 50; }
+  .login-box { width: 360px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 36px; }
+  .login-box h2 { text-align: center; color: var(--accent); }
+  .login-box .btn { width: 100%; margin-top: 6px; }
+  .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent2); border-radius: 50%; animation: rot 0.8s linear infinite; vertical-align: middle; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- 登录遮罩 -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <h2>🧟 SeverAdmin</h2>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin:6px 0 18px;">七零喵僵尸末日生存 · 后台管理</p>
+    <label>用户名</label>
+    <input id="loginUser" placeholder="admin" autocomplete="username">
+    <label>密码</label>
+    <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn primary" onclick="doLogin()">登 录</button>
+  </div>
+</div>
+
+<div class="layout" id="app" style="display:none">
+  <aside class="sidebar">
+    <div class="brand">🧟 SeverAdmin</div>
+    <a data-page="dashboard" class="active">📊 仪表盘</a>
+    <a data-page="properties">⚙️ 服务器配置</a>
+    <a data-page="players">👤 游戏管理员</a>
+    <a data-page="console">💬 控制台</a>
+    <a data-page="downloads">📦 下载中心</a>
+    <a data-page="logs">📜 日志</a>
+    <a data-page="danger">🔄 重启/停止</a>
+  </aside>
+  <div class="main">
+
+    <!-- 仪表盘 -->
+    <div class="page active" id="page-dashboard">
+      <h2>📊 服务器仪表盘</h2>
+      <div class="grid3">
+        <div class="stat"><div class="num" id="dOnline">-</div><div class="lbl">服务器在线</div></div>
+        <div class="stat"><div class="num" id="dPlayers">-</div><div class="lbl">在线玩家</div></div>
+        <div class="stat"><div class="num" id="dMode">-</div><div class="lbl">部署模式</div></div>
+      </div>
+      <div class="card"><h3>🧱 容器 / 服务状态</h3><div id="dockerBox" class="mono"></div></div>
+      <div class="card"><h3>🖥️ 主机信息</h3><div id="hostBox" class="mono"></div></div>
+    </div>
+
+    <!-- 服务器配置 -->
+    <div class="page" id="page-properties">
+      <h2>⚙️ 服务器配置 (server.properties)</h2>
+      <div class="card">
+        <div class="row">
+          <label class="grow">修改后自动写入，部分配置需重启生效</label>
+          <button class="btn" onclick="loadProperties()">刷新</button>
+          <button class="btn primary" onclick="saveProperties()">保存配置</button>
+        </div>
+        <div class="grid2" id="propsGrid"></div>
+      </div>
+    </div>
+
+    <!-- 游戏管理员 -->
+    <div class="page" id="page-players">
+      <h2>👤 游戏管理员</h2>
+      <div class="card">
+        <h3>🛡️ OP 管理员</h3>
+        <div class="row">
+          <input id="opName" class="grow" placeholder="玩家名">
+          <select id="opLevel" style="width:auto"><option value="4">4(最高)</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
+          <button class="btn green" onclick="addOp()">添加 OP</button>
+        </div>
+        <table><thead><tr><th>玩家</th><th>等级</th><th>操作</th></tr></thead><tbody id="opTable"></tbody></table>
+      </div>
+      <div class="card">
+        <h3>📋 白名单</h3>
+        <div class="row">
+          <input id="wlName" class="grow" placeholder="玩家名">
+          <button class="btn green" onclick="addWhitelist()">添加白名单</button>
+        </div>
+        <table><thead><tr><th>玩家</th><th>操作</th></tr></thead><tbody id="wlTable"></tbody></table>
+      </div>
+      <div class="card">
+        <h3>🚫 封禁列表</h3>
+        <div class="row">
+          <input id="banName" class="grow" placeholder="玩家名">
+          <input id="banReason" class="grow" placeholder="封禁原因">
+          <button class="btn danger" onclick="addBan()">封禁玩家</button>
+        </div>
+        <table><thead><tr><th>玩家</th><th>原因</th><th>操作</th></tr></thead><tbody id="banTable"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 控制台 -->
+    <div class="page" id="page-console">
+      <h2>💬 RCON 控制台</h2>
+      <div class="card">
+        <div id="consoleBox"></div>
+        <div class="row" style="margin-top:12px">
+          <input id="consoleCmd" class="grow" placeholder="例如: say hello / list / time set day">
+          <button class="btn primary" onclick="sendConsole()">发送</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" onclick="sendQuick('list')">在线列表</button>
+          <button class="btn" onclick="sendQuick('save-all')">保存世界</button>
+          <button class="btn" onclick="sendQuick('say [SeverAdmin] 请勿作弊，祝游戏愉快!')">公告</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下载中心管理 -->
+    <div class="page" id="page-downloads">
+      <h2>📦 下载中心管理</h2>
+      <div class="card">
+        <h3>⬆️ 上传文件（上限 500MB）</h3>
+        <div class="row">
+          <input id="uploadFile" type="file" class="grow">
+          <button class="btn primary" onclick="uploadFile()">上传</button>
+        </div>
+        <table style="margin-top:14px"><thead><tr><th>文件名</th><th>大小</th><th>操作</th></tr></thead><tbody id="dlTable"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 日志 -->
+    <div class="page" id="page-logs">
+      <h2>📜 服务器日志</h2>
+      <div class="card">
+        <div class="row" style="margin-bottom:10px">
+          <select id="logLines" style="width:auto"><option value="50">50 行</option><option value="200">200 行</option><option value="500">500 行</option></select>
+          <button class="btn" onclick="loadLogs()">刷新</button>
+        </div>
+        <div id="logBox"></div>
+      </div>
+    </div>
+
+    <!-- 重启/停止 -->
+    <div class="page" id="page-danger">
+      <h2>🔄 重启 / 停止 / 启动</h2>
+      <div class="card">
+        <h3>🔄 静默重启（推荐）</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:12px">先公告玩家、保存世界，等待数秒后优雅重启服务器。后台面板不受影响，持续在线。</p>
+        <div class="row">
+          <select id="restartDelay" style="width:auto">
+            <option value="5">5 秒后</option><option value="10" selected>10 秒后</option><option value="20">20 秒后</option><option value="30">30 秒后</option>
+          </select>
+          <button class="btn gold" onclick="restartServer()">静默重启</button>
+          <button class="btn danger" onclick="stopServer()">停止服务器</button>
+          <button class="btn green" onclick="startServer()">启动服务器</button>
+          <button class="btn" onclick="syncMods()">同步依赖模组</button>
+        </div>
+        <p style="color:var(--muted);font-size:12px;margin-top:10px">提示：同步依赖模组可自动释放 qlmzombie 及其依赖，修复"玩家无法加入 / 缺少模组"问题。</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let TOKEN = localStorage.getItem('qlm_token') || '';
+let deployedMode = 'auto';
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+function api(path, opts = {}) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  return fetch(path, Object.assign({}, opts, { headers })).then(async r => {
+    if (r.status === 401) { showLogin(); throw new Error('未登录'); }
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || r.statusText);
+    return d;
+  });
+}
+
+// ---------- 登录 ----------
+function showLogin() { document.getElementById('loginOverlay').style.display = 'flex'; }
+function hideLogin() { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('app').style.display = 'flex'; }
+async function doLogin() {
+  try {
+    const d = await api('/api/login', { method: 'POST', body: JSON.stringify({ username: document.getElementById('loginUser').value, password: document.getElementById('loginPass').value }) });
+    TOKEN = d.token; localStorage.setItem('qlm_token', d.token);
+    hideLogin(); loadAll();
+  } catch (e) { toast('登录失败: ' + e.message); }
+}
+// 侧边栏切换
+document.querySelectorAll('.sidebar a').forEach(a => a.addEventListener('click', () => {
+  document.querySelectorAll('.sidebar a').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  a.classList.add('active');
+  document.getElementById('page-' + a.dataset.page).classList.add('active');
+}));
+
+// ---------- 仪表盘 ----------
+async function loadDashboard() {
+  try {
+    const d = await api('/api/admin/monitor');
+    deployedMode = d.mode;
+    document.getElementById('dOnline').textContent = d.tcp ? '在线' : '离线';
+    document.getElementById('dOnline').style.color = d.tcp ? 'var(--green)' : 'var(--accent)';
+    document.getElementById('dPlayers').textContent = '检测中';
+    document.getElementById('dMode').textContent = d.mode === 'docker' ? 'Docker' : 'Java(systemd)';
+    let html = '';
+    if (d.docker && Array.isArray(d.docker)) {
+      html = d.docker.map(c => {
+        const mem = c.mem ? `${c.mem.usedMB}MB/${c.mem.limitMB}MB (${c.mem.pct}%)` : '-';
+        const cpu = c.cpu != null ? c.cpu + '%' : '-';
+        return `<b>${c.name}</b>  [${c.state}]  CPU: ${cpu}  内存: ${mem}  ${c.ports.join(', ')}\n`;
+      }).join('') || '（未发现容器）';
+    } else if (d.docker && d.docker.error) {
+      html = 'Docker 不可用: ' + d.docker.error;
+    } else if (d.java) {
+      html = `<b>服务状态:</b> ${d.java.service}\n<b>运行时间:</b> ${d.java.uptime}\n<b>进程:</b>\n${d.java.process}\n`;
+    }
+    document.getElementById('dockerBox').textContent = html;
+    document.getElementById('hostBox').textContent = d.uptime || '';
+    // 玩家数
+    try {
+      const st = await api('/api/status');
+      document.getElementById('dPlayers').textContent = st.players ? `${st.players.online}/${st.players.max}` : '0';
+    } catch (e) {}
+  } catch (e) { toast('仪表盘加载失败: ' + e.message); }
+}
+
+// ---------- 服务器配置 ----------
+const PROP_FIELDS = ['motd','difficulty','gamemode','pvp','online-mode','max-players','view-distance','simulation-distance','spawn-protection','white-list','enforce-whitelist','allow-flight','allow-nether','hardcore','force-gamemode','enable-command-block','max-tick-time','level-seed','level-type','op-permission-level','player-idle-timeout','rate-limit'];
+async function loadProperties() {
+  try {
+    const d = await api('/api/admin/properties');
+    const props = d.properties;
+    const grid = document.getElementById('propsGrid');
+    grid.innerHTML = '';
+    PROP_FIELDS.forEach(k => {
+      const v = props[k] !== undefined ? props[k] : '';
+      const div = document.createElement('div');
+      div.innerHTML = `<label>${k}</label><input data-key="${k}" value="${escAttr(v)}">`;
+      grid.appendChild(div);
+    });
+    // 其他字段折叠
+    const others = Object.keys(props).filter(k => !PROP_FIELDS.includes(k));
+    if (others.length) {
+      const div = document.createElement('div');
+      div.style.gridColumn = '1 / -1';
+      div.innerHTML = `<label>其他字段（折叠）</label><textarea rows="6" id="otherProps">${escAttr(others.map(k => `${k}=${props[k]}`).join('\n'))}</textarea>`;
+      grid.appendChild(div);
+    }
+  } catch (e) { toast('配置加载失败: ' + e.message); }
+}
+function escAttr(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+async function saveProperties() {
+  try {
+    const properties = {};
+    document.querySelectorAll('#propsGrid input[data-key]').forEach(i => properties[i.dataset.key] = i.value);
+    const other = document.getElementById('otherProps');
+    if (other) {
+      other.value.split(/\r?\n/).forEach(line => {
+        const idx = line.indexOf('=');
+        if (idx > 0) properties[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+      });
+    }
+    const d = await api('/api/admin/properties', { method: 'POST', body: JSON.stringify({ properties }) });
+    toast(d.note || '已保存');
+    loadProperties();
+  } catch (e) { toast('保存失败: ' + e.message); }
+}
+
+// ---------- 游戏管理员 ----------
+async function loadPlayers() {
+  try {
+    const ops = await api('/api/admin/ops');
+    document.getElementById('opTable').innerHTML = ops.ops.map(o => `<tr><td>${escAttr(o.name)}</td><td>${o.level}</td><td><button class="btn danger" onclick="removeOp('${escAttr(o.name)}')">移除</button></td></tr>`).join('') || '<tr><td colspan="3">暂无 OP</td></tr>';
+    const wl = await api('/api/admin/whitelist');
+    document.getElementById('wlTable').innerHTML = wl.whitelist.map(o => `<tr><td>${escAttr(o.name)}</td><td><button class="btn danger" onclick="removeWl('${escAttr(o.name)}')">移除</button></td></tr>`).join('') || '<tr><td colspan="2">白名单为空</td></tr>';
+    const bans = await api('/api/admin/bans');
+    document.getElementById('banTable').innerHTML = bans.bans.map(o => `<tr><td>${escAttr(o.name)}</td><td>${escAttr(o.reason || '')}</td><td><button class="btn green" onclick="removeBan('${escAttr(o.name)}')">解除</button></td></tr>`).join('') || '<tr><td colspan="3">无封禁</td></tr>';
+  } catch (e) { toast('玩家数据加载失败: ' + e.message); }
+}
+async function addOp() {
+  const name = document.getElementById('opName').value.trim();
+  if (!name) return toast('请输入玩家名');
+  try { await api('/api/admin/ops', { method: 'POST', body: JSON.stringify({ name, level: document.getElementById('opLevel').value }) }); toast('已添加 OP: ' + name); document.getElementById('opName').value=''; loadPlayers(); } catch (e) { toast(e.message); }
+}
+async function removeOp(name) { try { await api('/api/admin/ops/remove', { method: 'POST', body: JSON.stringify({ name }) }); loadPlayers(); } catch (e) { toast(e.message); } }
+async function addWhitelist() {
+  const name = document.getElementById('wlName').value.trim();
+  if (!name) return toast('请输入玩家名');
+  try { await api('/api/admin/whitelist', { method: 'POST', body: JSON.stringify({ name }) }); toast('已添加白名单: ' + name); document.getElementById('wlName').value=''; loadPlayers(); } catch (e) { toast(e.message); }
+}
+async function removeWl(name) { try { await api('/api/admin/whitelist/remove', { method: 'POST', body: JSON.stringify({ name }) }); loadPlayers(); } catch (e) { toast(e.message); } }
+async function addBan() {
+  const name = document.getElementById('banName').value.trim();
+  if (!name) return toast('请输入玩家名');
+  try { await api('/api/admin/bans', { method: 'POST', body: JSON.stringify({ name, reason: document.getElementById('banReason').value }) }); toast('已封禁: ' + name); document.getElementById('banName').value=''; loadPlayers(); } catch (e) { toast(e.message); }
+}
+async function removeBan(name) { try { await api('/api/admin/bans/remove', { method: 'POST', body: JSON.stringify({ name }) }); loadPlayers(); } catch (e) { toast(e.message); } }
+
+// ---------- 控制台 ----------
+async function sendConsole(cmd) {
+  const box = document.getElementById('consoleBox');
+  const c = cmd || document.getElementById('consoleCmd').value.trim();
+  if (!c) return;
+  document.getElementById('consoleCmd').value = '';
+  box.innerHTML += `<div style="color:var(--accent2)">> ${escAttr(c)}</div>`;
+  try {
+    const d = await api('/api/admin/console', { method: 'POST', body: JSON.stringify({ command: c }) });
+    box.innerHTML += `<div>${escAttr(d.output || '(无输出)')}</div>`;
+  } catch (e) { box.innerHTML += `<div style="color:var(--accent)">${escAttr(e.message)}</div>`; }
+  box.scrollTop = box.scrollHeight;
+}
+function sendQuick(cmd) { sendConsole(cmd); }
+document.getElementById('consoleCmd').addEventListener('keydown', e => { if (e.key === 'Enter') sendConsole(); });
+
+// ---------- 下载中心管理 ----------
+async function loadDownloads() {
+  try {
+    const d = await api('/api/downloads');
+    document.getElementById('dlTable').innerHTML = (d.files || []).map(f =>
+      `<tr><td>${escAttr(f.name)}</td><td>${f.sizeMB} MB</td><td><button class="btn danger" onclick="deleteFile('${escAttr(f.name)}')">删除</button></td></tr>`).join('') || '<tr><td colspan="3">暂无文件</td></tr>';
+  } catch (e) { toast(e.message); }
+}
+async function uploadFile() {
+  const input = document.getElementById('uploadFile');
+  if (!input.files || !input.files.length) return toast('请选择文件');
+  const fd = new FormData();
+  fd.append('file', input.files[0]);
+  try {
+    const r = await fetch('/api/downloads', { method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN }, body: fd });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.statusText);
+    toast('上传成功: ' + d.file.name);
+    input.value = ''; loadDownloads();
+  } catch (e) { toast('上传失败: ' + e.message); }
+}
+async function deleteFile(name) {
+  if (!confirm('确认删除文件: ' + name + ' ?')) return;
+  try { await api('/api/downloads/' + encodeURIComponent(name) + '/delete', { method: 'POST' }); toast('已删除'); loadDownloads(); } catch (e) { toast(e.message); }
+}
+
+// ---------- 日志 ----------
+async function loadLogs() {
+  try {
+    const d = await api('/api/admin/logs?lines=' + document.getElementById('logLines').value);
+    document.getElementById('logBox').textContent = d.logs || '(无日志)';
+    document.getElementById('logBox').scrollTop = document.getElementById('logBox').scrollHeight;
+  } catch (e) { document.getElementById('logBox').textContent = '日志加载失败: ' + e.message; }
+}
+
+// ---------- 重启 / 停止 / 启动 ----------
+async function restartServer() {
+  if (!confirm('确认静默重启服务器？将先公告并保存世界，后台面板不受影响。')) return;
+  try {
+    const d = await api('/api/admin/restart', { method: 'POST', body: JSON.stringify({ delay: document.getElementById('restartDelay').value }) });
+    toast(d.message);
+  } catch (e) { toast('重启失败: ' + e.message); }
+}
+async function stopServer() {
+  if (!confirm('确认停止服务器？所有玩家将被保存并退出。')) return;
+  try { const d = await api('/api/admin/stop', { method: 'POST' }); toast(d.message); } catch (e) { toast(e.message); }
+}
+async function startServer() {
+  try { const d = await api('/api/admin/start', { method: 'POST' }); toast(d.message); } catch (e) { toast(e.message); }
+}
+async function syncMods() {
+  try { const d = await api('/api/admin/sync-mods', { method: 'POST' }); toast(d.message); } catch (e) { toast(e.message); }
+}
+
+// ---------- 启动 ----------
+function loadAll() { loadDashboard(); loadProperties(); loadPlayers(); loadDownloads(); loadLogs(); }
+(async function init() {
+  if (TOKEN) {
+    try { await api('/api/admin/me'); hideLogin(); loadAll(); setInterval(loadDashboard, 15000); return; }
+    catch (e) { TOKEN = ''; localStorage.removeItem('qlm_token'); }
+  }
+  showLogin();
+})();
+</script>
+</body>
+</html>

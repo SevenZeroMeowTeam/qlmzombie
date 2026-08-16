@@ -127,7 +127,7 @@ public enum PickaxeAbility {
         }
 
         // --- 黑曜石破坏：所有品质都有概率 ---
-        // 劣质 5%，每级 +5%，普通(3) 20%，稀有(5) 30%，神器(6) 35%，史诗(7) 40%，传说(8) 45%
+        // 劣质 5%，每级 +5%，普通(2) 15%，稀有(5) 30%，卓越(6) 35%，史诗(7) 40%，传说(8) 45%
         if (!hasAbility(stack, OBSIDIAN_BREAKER)) {
             float obsidianChance = 0.05F + qualityId * 0.05F;
             if (quality.canBreakObsidianByQuality() || rnd.nextFloat() < obsidianChance) {
@@ -136,7 +136,7 @@ public enum PickaxeAbility {
         }
 
         // --- 基岩破坏：所有品质都有概率（很低） ---
-        // 劣质 0.1%，每级 +0.4%，普通(3) 1.3%，稀有(5) 2.1%，神器(6) 2.5%，传说(8) 3.3%
+        // 劣质 0.1%，每级 +0.4%，普通(2) 0.9%，稀有(5) 2.1%，卓越(6) 2.5%，传说(8) 3.3%
         if (!hasAbility(stack, BEDROCK_BREAKER)) {
             float bedrockChance = 0.001F + qualityId * 0.004F;
             if (quality.canBreakBedrockByQuality() || rnd.nextFloat() < bedrockChance) {

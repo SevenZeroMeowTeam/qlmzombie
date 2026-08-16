@@ -1,0 +1,17 @@
+{
+  "name": "qlm-severadmin-web",
+  "version": "1.0.0",
+  "description": "七零喵僵尸末日生存 - SeverAdmin 网站后台（介绍页/下载中心/服务器管理/监控/静默重启）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

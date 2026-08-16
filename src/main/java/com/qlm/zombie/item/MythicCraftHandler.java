@@ -81,6 +81,11 @@ public class MythicCraftHandler {
             sp.sendSystemMessage(Component.empty()
                     .append(Component.literal("[神话降临] ").withStyle(ChatFormatting.DARK_PURPLE))
                     .append(Component.literal("你成功合成了神话级装备！").withStyle(ChatFormatting.LIGHT_PURPLE)));
+            if (item instanceof net.minecraft.world.item.ArmorItem) {
+                sp.sendSystemMessage(Component.empty()
+                        .append(Component.literal("[神话降临] ").withStyle(ChatFormatting.DARK_PURPLE))
+                        .append(Component.literal("神话盔甲套装缺一不可：集齐 4 件全套，才能无视虚空伤害并解锁全套神话庇护！").withStyle(ChatFormatting.AQUA)));
+            }
         }
     }
 }

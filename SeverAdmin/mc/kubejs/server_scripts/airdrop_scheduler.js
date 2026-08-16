@@ -1,0 +1,567 @@
+(() => {
+var MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
+var ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
+var RandomSource = Java.loadClass('net.minecraft.util.RandomSource')
+var BlockPos = Java.loadClass('net.minecraft.core.BlockPos')
+var ItemStack = Java.loadClass('net.minecraft.world.item.ItemStack')
+var Blocks = Java.loadClass('net.minecraft.world.level.block.Blocks')
+// KubeJS 6.x 通过 Java.loadClass 获取 Heightmap 类
+var Heightmap = Java.loadClass('net.minecraft.world.level.levelgen.Heightmap')
+
+var DAY_LENGTH = 24000
+var DAY_START = 0
+var THROTTLE_TICKS = 100
+var AIRDROP_DAY_INTERVAL = 2
+var MIN_DAY_FOR_AIRDROP = 5
+var MAX_AIRDROP_PER_DAY = 3
+
+var tickCounter = 0
+
+var MOD_ITEMS = [
+    'minecraft:diamond_sword',
+    'minecraft:diamond_pickaxe',
+    'minecraft:diamond_axe',
+    'minecraft:diamond_shovel',
+    'minecraft:diamond_hoe',
+    'minecraft:diamond_helmet',
+    'minecraft:diamond_chestplate',
+    'minecraft:diamond_leggings',
+    'minecraft:diamond_boots',
+    'minecraft:golden_apple',
+    'minecraft:enchanted_golden_apple',
+    'minecraft:iron_sword',
+    'minecraft:iron_pickaxe',
+    'minecraft:iron_axe',
+    'minecraft:iron_shovel',
+    'minecraft:iron_helmet',
+    'minecraft:iron_chestplate',
+    'minecraft:iron_leggings',
+    'minecraft:iron_boots',
+    'minecraft:bow',
+    'minecraft:arrow',
+    'minecraft:crossbow',
+    'minecraft:trident',
+    'minecraft:shield',
+    'minecraft:ender_eye',
+    'minecraft:ender_pearl',
+    'minecraft:experience_bottle',
+    'minecraft:netherite_ingot',
+    'minecraft:nether_star',
+    'minecraft:totem_of_undying',
+    'minecraft:beacon',
+    'minecraft:conduit',
+    'minecraft:elytra',
+    'minecraft:shulker_box',
+    'minecraft:ender_chest',
+    'minecraft:gold_ingot',
+    'minecraft:iron_ingot',
+    'minecraft:diamond',
+    'minecraft:emerald',
+    'minecraft:coal',
+    'minecraft:charcoal',
+    'minecraft:bread',
+    'minecraft:cooked_beef',
+    'minecraft:cooked_porkchop',
+    'minecraft:cooked_chicken',
+    'minecraft:cooked_mutton',
+    'minecraft:cooked_rabbit',
+    'minecraft:potato',
+    'minecraft:carrot',
+    'minecraft:golden_carrot',
+    'minecraft:cake',
+    'minecraft:cookie',
+    'minecraft:potion',
+    'minecraft:splash_potion',
+    'minecraft:lingering_potion',
+    'minecraft:fire_charge',
+    'minecraft:tnt',
+    'minecraft:bedrock',
+    'minecraft:obsidian',
+    'minecraft:crying_obsidian',
+    'minecraft:respawn_anchor',
+    'minecraft:anvil',
+    'minecraft:enchanting_table',
+    'minecraft:brewing_stand',
+    'minecraft:crafting_table',
+    'minecraft:furnace',
+    'minecraft:blast_furnace',
+    'minecraft:smoker',
+    'minecraft:campfire',
+    'minecraft:soul_campfire',
+    'minecraft:lantern',
+    'minecraft:soul_lantern',
+    'minecraft:glowstone',
+    'minecraft:sea_lantern',
+    'minecraft:end_crystal',
+    'minecraft:dragon_egg',
+    'minecraft:nether_portal_frame',
+    'minecraft:end_portal_frame',
+    'mekanism:ingot_steel',
+    'mekanism:pellet_iron',
+    'mekanism:gas_canister',
+    'create:iron_sheet',
+    'create:brass_ingot',
+    'create:andesite_alloy',
+    'create:zinc_ingot',
+    'appliedenergistics2:certus_quartz_crystal',
+    'appliedenergistics2:fluix_crystal',
+    'appliedenergistics2:iron_ore_dense',
+    'bloodmagic:demon_will',
+    'bloodmagic:awakened_diamond',
+    'botania:mana_diamond',
+    'botania:livingrock',
+    'botania:livingwood',
+    'immersiveengineering:ingot_steel',
+    'immersiveengineering:component_iron',
+    'immersiveengineering:wire_copper',
+    'pneumaticcraft:ingot_iron_compressed',
+    'pneumaticcraft:compressed_iron_plate',
+    'tetra:bronze_ingot',
+    'tetra:steel_ingot',
+    'thermal_foundation:ingot_copper',
+    'thermal_foundation:ingot_iron',
+    'thermal_foundation:ingot_gold',
+    'thermal_foundation:ingot_silver',
+    'thermal_foundation:ingot_lead',
+    'thermal_foundation:ingot_tin',
+    'thermal_foundation:ingot_nickel',
+    'thermal_foundation:ingot_platinum',
+    'thermal_foundation:dust_coal',
+    'thermal_foundation:dust_iron',
+    'thermal_foundation:dust_redstone',
+    'thermal_foundation:dust_lapis',
+    'thermal_foundation:dust_diamond',
+    'thermal_foundation:dust_emerald',
+    'refinedstorage:quartz_enriched_iron',
+    'refinedstorage:processor_basic',
+    'refinedstorage:processor_improved',
+    'refinedstorage:processor_advanced',
+    'enderio:iron_gear',
+    'enderio:copper_gear',
+    'enderio:silicon',
+    'forestry:tin_ingot',
+    'forestry:bronze_ingot',
+    'forestry:glass_capsule',
+    'forestry:mulch',
+    'quark:amber',
+    'quark:raw_amber',
+    'quark:obsidian_rod',
+    'quark:stained_clay',
+    'quark:slate',
+    'quark:limestone',
+    'quark:marble',
+    'quark:jasper',
+    'quark:quartz_pillar',
+    'quark:prismarine_brick',
+    'quark:glowstone_brick',
+    'quark:end_stone_brick',
+    'quark:netherite_ingot',
+    'quark:netherite_scrap',
+    'quark:ancient_debris',
+    'sophisticatedcore:upgrade_tier_1',
+    'sophisticatedcore:upgrade_tier_2',
+    'sophisticatedcore:upgrade_tier_3',
+    'sophisticatedbackpacks:backpack',
+    'sophisticatedbackpacks:iron_backpack',
+    'sophisticatedbackpacks:gold_backpack',
+    'sophisticatedbackpacks:diamond_backpack',
+    'sophisticatedbackpacks:netherite_backpack',
+    'curios:bauble_ring',
+    'curios:bauble_amulet',
+    'curios:bauble_belt',
+    'curios:bauble_head',
+    'curios:bauble_necklace',
+    'curios:bauble_bracelet',
+    'curios:bauble_earring',
+    'patchouli:guide_book',
+    'patchouli:lexicon',
+    'patchouli:book_cloth',
+    'patchouli:book_fancy',
+    'patchouli:book_old',
+    'patchouli:book_wooden',
+    'patchouli:blank_page',
+    'patchouli:page_icon',
+    'patchouli:page_text',
+    'patchouli:page_spotlight',
+    'patchouli:page_crafting',
+    'patchouli:page_smelting',
+    'patchouli:page_entity',
+    'patchouli:page_fluid',
+    'patchouli:page_image',
+    'patchouli:page_link',
+    'patchouli:page_relations',
+    'patchouli:page_recipe',
+    'patchouli:page_structure',
+    'patchouli:page_table_of_contents',
+    'patchouli:page_texture',
+    'patchouli:page_world',
+    'bloodmagic:soul_glass',
+    'bloodmagic:living_planks',
+    'bloodmagic:living_rock',
+    'bloodmagic:demon_crystal',
+    'bloodmagic:slate',
+    'bloodmagic:dark_steel_ingot',
+    'bloodmagic:dark_steel_sword',
+    'bloodmagic:dark_steel_pickaxe',
+    'bloodmagic:dark_steel_axe',
+    'bloodmagic:dark_steel_shovel',
+    'bloodmagic:dark_steel_helmet',
+    'bloodmagic:dark_steel_chestplate',
+    'bloodmagic:dark_steel_leggings',
+    'bloodmagic:dark_steel_boots',
+    'botania:rune_air',
+    'botania:rune_water',
+    'botania:rune_fire',
+    'botania:rune_earth',
+    'botania:rune_mana',
+    'botania:rune_spring',
+    'botania:rune_summer',
+    'botania:rune_autumn',
+    'botania:rune_winter',
+    'botania:rune_orechid',
+    'botania:rune_dawn',
+    'botania:rune_dusk',
+    'botania:rune_sun',
+    'botania:rune_moon',
+    'botania:rune_star',
+    'botania:rune_void',
+    'botania:rune_wild',
+    'botania:rune_chaos',
+    'botania:rune_order',
+    'botania:rune_life',
+    'botania:rune_death',
+    'botania:rune_flower',
+    'botania:rune_greed',
+    'botania:petal_red',
+    'botania:petal_orange',
+    'botania:petal_yellow',
+    'botania:petal_lime',
+    'botania:petal_green',
+    'botania:petal_cyan',
+    'botania:petal_light_blue',
+    'botania:petal_blue',
+    'botania:petal_purple',
+    'botania:petal_magenta',
+    'botania:petal_pink',
+    'botania:petal_white',
+    'botania:petal_gray',
+    'botania:petal_light_gray',
+    'botania:petal_black',
+    'create:propeller',
+    'create:cogwheel',
+    'create:large_cogwheel',
+    'create:shaft',
+    'create:gearbox',
+    'create:andesite_casing',
+    'create:brass_casing',
+    'create:copper_casing',
+    'create:diamond_casing',
+    'create:gold_casing',
+    'create:iron_casing',
+    'create:obsidian_casing',
+    'create:stone_casing',
+    'create:zinc_casing',
+    'immersiveengineering:steel_barrel',
+    'immersiveengineering:steel_tank',
+    'immersiveengineering:copper_wire',
+    'immersiveengineering:iron_wire',
+    'immersiveengineering:gold_wire',
+    'immersiveengineering:capacitor_lv',
+    'immersiveengineering:capacitor_mv',
+    'immersiveengineering:capacitor_hv',
+    'immersiveengineering:battery_lv',
+    'immersiveengineering:battery_mv',
+    'immersiveengineering:battery_hv',
+    'immersiveengineering:transformer_lv',
+    'immersiveengineering:transformer_mv',
+    'immersiveengineering:transformer_hv',
+    'immersiveengineering:breaker_switch',
+    'immersiveengineering:connector',
+    'immersiveengineering:relay_hv',
+    'immersiveengineering:relay_mv',
+    'immersiveengineering:relay_lv',
+    'immersiveengineering:solar_panel_lv',
+    'immersiveengineering:solar_panel_mv',
+    'immersiveengineering:solar_panel_hv',
+    'immersiveengineering:windmill',
+    'immersiveengineering:watermill',
+    'immersiveengineering:diesel_generator',
+    'immersiveengineering:biofuel_generator',
+    'immersiveengineering:coal_generator',
+    'immersiveengineering:crusher',
+    'immersiveengineering:fermenter',
+    'immersiveengineering:press',
+    'immersiveengineering:refinery',
+    'immersiveengineering:alloy_smelter',
+    'immersiveengineering:blast_furnace',
+    'immersiveengineering:arc_furnace',
+    'immersiveengineering:metal_press',
+    'immersiveengineering:packager',
+    'immersiveengineering:sawmill',
+    'immersiveengineering:workbench',
+    'immersiveengineering:toolbox',
+    'immersiveengineering:lantern',
+    'immersiveengineering:spotlight',
+    'immersiveengineering:floodlight',
+    'immersiveengineering:flares',
+    'immersiveengineering:railgun',
+    'immersiveengineering:revolver',
+    'immersiveengineering:shotgun',
+    'immersiveengineering:rifle',
+    'immersiveengineering:chemthrower',
+    'immersiveengineering:mining_drill',
+    'immersiveengineering:excavator',
+    'immersiveengineering:hammer',
+    'immersiveengineering:wrench',
+    'immersiveengineering:wirecutter',
+    'immersiveengineering:screwdriver',
+    'immersiveengineering:drill_head_iron',
+    'immersiveengineering:drill_head_steel',
+    'immersiveengineering:drill_head_diamond',
+    'immersiveengineering:drill_head_netherite',
+    'immersiveengineering:upgrade_efficiency',
+    'immersiveengineering:upgrade_silk_touch',
+    'immersiveengineering:upgrade_fortune',
+    'immersiveengineering:upgrade_speed',
+    'immersiveengineering:upgrade_capacity',
+    'immersiveengineering:upgrade_conveyor',
+    'immersiveengineering:upgrade_filter',
+    'immersiveengineering:upgrade_redstone',
+    'immersiveengineering:upgrade_range',
+    'immersiveengineering:upgrade_energy_storage',
+    'immersiveengineering:upgrade_electric',
+    'immersiveengineering:upgrade_mechanical',
+    'immersiveengineering:upgrade_machine',
+    'immersiveengineering:upgrade_advanced_machine',
+    'immersiveengineering:upgrade_automatic',
+    'immersiveengineering:upgrade_improved',
+    'immersiveengineering:upgrade_advanced',
+    'immersiveengineering:upgrade_elite',
+    'immersiveengineering:upgrade_ultimate',
+    'immersiveengineering:component_iron',
+    'immersiveengineering:component_steel',
+    'immersiveengineering:component_copper',
+    'immersiveengineering:component_electron',
+    'immersiveengineering:component_energy',
+    'immersiveengineering:component_flux',
+    'immersiveengineering:component_gold',
+    'immersiveengineering:component_iron',
+    'immersiveengineering:component_lead',
+    'immersiveengineering:component_lithium',
+    'immersiveengineering:component_plastic',
+    'immersiveengineering:component_silver',
+    'immersiveengineering:component_tin',
+    'immersiveengineering:component_wood',
+    'immersiveengineering:circuit_board',
+    'immersiveengineering:engineer_manual',
+    'immersiveengineering:blueprint',
+    'immersiveengineering:empty_canister',
+    'immersiveengineering:oil_canister',
+    'immersiveengineering:fuel_canister',
+    'immersiveengineering:creosote_canister',
+    'immersiveengineering:ethanol_canister',
+    'immersiveengineering:diesel_canister',
+    'immersiveengineering:biofuel_canister',
+    'immersiveengineering:hydrogen_canister',
+    'immersiveengineering:helium_canister',
+    'immersiveengineering:nitrogen_canister',
+    'immersiveengineering:oxygen_canister',
+    'immersiveengineering:refrigerant_canister',
+    'immersiveengineering:gasoline_canister',
+    'immersiveengineering:kerosene_canister',
+    'immersiveengineering:tar_canister',
+    'immersiveengineering:coal_coke',
+    'immersiveengineering:slag',
+    'immersiveengineering:steel_ingot',
+    'immersiveengineering:steel_plate',
+    'immersiveengineering:steel_rod',
+    'immersiveengineering:steel_wire',
+    'immersiveengineering:copper_ingot',
+    'immersiveengineering:copper_plate',
+    'immersiveengineering:copper_rod',
+    'immersiveengineering:copper_wire',
+    'immersiveengineering:tin_ingot',
+    'immersiveengineering:tin_plate',
+    'immersiveengineering:tin_rod',
+    'immersiveengineering:lead_ingot',
+    'immersiveengineering:lead_plate',
+    'immersiveengineering:silver_ingot',
+    'immersiveengineering:silver_plate',
+    'immersiveengineering:gold_ingot',
+    'immersiveengineering:gold_plate',
+    'immersiveengineering:iron_ingot',
+    'immersiveengineering:iron_plate',
+    'immersiveengineering:bronze_ingot',
+    'immersiveengineering:bronze_plate',
+    'immersiveengineering:brass_ingot',
+    'immersiveengineering:brass_plate',
+    'immersiveengineering:nickel_ingot',
+    'immersiveengineering:nickel_plate',
+    'immersiveengineering:invar_ingot',
+    'immersiveengineering:invar_plate',
+    'immersiveengineering:electrum_ingot',
+    'immersiveengineering:electrum_plate',
+    'immersiveengineering:constantan_ingot',
+    'immersiveengineering:constantan_plate',
+    'immersiveengineering:aluminum_ingot',
+    'immersiveengineering:aluminum_plate',
+    'immersiveengineering:steel_gear',
+    'immersiveengineering:iron_gear',
+    'immersiveengineering:copper_gear',
+    'immersiveengineering:gold_gear',
+    'immersiveengineering:tin_gear',
+    'immersiveengineering:lead_gear',
+    'immersiveengineering:silver_gear',
+    'immersiveengineering:brass_gear',
+    'immersiveengineering:bronze_gear',
+    'immersiveengineering:nickel_gear',
+    'immersiveengineering:invar_gear',
+    'immersiveengineering:electrum_gear',
+    'immersiveengineering:constantan_gear',
+    'immersiveengineering:aluminum_gear',
+    'immersiveengineering:steel_screw',
+    'immersiveengineering:iron_screw',
+    'immersiveengineering:copper_screw',
+    'immersiveengineering:gold_screw',
+    'immersiveengineering:tin_screw',
+    'immersiveengineering:lead_screw',
+    'immersiveengineering:silver_screw',
+    'immersiveengineering:brass_screw',
+    'immersiveengineering:bronze_screw',
+    'immersiveengineering:nickel_screw',
+    'immersiveengineering:invar_screw',
+    'immersiveengineering:electrum_screw',
+    'immersiveengineering:constantan_screw',
+    'immersiveengineering:aluminum_screw',
+    'immersiveengineering:steel_nut',
+    'immersiveengineering:iron_nut',
+    'immersiveengineering:copper_nut',
+    'immersiveengineering:gold_nut',
+    'immersiveengineering:tin_nut',
+    'immersiveengineering:lead_nut',
+    'immersiveengineering:silver_nut',
+    'immersiveengineering:brass_nut',
+    'immersiveengineering:bronze_nut',
+    'immersiveengineering:nickel_nut',
+    'immersiveengineering:invar_nut',
+    'immersiveengineering:electrum_nut',
+    'immersiveengineering:constantan_nut',
+    'immersiveengineering:aluminum_nut',
+    'immersiveengineering:steel_bolt',
+    'immersiveengineering:iron_bolt',
+    'immersiveengineering:copper_bolt',
+    'immersiveengineering:gold_bolt',
+    'immersiveengineering:tin_bolt',
+    'immersiveengineering:lead_bolt',
+    'immersiveengineering:silver_bolt',
+    'immersiveengineering:brass_bolt',
+    'immersiveengineering:bronze_bolt',
+    'immersiveengineering:nickel_bolt',
+    'immersiveengineering:invar_bolt',
+    'immersiveengineering:electrum_bolt',
+    'immersiveengineering:constantan_bolt',
+    'immersiveengineering:aluminum_bolt'
+]
+
+function getRandomItem() {
+    var itemId = MOD_ITEMS[Math.floor(Math.random() * MOD_ITEMS.length)]
+    try {
+        var item = Item.of(itemId)
+        return item
+    } catch (e) {
+        console.log('[QLM Airdrop] Item not found: ' + itemId)
+        return Item.of('minecraft:iron_ingot')
+    }
+}
+
+function generateAirdropLoot() {
+    var loot = []
+    var itemCount = Math.floor(Math.random() * 8) + 5
+    for (var i = 0; i < itemCount; i++) {
+        var item = getRandomItem()
+        var count = Math.floor(Math.random() * 64) + 1
+        item.setCount(count)
+        loot.push(item)
+    }
+    return loot
+}
+
+function spawnAirdrop(level, x, z) {
+    try {
+        var y = level.getMaxBuildHeight() - 5
+        var pos = new BlockPos(x, y, z)
+        
+        var chest = level.getBlockState(pos).getBlock()
+        if (chest !== Blocks.AIR) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3)
+        }
+        
+        level.setBlock(pos, Blocks.CHEST.defaultBlockState(), 3)
+        
+        var chestEntity = level.getBlockEntity(pos)
+        if (chestEntity) {
+            var loot = generateAirdropLoot()
+            var container = chestEntity.getContainer()
+            for (var i = 0; i < loot.length && i < container.getContainerSize(); i++) {
+                container.setItem(i, loot[i])
+            }
+        }
+        
+        level.playSound(null, pos, 'minecraft:entity.firework_rocket.launch', 1.0, 1.0)
+        
+        console.log('[QLM Airdrop] Spawned airdrop at ' + pos.x + ', ' + pos.y + ', ' + pos.z)
+        
+        return true
+    } catch (e) {
+        console.log('[QLM Airdrop] Failed to spawn: ' + e.message)
+        return false
+    }
+}
+
+LevelEvents.tick('minecraft:overworld', event => {
+    var level = event.level
+    if (!(level instanceof ServerLevel)) return
+
+    if (++tickCounter < THROTTLE_TICKS) return
+    tickCounter = 0
+
+    var dayTime = MoonHelper.getDayTime(level)
+    var timeOfDay = dayTime % DAY_LENGTH
+    
+    if (timeOfDay < DAY_START || timeOfDay > DAY_START + 100) return
+
+    var day = MoonHelper.getDay(level)
+    var pd = event.server.persistentData
+    var lastAirdropDay = pd.getLong('qlmzombie.lastAirdropDay')
+
+    if (lastAirdropDay === day) return
+
+    if (day < MIN_DAY_FOR_AIRDROP) return
+
+    if (day % AIRDROP_DAY_INTERVAL !== 1) return
+
+    var airdropCount = Math.floor(Math.random() * MAX_AIRDROP_PER_DAY) + 1
+    var spawnedCount = 0
+
+    for (var i = 0; i < airdropCount; i++) {
+        var x = Math.floor(Math.random() * 2000) - 1000
+        var z = Math.floor(Math.random() * 2000) - 1000
+        
+        var surfaceY = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, new BlockPos(x, 0, z)).getY()
+        if (surfaceY > 60) {
+            if (spawnAirdrop(level, x, z)) {
+                spawnedCount++
+            }
+        }
+    }
+
+    if (spawnedCount > 0) {
+        pd.putLong('qlmzombie.lastAirdropDay', day)
+        console.log('[QLM Airdrop] Day ' + day + ' (odd day) -> Spawned ' + spawnedCount + ' airdrops')
+        
+        event.server.players.forEach(function(player) {
+            player.sendMessage('§e✈️ 空投已投放！今天是第 ' + day + ' 天，天空中落下了 ' + spawnedCount + ' 个空投箱！')
+        })
+    }
+})
+})()

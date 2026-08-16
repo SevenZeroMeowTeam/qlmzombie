@@ -1,0 +1,31 @@
+// 七零喵僵尸末日生存mod - 幸运之月效果
+// 幸运之月期间给所有在线玩家持续刷新 Luck buff 直到天亮
+
+(() => {
+var MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
+var ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
+var LUCK_DURATION = 600
+var LUCK_AMPLIFIER = 1
+
+PlayerEvents.tick(event => {
+  if (event.server.tickCount % 60 !== 0) return
+  if (event.player.level === null) return
+  var level = event.player.level
+  if (!(level instanceof ServerLevel)) return
+
+  if (!MoonHelper.isLuckyMoon(level)) return
+
+  event.player.potionEffects.add('minecraft:luck', LUCK_DURATION, LUCK_AMPLIFIER, true, true)
+})
+
+LevelEvents.tick('minecraft:overworld', event => {
+  if (event.server.tickCount % 100 !== 0) return
+  var level = event.level
+  if (!(level instanceof ServerLevel)) return
+  if (!MoonHelper.isLuckyMoon(level)) return
+
+  event.server.players.forEach(function(player) {
+    player.potionEffects.add('minecraft:luck', LUCK_DURATION, LUCK_AMPLIFIER, true, true)
+  })
+})
+})()

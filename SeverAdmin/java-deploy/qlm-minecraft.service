@@ -1,0 +1,17 @@
+[Unit]
+Description=七零喵僵尸末日生存 - Minecraft Forge 服务器
+After=network.target
+
+[Service]
+Type=simple
+# 静默重启：先保存世界并公告，再优雅停止
+ExecStartPre=/bin/bash -c 'command -v rcon-cli >/dev/null 2>&1 && rcon-cli -H 127.0.0.1 -p 25575 -P "$(grep ^rcon.password= /opt/qlm/mc/server.properties | cut -d= -f2)" save-all || true'
+ExecStart=/usr/bin/java -Xms512M -Xmx%I -XX:+UseG1GC -XX:+ParallelRefProcEnabled -Dfml.debugMissingRegistries=true -Dfml.resolveMissingRegistries=WARN -Dfml.ignoreMissingRegistries=true -jar /opt/qlm/mc/forge-server.jar nogui
+WorkingDirectory=/opt/qlm/mc
+Restart=on-failure
+RestartSec=10
+# 玩家上限 50，关闭在线模式验证
+Environment=ONLINE_MODE=false
+
+[Install]
+WantedBy=multi-user.target

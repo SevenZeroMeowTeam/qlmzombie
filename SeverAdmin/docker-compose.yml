@@ -1,0 +1,198 @@
+# ============================================================
+# 七零喵僵尸末日生存 - SeverAdmin Docker 编排
+# 服务：minecraft (Forge 1.20.1) + web (Node.js 后台) + nginx (域名统一入口)
+# 统一域名：mc.sh197.dpdns.org（MC 25565 / HTTP 80 / HTTPS 443）
+# ============================================================
+services:
+  # ==================== Minecraft Forge 服务器 ====================
+  minecraft:
+    image: itzg/minecraft-server:java17
+    container_name: qlm-minecraft
+    restart: unless-stopped
+    # 必须使用 /bin/bash：entrypoint-wrapper.sh 使用了 bash 特有语法（here-string <<<, $'\n'）
+    entrypoint: ["/bin/bash", "/entrypoint-wrapper.sh"]
+    volumes:
+      - mc-data:/data
+      - ./mc/mods:/data/mods
+      - ./mc/kubejs:/data/kubejs
+      # 配置模板目录（只读，entrypoint 内复制到 /data/ 避免权限问题）
+      - ./mc:/mc-templates:ro
+      - ./mc/entrypoint-wrapper.sh:/entrypoint-wrapper.sh:ro
+      # 依赖 JAR 自动释放：优先挂载 mc/libs（deploy.sh 已提前同步好）
+      - ./mc/libs:/mcmod-libs:ro
+      # mcmod 源项目 src/main/libs 作为白名单单源
+      - ../src/main/libs:/mcmod-libs-src:ro
+      # CraftingDead JAR 补丁脚本（移除 disableSaving() 调用）
+      - ./mc/agent:/mc-agent:ro
+    environment:
+      - EULA=TRUE
+      - TYPE=FORGE
+      - VERSION=1.20.1
+      - FORGE_VERSION=47.4.22
+      - ENABLE_RCON=true
+      - RCON_PASSWORD=${RCON_PASSWORD:?RCON_PASSWORD must be set in .env}
+      - RCON_PORT=25575
+      - MAX_PLAYERS=${MC_MAX_PLAYERS:-50}
+      - VIEW_DISTANCE=${MC_VIEW_DISTANCE:-10}
+      - MOTD=${SERVER_NAME:-七零喵僵尸末日生存}
+      - MEMORY=${MC_MAX_MEMORY:-2G}
+      - ONLINE_MODE=${ONLINE_MODE:-false}
+      - TZ=Asia/Shanghai
+      - SEED=
+      # ---- CraftingDead 注册表修复（Missing registry: gun_configuration）----
+      # ModernFix 优化 DFU 会导致服务器连接包未"预告"自定义 registry 时抛 Missing registry。
+      # JAVA_TOOL_OPTIONS 只能有一个值，必须合并所有参数。
+      - JAVA_TOOL_OPTIONS=-Dfml.debugMissingRegistries=true -Dfml.resolveMissingRegistries=WARN -Dfml.ignoreMissingRegistries=true
+      - JDK_JAVA_OPTIONS=-Dfml.debugMissingRegistries=true -Dfml.resolveMissingRegistries=WARN -Dfml.ignoreMissingRegistries=true
+      - JVM_OPTS=-Dfml.debugMissingRegistries=true -Dfml.resolveMissingRegistries=WARN -Dfml.ignoreMissingRegistries=true
+    networks:
+      - qlm-net
+    expose:
+      - "25565"
+      - "25575"
+    # MC 端口由 Nginx stream 统一转发，RCON 仅本机访问
+    ports:
+      - "${RCON_HOST_PORT:-127.0.0.1:25575}:25575"
+    healthcheck:
+      test: ["CMD-SHELL", "mc-monitor status --host localhost --port 25565 >/dev/null 2>&1 && echo ok || (list >/dev/null 2>&1 && echo ok || echo fail)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ==================== Node.js Web 管理后台 ====================
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: qlm-web
+    restart: unless-stopped
+    depends_on:
+      minecraft:
+        condition: service_started
+    environment:
+      - RCON_HOST=minecraft
+      - RCON_PORT=25575
+      - RCON_PASSWORD=${RCON_PASSWORD:?RCON_PASSWORD must be set in .env}
+      - MC_HOST=minecraft
+      - MC_PORT=25565
+      - SERVER_NAME=${SERVER_NAME:-七零喵僵尸末日生存}
+      - SERVER_ADDRESS=${SERVER_ADDRESS:-mc.sh197.dpdns.org}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:?ADMIN_PASS must be set in .env}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:?ADMIN_TOKEN must be set in .env}
+      - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-500}
+      - DATA_DIR=/data
+      - DOWNLOADS_DIR=/app/downloads
+      - DEPLOY_MODE=docker
+      - NODE_ENV=production
+    volumes:
+      - mc-data:/data
+      # 只读 docker.sock 用于 Docker 监控（docker stats/ps）
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # 下载中心：宿主机 web/downloads 挂载到容器
+      - ./web/downloads:/app/downloads
+    networks:
+      - qlm-net
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',(r)=>process.exit(r.statusCode===200?0:1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==================== Nginx 统一入口（MC + Web 同域名） ====================
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: qlm-nginx
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+      minecraft:
+        condition: service_started
+    ports:
+      - "${NGINX_MC_PORT:-25565}:25565"
+      - "${HOST_HTTP_PORT:-80}:80"
+      - "${HOST_HTTPS_PORT:-443}:443"
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx-stream.conf:/etc/nginx/conf.d/stream.conf:ro
+      - ./nginx/nginx-http.conf:/etc/nginx/conf.d/http.conf:ro
+      - certs:/etc/nginx/certs
+      - ./nginx/www:/var/www/certbot:ro
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - qlm-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==================== SSL 证书申请（certbot，可选 profile） ====================
+  # 首次部署流程：
+  #   1. 先启动 nginx（用自签证书）确保 80 端口可用
+  #   2. 运行 certbot 申请证书：docker compose --profile ssl run --rm certbot
+  #   3. 重启 nginx 使用正式证书：docker compose restart nginx
+  certbot:
+    image: certbot/certbot:latest
+    container_name: qlm-certbot
+    profiles: ["ssl"]
+    entrypoint: ["/bin/sh", "/issue-cert.sh"]
+    volumes:
+      - ./nginx/certbot-entrypoint.sh:/issue-cert.sh:ro
+      - certs:/etc/letsencrypt
+      - certs:/etc/nginx/certs
+      - ./nginx/www:/var/www/certbot
+    environment:
+      - DOMAIN=${DOMAIN}
+      - SSL_EMAIL=${SSL_EMAIL}
+
+  certbot-renew:
+    image: certbot/certbot:latest
+    container_name: qlm-certbot-renew
+    profiles: ["ssl"]
+    entrypoint: ["/bin/sh", "/renew-cert.sh"]
+    volumes:
+      - ./nginx/certbot-renew.sh:/renew-cert.sh:ro
+      - certs:/etc/letsencrypt
+      - certs:/etc/nginx/certs
+      - ./nginx/www:/var/www/certbot
+    environment:
+      - DOMAIN=${DOMAIN}
+      - SSL_EMAIL=${SSL_EMAIL}
+
+volumes:
+  mc-data:
+    driver: local
+  certs:
+    driver: local
+
+networks:
+  qlm-net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"

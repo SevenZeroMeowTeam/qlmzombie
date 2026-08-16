@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>七零喵僵尸末日生存 - 服务器主页</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d; --accent: #f85149;
+    --accent2: #58a6ff; --text: #e6edf3; --muted: #8b949e; --gold: #d29922;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    background-image: radial-gradient(circle at 20% 0%, rgba(248,81,73,.08), transparent 40%),
+                      radial-gradient(circle at 80% 100%, rgba(88,166,255,.06), transparent 40%);
+  }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header {
+    border-bottom: 1px solid var(--border); background: rgba(13,17,23,.9);
+    position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px);
+  }
+  nav { display: flex; align-items: center; gap: 24px; padding: 14px 0; }
+  .logo { font-weight: 700; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+  nav a:hover, nav a.active { color: var(--text); }
+  nav .right { margin-left: auto; }
+  .hero { text-align: center; padding: 80px 20px 60px; }
+  .hero h1 { font-size: 42px; margin-bottom: 12px; background: linear-gradient(90deg, var(--accent), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { color: var(--muted); font-size: 16px; margin-bottom: 28px; }
+  .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; font-size: 13px;
+    border: 1px solid var(--border); background: var(--card); color: var(--muted); margin: 0 6px; }
+  .badge.online { border-color: #3fb950; color: #3fb950; }
+  .badge.offline { border-color: var(--accent); color: var(--accent); }
+  .copy-ip { display: inline-flex; align-items: center; gap: 10px; margin-top: 24px;
+    padding: 12px 24px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 16px;
+    cursor: pointer; border: none; transition: transform .15s, box-shadow .15s; }
+  .copy-ip:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(248,81,73,.35); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 20px 0 60px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .card h3 { margin-bottom: 14px; color: var(--accent2); font-size: 17px; }
+  .card ul { list-style: none; }
+  .card li { padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 14px; color: var(--text); }
+  .card li:last-child { border: none; }
+  .card li::before { content: "▸ "; color: var(--gold); }
+  .status-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .stat { flex: 1; min-width: 140px; text-align: center; padding: 16px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
+  .stat .num { font-size: 28px; font-weight: 700; color: var(--accent2); }
+  .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  footer { text-align: center; padding: 30px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card);
+    border: 1px solid var(--border); padding: 12px 24px; border-radius: 8px; font-size: 14px; opacity: 0;
+    transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <nav>
+      <span class="logo">🧟 七零喵 · 僵尸末日生存</span>
+      <a href="/" class="active">主页</a>
+      <a href="/downloads">下载中心</a>
+      <div class="right"><a href="/admin">后台管理</a></div>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>七零喵僵尸末日生存</h1>
+  <p>1.20.1 Forge · 僵尸末日 · 动态难度 · 神话品质装备 · 生存挑战</p>
+  <div>
+    <span class="badge" id="statusBadge">检测中...</span>
+    <span class="badge">在线玩家: <b id="playerCount">-</b></span>
+  </div>
+  <div>
+    <button class="copy-ip" onclick="copyIp()">📋 复制服务器地址：<b id="serverIp">mc.sh197.dpdns.org</b></button>
+  </div>
+  <div class="status-row" style="margin-top:36px">
+    <div class="stat"><div class="num" id="sOnline">-</div><div class="lbl">服务器状态</div></div>
+    <div class="stat"><div class="num" id="sPlayers">-</div><div class="lbl">当前在线</div></div>
+    <div class="stat"><div class="num" id="sVersion">1.20.1</div><div class="lbl">游戏版本</div></div>
+    <div class="stat"><div class="num" id="sMax">50</div><div class="lbl">最大人数</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="grid">
+    <div class="card">
+      <h3>🌍 服务器特色</h3>
+      <ul>
+        <li>动态难度：0-25天和平 · 26-50天简单 · 51-75天普通 · 76-100天困难 · 100天+锁定困难</li>
+        <li>装备品质 10 级：劣质 → 一般 → 普通 → 精良 → 优秀 → 稀有 → 卓越 → 史诗 → 传说 → 神话</li>
+        <li>神话品质：无视游戏规则，神话盔甲套装缺一不可</li>
+        <li>合成随机品质 + Apotheosis 风格属性词缀</li>
+        <li>僵尸末日生存：口渴系统 · 空投补给 · 月亮事件</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚔️ 玩法说明</h3>
+      <ul>
+        <li>游戏天数越长，僵尸越强，生存越难</li>
+        <li>100 天后难度锁定为困难，无法更改</li>
+        <li>高品质装备可通过合成获得随机品质</li>
+        <li>神话系列需要核心武器/盔甲/工具才能合成</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🖥️ 加入方式</h3>
+      <ul>
+        <li>游戏版本：Minecraft Java 1.20.1</li>
+        <li>服务器地址：mc.sh197.dpdns.org</li>
+        <li>端口：25565（默认）</li>
+        <li>需要安装整合包（见下载中心）</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<footer>© 七零喵 · 僵尸末日生存 SeverAdmin · 联系管理员获取帮助</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const badge = document.getElementById('statusBadge');
+    if (d.online) {
+      badge.textContent = '● 在线';
+      badge.className = 'badge online';
+    } else {
+      badge.textContent = '○ 离线';
+      badge.className = 'badge offline';
+    }
+    document.getElementById('playerCount').textContent = d.players ? d.players.online : '0';
+    document.getElementById('sOnline').textContent = d.online ? '在线' : '离线';
+    document.getElementById('sPlayers').textContent = d.players ? `${d.players.online}/${d.players.max}` : '-';
+    document.getElementById('sVersion').textContent = d.version || '1.20.1';
+    document.getElementById('sMax').textContent = d.players ? d.players.max : '50';
+  } catch (e) {
+    document.getElementById('statusBadge').textContent = '无法连接';
+  }
+}
+async function loadInfo() {
+  try {
+    const r = await fetch('/api/info');
+    const d = await r.json();
+    if (d.address) document.getElementById('serverIp').textContent = d.address + ':' + d.port;
+    document.title = d.name + ' - 服务器主页';
+  } catch (e) {}
+}
+function copyIp() {
+  const ip = document.getElementById('serverIp').textContent;
+  navigator.clipboard.writeText(ip).then(() => toast('已复制服务器地址: ' + ip));
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+loadStatus(); loadInfo();
+setInterval(loadStatus, 15000);
+</script>
+</body>
+</html>

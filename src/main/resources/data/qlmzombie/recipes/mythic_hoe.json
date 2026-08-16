@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "qlmzombie_mythic",
+  "pattern": [
+    "ana",
+    "dnd",
+    "ana"
+  ],
+  "key": {
+    "a": { "item": "minecraft:netherite_ingot" },
+    "d": { "item": "minecraft:diamond" },
+    "n": { "item": "minecraft:netherite_hoe" }
+  },
+  "result": {
+    "item": "minecraft:netherite_hoe",
+    "nbt": "{qlm_mythic_forced:1b}"
+  }
+}

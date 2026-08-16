@@ -1,0 +1,23 @@
+[Unit]
+Description=七零喵僵尸末日生存 - SeverAdmin Web 后台
+After=network.target qlm-minecraft.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/qlm/web
+# 后台与 MC 服务器解耦运行，静默重启 MC 时本服务保持在线
+EnvironmentFile=/opt/qlm/.env
+Environment=NODE_ENV=production
+Environment=DATA_DIR=/opt/qlm/mc
+Environment=DOWNLOADS_DIR=/opt/qlm/web/downloads
+Environment=MC_HOST=127.0.0.1
+Environment=MC_PORT=25565
+Environment=RCON_HOST=127.0.0.1
+Environment=RCON_PORT=25575
+Environment=DEPLOY_MODE=java
+ExecStart=/usr/bin/node /opt/qlm/web/server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
