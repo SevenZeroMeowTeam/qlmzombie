@@ -8,7 +8,7 @@
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD34%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD35%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build34` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build34.jar` / `qlmzombie-3.0.0.beta.build34-server.jar` |
+| **当前版本** | `3.0.0.beta.build35` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build35.jar` / `qlmzombie-3.0.0.beta.build35-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -36,7 +36,7 @@ QLM Zombie 是一个深度整合的 Minecraft 末日生存模组，基于 **Kotl
 
 - 🌙 **动态昼夜阶段系统**：从和平到地狱，8 个难度阶段随天数递进
 - 🧟 **僵尸进化系统**：僵尸属性随阶段动态增强，每个夜晚越来越危险
-- 💧 **口渴生存系统**：除饥饿值外新增口渴值管理，脱水会导致虚弱与死亡
+- 💧 **口渴生存系统**（Thirst-Mod 整合）：口渴/解渴值管理，水质净化（脏→纯净），脱水受伤，多群系衰减修正
 - 🦠 **感染机制**：被僵尸攻击有概率感染，叠加中毒、虚弱、反胃效果
 - 🤖 **AI 玩家伴侣系统**：召唤可驯服的 AI 同伴，支持建造、挖矿、跟随等任务
 - 🏗️ **随机建筑生成**：废弃商店、9 层高楼、海底遗迹、随机小屋自然生成
@@ -109,7 +109,6 @@ D:\mcmod\
     │   │   └── DayPhaseManager.kt       # 阶段切换 + 难度计算逻辑
     │   │
     │   ├── feature/
-    │   │   ├── ThirstFeature.kt         # 口渴系统核心 (数据存储 + 衰减)
     │   │   ├── AlwaysEatFeature.kt      # 随时可进食 (无视饱食度)
     │   │   ├── DropTheMeatFeature.kt    # 生物额外掉落肉类
     │   │   ├── FastCraftingFeature.kt   # 快速合成优化
@@ -119,8 +118,7 @@ D:\mcmod\
     │   │   └── ZombieEvolutionHandler.kt # 僵尸属性动态加成 (生命/伤害/速度)
     │   │
     │   ├── player/
-    │   │   ├── ThirstBarOverlay.kt      # HUD 口渴条渲染
-    │   │   ├── PlayerInitHandler.kt     # 玩家登录/克隆/重生初始化
+    │   │   ├── PlayerInitHandler.kt     # 玩家重生口渴补充
     │   │   ├── InfectionHandler.kt      # 感染系统 (层数/效果/衰减)
     │   │   └── AIPlayerChatHandler.kt   # AI 伴侣聊天命令系统
     │   │
@@ -204,7 +202,7 @@ D:\mcmod\
         ├── [斯巴达的武器] SpartanWeaponry-3.2.1-all.jar
         ├── [农夫乐事] FarmersDelight-1.20.1-1.3.2.jar
         ├── [意志坚定] ToughAsNails-forge-9.2.0.171.jar
-        ├── [口渴] ThirstWasTaken-1.20.1-1.4.0.jar  (⚠️ 默认自动禁用：与内置口渴系统冲突)
+        ├── [口渴] ThirstWasTaken-1.20.1-1.4.0.jar  (⚠️ 已源码整合进本 mod，外置 JAR 默认自动禁用)
         ├── Better Combat / Epic Fight / Create / Tetra / Forestry ...
         └── ... (共 100+ JAR，详见下方开源模组清单)
 ```
@@ -239,18 +237,21 @@ D:\mcmod\
 
 ### 3. 口渴生存系统 (Thirst)
 
-```
-MAX_THIRST = 20 (与饥饿值一致)
-```
+整合自开源模组 **Thirst was Taken**（ghen-git/Thirst-Mod，MIT，署名见 [THIRSTMOD_LICENSE.md](THIRSTMOD_LICENSE.md)），以源码模块 `com.qlm.zombie.thirst` 并入，替换原简易口渴系统。
 
-- 玩家登录时口渴值重置为 20
-- 死亡重生时设置为 14 (70%)
-- 每 30 秒游戏刻自动衰减 1 点口渴值
-- 口渴值 ≤ 0 时：每 5 秒造成 1 点伤害 + 持续虚弱 II 效果
+- 口渴值 0-20、解渴值 0-20（HUD 显示水滴条）
+- 按生物群系温度/湿度、下界、防火附魔等修正口渴衰减速度
+- 口渴值 ≤ 0 时：每 40 tick 造成 1 点脱水伤害（难度影响伤害阈值）
+- **水质系统**：脏 → 微脏 → 可接受 → 纯净，瓶/桶/陶碗可盛不同水质的水
+- **净化方式**：熔炉/营火煮沸；雪山高处/洞穴/流动水自然净化（有群系加成）
+- 饮用脏水有概率中毒/反胃（按水质等级）
 - **恢复方式**：
-  - 净化水瓶 (`purified_water_bottle`)：恢复 10 点
-  - 水瓶 + 煤炭合成
-  - KubeJS 钓鱼宝藏也可获取
+  - 黏土碗/陶碗 + 陶土水碗（喝后留空碗）
+  - 水瓶 / 水桶盛水后净化饮用
+  - 净化水瓶 (`purified_water_bottle`)：恢复 8 点口渴 + 4 点解渴
+  - 名称含 drink/soup/fruit 关键词的食物自动恢复口渴（可配置）
+- **命令**：`/thirst query|set|enable`（权限 2）
+- **配置**：`config/thirst/common.toml`（衰减速度/水质效果/净化参数/口渴条偏移等）
 
 ### 4. 感染系统 (Infection)
 
@@ -384,13 +385,13 @@ MAX_THIRST = 20 (与饥饿值一致)
 
 | 前缀 | 模组 | 原因 |
 |------|------|------|
-| `toughasnails` | Tough As Nails (意志坚定) | 与内置口渴系统冲突，会导致双重扣水 + 创造模式翻页崩溃 |
-| `thirstwastaken` | Thirst Was Taken | 同上，口渴功能完全由 `ThirstFeature` 接管 |
+| `toughasnails` | Tough As Nails (意志坚定) | 与口渴系统冲突，会导致双重扣水 + 创造模式翻页崩溃 |
+| `thirstwastaken` | Thirst Was Taken (外置 JAR) | 已整合为源码模块 `com.qlm.zombie.thirst`，外置 JAR 自动禁用 |
 | `thirstmod` / `thirstcanteen` | 其它口渴模组 | 避免重复口渴系统 |
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build34.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build34-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
+成功构建后，`qlmzombie-3.0.0.beta.build35.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build35-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
 
 ---
 
@@ -498,11 +499,12 @@ MAX_THIRST = 20 (与饥饿值一致)
 | 96 | KubeJS Additions | Hunter19823/kubejsadditions | - |
 | 97 | Drop the Meat | Moralle/DropTheMeat | MIT |
 | 98 | Fast Workbench | Shadows-of-Fire/FastWorkbench | MIT |
-| 99 | Thirst was Taken | ghen-git/Thirst-Mod | MIT |
+| 99 | Thirst was Taken | ghen-git/Thirst-Mod | MIT（源码整合，见 [THIRSTMOD_LICENSE.md](THIRSTMOD_LICENSE.md)） |
 | 100 | SevenZeroMeow/qlmzombie | SevenZeroMeowTeam/qlmzombie | MIT |
 
 > ⚖️ **开源合规说明**：所有内嵌模组均保留其原始 JAR、纹理、语言文件、许可证信息。
 > QLM Zombie 仅通过 `ModDependencyHandler` 做运行时动态释放，不修改任何第三方 JAR 内部字节码。
+> 其中 **Thirst was Taken** 已按 MIT 许可将源码（物品/纹理/水质机制）整合进本 mod（`com.qlm.zombie.thirst`），完整署名与许可证见 [THIRSTMOD_LICENSE.md](THIRSTMOD_LICENSE.md)。
 > 冲突处理采用 `.disabled` 文件后缀方式（Forge 会自动忽略 `.disabled` 结尾的文件），而非修改或删除第三方内容。
 
 ---
@@ -601,9 +603,9 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build34.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
-├── qlmzombie-3.0.0.beta.build34-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
-└── qlmzombie-3.0.0.beta.build34-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build35.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
+├── qlmzombie-3.0.0.beta.build35-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
+└── qlmzombie-3.0.0.beta.build35-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -614,8 +616,8 @@ D:\mcmod\build\libs\
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
 2. 选择对应发行包放入 `.minecraft/mods/` 目录：
-   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build34.jar`（完整包含 crafting-dead 4 个模组）
-   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build34-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
+   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build35.jar`（完整包含 crafting-dead 4 个模组）
+   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build35-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -650,7 +652,7 @@ copy build\libs\qlmzombie-*.jar %APPDATA%\.minecraft\mods\
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
-| `enableThirst` | Boolean | true | 是否启用心渴系统 |
+| `enableThirst` | Boolean | true | 是否启用心渴系统（Thirst-Mod 整合） |
 | `enableInfection` | Boolean | true | 是否启用感染系统 |
 | `enableDayPhase` | Boolean | true | 是否启用昼夜阶段系统 |
 | `enableZombieEvolution` | Boolean | true | 是否启用僵尸进化 |
@@ -686,7 +688,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build34` (精确到 build)
+1. **版本号**：`3.0.0.beta.build35` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -766,6 +768,51 @@ SOFTWARE.
 ---
 
 ## 📋 更新说明
+
+### 3.0.0.beta.build35 (2026-08-16)
+
+#### 整合开源模组 Thirst was Taken（口渴系统）+ 兼容性加固
+
+按开源准则（MIT）将 [ghen-git/Thirst-Mod](https://github.com/ghen-git/Thirst-Mod)（v1.20.1-1.3.15）核心内容以源码模块 `com.qlm.zombie.thirst` 整合进本 mod，**保留纹理与物品**，并**替换原简易 ThirstFeature 系统**：
+
+##### 整合内容
+
+| 类别 | 内容 |
+|:-----|:-----|
+| 物品 | `clay_bowl`（黏土碗）、`terracotta_bowl`（陶碗）、`terracotta_water_bowl`（陶土水碗，可饮用） |
+| 机制 | 口渴值/解渴值能力（IThirst）、水质系统（脏→微脏→可接受→纯净）、脱水伤害、口渴 HUD、`/thirst` 命令 |
+| 数据 | 净化配方（熔炉/营火）、宝箱战利品、伤害类型标签、7 种语言文件 |
+| 署名 | [THIRSTMOD_LICENSE.md](THIRSTMOD_LICENSE.md)（MIT 完整版权声明） |
+
+##### 开源合规处理
+
+- 剔除未安装模组的兼容代码：Create 沙滤器、Botania / ToughAsNails / FarmersRespite / BrewinAndChewin / Jade / AppleSkin 兼容 mixin
+- 外置 ThirstWasTaken JAR 仍自动禁用（`thirstwastaken` 前缀），避免双重口渴
+
+##### 兼容性加固（保证不报错、不闪退）
+
+| 加固项 | 说明 |
+|:-------|:-----|
+| Mixin refmap | 引入 MixinGradle 生成 refmap，正式（SRG）环境下 mixin 正确映射，避免启动闪退 |
+| mixin `required: false` | 任何 mixin 应用失败仅记日志、跳过该功能，绝不崩溃 |
+| 访问转换器 (AT) | 公开 `FoodProperties.nutrition`（`META-INF/accesstransformer.cfg`） |
+| HUD 空指针防护 | 口渴条在玩家/能力未就绪时自动隐藏 |
+| 初始化容错 | 口渴模块初始化异常仅降级（关闭口渴），不影响主模组启动 |
+| 手喝/命令空指针防护 | `DrinkByHandClient`、`/thirst` 命令均加空值保护 |
+| 旧系统移除 | 删除 `ThirstFeature.kt`、`ThirstBarOverlay.kt`，`PurifiedWaterItem`/重生逻辑接入新能力系统 |
+
+##### 涉及文件
+
+| 文件 | 改动 |
+|:-----|:-----|
+| `src/main/java/com/qlm/zombie/thirst/**` | 新增（47 个核心文件，原 `dev.ghen.thirst`） |
+| `src/main/resources/assets/qlmzombie/**`、`data/qlmzombie/**` | 新增（纹理/模型/语言/配方/战利品/伤害类型） |
+| `build.gradle.kts` | MixinGradle + refmap + AT + annotationProcessor |
+| `qlmzombie-thirst.mixins.json` | 新增（14 核心 mixin + refmap + `required:false`） |
+| `META-INF/accesstransformer.cfg` | 新增 |
+| `QLMZombieMod.kt` | 接入 `Thirst.init()`（含容错） |
+| `PurifiedWaterItem.kt` / `PlayerInitHandler.kt` / `QLMClientMod.kt` | 接入新能力系统 |
+| `ThirstFeature.kt` / `ThirstBarOverlay.kt` | **删除**（旧系统） |
 
 ### 3.0.0.beta.build34 (2026-08-16)
 
@@ -2396,4 +2443,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build34` · 构建日期：2026-08-16 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build35` · 构建日期：2026-08-16 · Minecraft 1.20.1

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient":
+  {
+    "item": "qlmzombie:clay_bowl"
+  },
+  "result": "qlmzombie:terracotta_bowl",
+  "experience": 0.35,
+  "cookingtime": 200
+}

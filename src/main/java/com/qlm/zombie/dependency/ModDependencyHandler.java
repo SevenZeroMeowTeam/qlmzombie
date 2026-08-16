@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -189,7 +190,7 @@ public class ModDependencyHandler {
             saveTrackedDisabled(gameDir, trackedDisabled);
             logSummary();
 
-        } catch (Exception e) {
+        } catch (IOException | RuntimeException e) {
             LOGGER.error("[QLM Zombie] 初始化依赖模组时发生严重错误", e);
         }
     }
@@ -245,7 +246,7 @@ public class ModDependencyHandler {
                     return path;
                 }
             }
-        } catch (Exception e) {
+        } catch (URISyntaxException | RuntimeException e) {
             LOGGER.error("[QLM Zombie] 获取 mod JAR 路径失败", e);
         }
 
@@ -331,8 +332,7 @@ public class ModDependencyHandler {
         if (lower.contains("jython")) return true;
         if (lower.contains("graal")) return true;
         if (lower.contains("polyglot")) return true;
-        if (lower.contains("[python]")) return true;
-        return false;
+        return lower.contains("[python]");
     }
 
     /**
@@ -812,7 +812,7 @@ public class ModDependencyHandler {
             }
             LOGGER.warn("[QLM Zombie] 未在 JAR 中找到内部库: {}", libFileName);
             return false;
-        } catch (Exception e) {
+        } catch (IOException | RuntimeException e) {
             LOGGER.error("[QLM Zombie] 释放内部库失败: {}", libFileName, e);
             return false;
         }

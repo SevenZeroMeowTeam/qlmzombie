@@ -7,6 +7,11 @@
     "qlmzombie:abandoned_shop_loot",
     "qlmzombie:random_building_loot",
     "qlmzombie:other_mod_building_loot",
-    "qlmzombie:drop_the_meat"
+    "qlmzombie:drop_the_meat",
+    "qlmzombie:add_loot_shipwreck_supply",
+    "qlmzombie:add_loot_abandoned_mineshaft",
+    "qlmzombie:add_loot_simple_dungeon",
+    "qlmzombie:add_loot_nether_bridge",
+    "qlmzombie:add_loot_bastion_other"
   ]
 }

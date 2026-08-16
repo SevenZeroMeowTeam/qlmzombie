@@ -17,6 +17,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -91,10 +92,11 @@ public class QLMCommands {
                             ctx.getSource().sendSuccess(() -> Component.literal("§7该物品暂无品质属性"), false);
                             return 1;
                         }
-                        float ba = held.getTag() != null ? held.getTag().getFloat(EquipmentQuality.NBT_ATTACK) : 0;
-                        float bh = held.getTag() != null ? held.getTag().getFloat(EquipmentQuality.NBT_HEALTH) : 0;
-                        float bAr = held.getTag() != null ? held.getTag().getFloat(EquipmentQuality.NBT_ARMOR) : 0;
-                        double rd = held.getTag() != null ? held.getTag().getDouble(EquipmentQuality.NBT_RANDOM_DMG) : 0;
+                        CompoundTag tag = held.getTag();
+                        float ba = tag != null ? tag.getFloat(EquipmentQuality.NBT_ATTACK) : 0;
+                        float bh = tag != null ? tag.getFloat(EquipmentQuality.NBT_HEALTH) : 0;
+                        float bAr = tag != null ? tag.getFloat(EquipmentQuality.NBT_ARMOR) : 0;
+                        double rd = tag != null ? tag.getDouble(EquipmentQuality.NBT_RANDOM_DMG) : 0;
 
                         ctx.getSource().sendSuccess(() -> Component.empty()
                                 .append(Component.literal("§6===== 装备品质 =====").withStyle(ChatFormatting.GOLD))
@@ -237,7 +239,7 @@ public class QLMCommands {
                     .executes(ctx -> {
                         String name = StringArgumentType.getString(ctx, "player");
                         Player target = ctx.getSource().getServer().getPlayerList().getPlayerByName(name);
-                        if (target instanceof ServerPlayer sp) {
+                        if (target instanceof ServerPlayer) {
                             target.getPersistentData().remove(StarterKitHandler.NBT_RECEIVED);
                             ctx.getSource().sendSuccess(() -> Component.literal("§a✔ 已重置玩家 " + name + " 的初始装备标记（下次登录重发）"), true);
                         } else {

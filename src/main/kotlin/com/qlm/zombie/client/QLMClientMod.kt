@@ -1,7 +1,6 @@
 package com.qlm.zombie.client
 
 import com.qlm.zombie.QLMZombieMod
-import com.qlm.zombie.player.ThirstBarOverlay
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
@@ -21,14 +20,13 @@ object QLMClientMod {
     @SubscribeEvent
     fun onClientSetup(event: FMLClientSetupEvent) {
         event.enqueueWork {
-            ThirstBarOverlay.register()
-            QLMZombieMod.LOGGER.info("[QLM Zombie] 口渴值覆盖层已注册")
+            // 口渴值 HUD 已由 Thirst 模块（ThirstBarRenderer）注册
+            QLMZombieMod.LOGGER.info("[QLM Zombie] 客户端设置完成（口渴 HUD 由 Thirst 模块接管）")
         }
     }
 
     fun init() {
-        ThirstBarOverlay.register()
-        QLMZombieMod.LOGGER.info("[QLM Zombie] 口渴值覆盖层已注册")
+        QLMZombieMod.LOGGER.info("[QLM Zombie] 客户端初始化（口渴 HUD 由 Thirst 模块接管）")
     }
 }
 

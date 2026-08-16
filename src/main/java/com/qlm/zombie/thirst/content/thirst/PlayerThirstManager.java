@@ -1,0 +1,137 @@
+package com.qlm.zombie.thirst.content.thirst;
+
+import com.qlm.zombie.QLMZombieMod;
+import com.qlm.zombie.config.QLMConfig;
+import com.qlm.zombie.thirst.Thirst;
+import com.qlm.zombie.thirst.api.ThirstHelper;
+import com.qlm.zombie.thirst.foundation.common.capability.IThirst;
+import com.qlm.zombie.thirst.foundation.common.capability.ModCapabilities;
+import com.qlm.zombie.thirst.foundation.config.CommonConfig;
+import com.qlm.zombie.thirst.content.purity.WaterPurity;
+import com.mojang.logging.LogUtils;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.capabilities.ICapabilitySerializable;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.common.Mod;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
+public class PlayerThirstManager
+{
+    private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
+
+    @SubscribeEvent
+    public static void attachCapabilityToEntityHandler(AttachCapabilitiesEvent<Entity> event)
+    {
+        if (event.getObject() instanceof Player)
+        {
+            IThirst playerThirstCap = new PlayerThirst();
+            LazyOptional<IThirst> capOptional = LazyOptional.of(() -> playerThirstCap);
+            Capability<IThirst> capability = ModCapabilities.PLAYER_THIRST;
+
+            ICapabilityProvider provider = new ICapabilitySerializable<CompoundTag>()
+            {
+                @Nonnull
+                @Override
+                public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction direction)
+                {
+                    if (cap == capability)
+                    {
+                        return capOptional.cast();
+                    }
+                    return LazyOptional.empty();
+                }
+
+                @Override
+                public CompoundTag serializeNBT()
+                {
+                    return playerThirstCap.serializeNBT();
+                }
+
+                @Override
+                public void deserializeNBT(CompoundTag nbt)
+                {
+                    playerThirstCap.deserializeNBT(nbt);
+                }
+            };
+
+            event.addCapability(Thirst.asResource("thirst"), provider);
+        }
+    }
+
+    @SubscribeEvent
+    public static void drinkByHand(PlayerInteractEvent.RightClickBlock event)
+    {
+        if(CommonConfig.CAN_DRINK_BY_HAND.get() && event.getEntity().level().isClientSide)
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> DrinkByHandClient::drinkByHand);
+    }
+
+    @SubscribeEvent
+    public static void drinkByHand(PlayerInteractEvent.RightClickEmpty event)
+    {
+        if(CommonConfig.CAN_DRINK_BY_HAND.get() && event.getEntity().level().isClientSide)
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> DrinkByHandClient::drinkByHand);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event)
+    {
+        if (event.phase == TickEvent.Phase.START && event.player instanceof ServerPlayer serverPlayer)
+        {
+            if (!QLMConfig.INSTANCE.getEnableThirst()) return;
+            serverPlayer.getCapability(ModCapabilities.PLAYER_THIRST).ifPresent(cap -> cap.tick(serverPlayer));
+        }
+    }
+
+    /**
+     * Adds the thirst capability to the player if they returned from the end
+     * without dying.
+     */
+    @SubscribeEvent
+    public static void endFix(PlayerEvent.Clone event)
+    {
+        if (!event.getEntity().level().isClientSide)
+        {
+            Player oldPlayer = event.getOriginal();
+            oldPlayer.reviveCaps();
+
+            if(!event.isWasDeath()) {
+                event.getEntity().getCapability(ModCapabilities.PLAYER_THIRST).ifPresent(cap ->
+                        oldPlayer.getCapability(ModCapabilities.PLAYER_THIRST).ifPresent(cap::copy));
+            }
+            else {
+                event.getEntity().getCapability(ModCapabilities.PLAYER_THIRST).ifPresent(cap ->
+                        oldPlayer.getCapability(ModCapabilities.PLAYER_THIRST).ifPresent(oldCap->cap.setShouldTickThirst(oldCap.getShouldTickThirst())));
+            }
+            oldPlayer.invalidateCaps();
+        }
+    }
+
+    @SubscribeEvent
+    public static void initDrinks(ServerStartedEvent event){
+        try {
+            ThirstHelper.init();
+        } catch (Throwable t) {
+            // 健壮性：口渴数值注册失败仅影响口渴系统，不中断服务端启动
+            LOGGER.error("[QLM Zombie] 口渴数值初始化失败，已忽略（不影响游戏运行）", t);
+        }
+    }
+}

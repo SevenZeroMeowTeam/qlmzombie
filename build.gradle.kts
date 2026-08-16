@@ -8,6 +8,21 @@ plugins {
 
 import java.time.Instant
 
+// MixinGradle：为 Thirst 模块 mixin 生成 refmap，保证正式（SRG）环境下 mixin 正确映射不闪退。
+// 原模组 dev.ghen.thirst 同款方案。
+buildscript {
+    repositories {
+        mavenCentral()
+        maven("https://maven.minecraftforge.net")
+        maven("https://repo.spongepowered.org/repository/maven-public")
+    }
+    dependencies {
+        classpath("org.spongepowered:mixingradle:0.7-SNAPSHOT")
+    }
+}
+
+apply(plugin = "org.spongepowered.mixin")
+
 val mod_version: String by project
 val mod_group_id: String by project
 val mod_id: String by project
@@ -48,6 +63,8 @@ java {
 minecraft {
     mappings(mapOf("channel" to mapping_channel, "version" to mapping_version))
     copyIdeResources = true
+    // 访问转换器：Thirst-Mod 口渴系统需要公开 FoodProperties.nutrition 字段（原模组 dev.ghen.thirst 同款）
+    accessTransformer(file("src/main/resources/META-INF/accesstransformer.cfg"))
 
     runs {
         configureEach {
@@ -93,6 +110,15 @@ dependencies {
     // All mod JARs from libs directory
     // KotlinForForge and KubeJS are runtime-only (not referenced directly in code)
     implementation(fileTree(mapOf("dir" to "src/main/libs", "include" to listOf("*.jar"))))
+
+    // Mixin 注解处理器：生成 refmap，保证 Thirst 模块 mixin 在正式（SRG）环境下正确映射
+    annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
+}
+
+// MixinGradle 负责：注入 Mixin 注解处理器 + 生成/重混淆 refmap
+// （mixin json 中已手动声明 "refmap": "qlmzombie-thirst.refmap.json"）
+configure<org.spongepowered.asm.gradle.plugins.MixinExtension> {
+    add(sourceSets.main.get(), "qlmzombie-thirst.refmap.json")
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -203,7 +229,7 @@ tasks.named<Jar>("jar") {
             "Implementation-Version" to archiveVersion,
             "Implementation-Vendor" to mod_authors,
             "Implementation-Timestamp" to Instant.now().toString(),
-            "FMLAT" to "qlmzombie.mixins.json",
+            "FMLAT" to "accesstransformer.cfg",
         ))
     }
 

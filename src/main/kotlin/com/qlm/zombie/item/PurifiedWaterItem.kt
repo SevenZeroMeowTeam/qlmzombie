@@ -1,6 +1,6 @@
 package com.qlm.zombie.item
 
-import com.qlm.zombie.feature.ThirstFeature
+import com.qlm.zombie.thirst.foundation.common.capability.ModCapabilities
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.LivingEntity
@@ -32,9 +32,12 @@ class PurifiedWaterItem(properties: Item.Properties) : Item(properties.food(
     override fun finishUsingItem(stack: ItemStack, level: Level, livingEntity: LivingEntity): ItemStack {
         val result = super.finishUsingItem(stack, level, livingEntity)
 
-        if (!level.isClientSide) {
+        if (!level.isClientSide && livingEntity is Player) {
             runCatching {
-                ThirstFeature.restoreThirst(livingEntity, 8)
+                // 接入 Thirst-Mod 口渴能力系统（合并后）：恢复 8 点口渴 + 4 点解渴
+                livingEntity.getCapability(ModCapabilities.PLAYER_THIRST).ifPresent { cap ->
+                    cap.drink(livingEntity, 8, 4)
+                }
             }
         }
 
