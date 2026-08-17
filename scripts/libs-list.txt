@@ -35,7 +35,6 @@
 [犀牛] rhino-forge-2001.2.3-build.10.jar
 [现代化修复] modernfix-forge-5.27.58+mc1.20.1.jar
 [星光] starlight-1.1.2+forge.1cda73c.jar
-[口渴] ThirstWasTaken-1.20.1-1.4.0.jar
 [应用能源2] appliedenergistics2-forge-15.4.10.jar
 [真正的力量] True_POWER-1.20.1-1.1.8.jar
 [卓越前线] superbwarfare-0.8.9-final-mc1.20.1-6effe4385-all.jar

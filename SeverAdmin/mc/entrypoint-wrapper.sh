@@ -23,6 +23,26 @@ for f in server.properties eula.txt ops.json whitelist.json banned-players.json 
   fi
 done
 
+# ---------- 1b. FTB Quests 任务数据（config/ftbquests/quests，仅在缺失时复制，保留游戏内编辑） ----------
+# FTB Quests 从 config/ftbquests/quests 读取任务（不读数据包），缺失则游戏内无任务。
+# ★ 2001.4.22 只读取 *.snbt（不读 .json5 / lang/ 目录），标题描述已内联在 quest 中。
+# 先清理历史错误格式的 .json5（该版本不读且易混淆），再复制 .snbt（已存在含游戏内编辑的保留）。
+if [ -d "/mc-templates/config/ftbquests/quests" ]; then
+  mkdir -p /data/config/ftbquests/quests
+  find /data/config/ftbquests/quests -name '*.json5' -delete 2>/dev/null
+  if command -v cp >/dev/null 2>&1 && [ "$(find /data/config/ftbquests/quests -name '*.snbt' 2>/dev/null | wc -l)" -eq 0 ]; then
+    cp -R /mc-templates/config/ftbquests/quests/. /data/config/ftbquests/quests/ 2>/dev/null && echo "[qlm] 初始化 FTB Quests 任务数据 (*.snbt)"
+  else
+    # 已有任务文件则仅补缺
+    (cd /mc-templates/config/ftbquests/quests && find . -type f -name '*.snbt' | while read -r rel; do
+      if [ ! -f "/data/config/ftbquests/quests/$rel" ]; then
+        mkdir -p "/data/config/ftbquests/quests/$(dirname "$rel")"
+        cp "/mc-templates/config/ftbquests/quests/$rel" "/data/config/ftbquests/quests/$rel" && echo "[qlm] 补齐任务文件: $rel"
+      fi
+    done)
+  fi
+fi
+
 # ---------- 2. 强制 EULA ----------
 echo "eula=true" > /data/eula.txt
 echo "[qlm] EULA 已写入 true"
@@ -34,10 +54,13 @@ mkdir -p "$MC_MODS_DIR"
 
 # 纯客户端模组前缀（专用服务端跳过：ETF mixin 会在服务端加载客户端类 Screen 导致崩溃，
 # 其余为无服务端功能的纯渲染/UI 模组）。
-# 注意：kleiders_custom_renderer 不在列表 —— 它注册网络 channel（客户端皮肤/模型同步），
+# 注意 1：kleiders_custom_renderer 不在列表 —— 它注册网络 channel（客户端皮肤/模型同步），
 # 服务器缺失会导致玩家连接报 "mismatched mod channel list"；服务端加载安全（空 mixin、无客户端类引用），
 # 因此保留在服务端以匹配客户端 channel。
-CLIENT_ONLY_MODS="entity_texture_features entity_model_features 3d-armor skinlayers3d imblocker sodiumdynamiclights sodiumoptionsapi ysm"
+# 注意 2：ysm (yes_steve_model) 不在列表 —— side=BOTH 模组，服务端必须加载以同步玩家模型数据
+# （ServerPlayerMixin 服务端处理，缺失会导致自定义模型客户端间不同步、手持物品渲染错位）；
+# 公共 mixin 无客户端类引用，服务端加载安全。
+CLIENT_ONLY_MODS="entity_texture_features entity_model_features 3d-armor skinlayers3d imblocker sodiumdynamiclights sodiumoptionsapi"
 
 is_client_only() { # 文件名
   local f="$1" lower
@@ -123,7 +146,7 @@ for mjar in "$MC_MODS_DIR"/qlmzombie-*.jar; do
     python3 - "$mjar" "$MC_MODS_DIR" <<'PYEOF' || echo "[qlm]   python3 提取失败"
 import sys, os, zipfile, shutil
 src, dest = sys.argv[1], sys.argv[2]
-skip = ('entity_texture_features','entity_model_features','3d-armor','skinlayers3d','imblocker','sodiumdynamiclights','sodiumoptionsapi','ysm')
+skip = ('entity_texture_features','entity_model_features','3d-armor','skinlayers3d','imblocker','sodiumdynamiclights','sodiumoptionsapi')
 def is_mojibake(n):
     # 无效 UTF-8 字节（os.listdir 以 surrogateescape 返回 \udc80-\udcff）
     if any(0xDC80 <= ord(c) <= 0xDCFF for c in n):
@@ -190,14 +213,6 @@ for f in "$MC_MODS_DIR"/kleiders_custom_renderer*.jar.disabled; do
   echo "[qlm]   恢复关键模组为 active（移除 .disabled）: $(basename "$f")"
   rm -f "$f"
 done
-#     ThirstWasTaken 同理：客户端装有外置 JAR（modId=thirst，通道 thirst:main），服务器端
-#     必须保留以匹配客户端 channel（否则报 "服务器缺少 Thirst was Taken"），若历史部署
-#     曾禁用为 .disabled，启动时一并恢复为 active。
-for f in "$MC_MODS_DIR"/*ThirstWasTaken*.jar.disabled; do
-  [ -e "$f" ] || continue
-  echo "[qlm]   恢复 ThirstWasTaken 为 active（移除 .disabled）: $(basename "$f")"
-  rm -f "$f"
-done
 #     ToughAsNails 预禁用：与口渴系统冲突，必须在 Forge 扫描前保持 .disabled
 #     （运行时禁用太晚：模组已加载，外部 ThirstWasTaken 的 compat/toughasnails 配方
 #      会因 null ItemStack 触发 NPE —— Zeta 配方扫描报错 + 玩家登录配方同步 EncoderException）。
@@ -212,6 +227,18 @@ for f in "$MC_MODS_DIR"/*ToughAsNails*.jar; do
     continue
   fi
   echo "[qlm]   预禁用冲突模组（ToughAsNails）: $(basename "$f")"
+  mv -f "$f" "${f}.disabled"
+done
+
+#     ThirstWasTaken 统一禁用：按当前策略本地/服务器都禁用口渴模组。
+for f in "$MC_MODS_DIR"/*ThirstWasTaken*.jar; do
+  [ -e "$f" ] || continue
+  if [ -e "${f}.disabled" ]; then
+    echo "[qlm]   移除与 .disabled 并存的 ThirstWasTaken active jar: $(basename "$f")"
+    rm -f "$f"
+    continue
+  fi
+  echo "[qlm]   预禁用口渴模组（ThirstWasTaken）: $(basename "$f")"
   mv -f "$f" "${f}.disabled"
 done
 

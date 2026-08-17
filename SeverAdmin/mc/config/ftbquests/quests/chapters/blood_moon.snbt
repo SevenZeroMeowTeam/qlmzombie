@@ -1,0 +1,291 @@
+{
+  "id": "0000000000000018",
+  "group": "",
+  "order_index": 2,
+  "filename": "blood_moon",
+  "title": "血月幸存者",
+  "quests": [
+    {
+      "id": "0000000000000019",
+      "x": 0.0,
+      "y": 0.0,
+      "title": "血月幸存者",
+      "description": [
+        "血月是末日中最可怕的现象。在血月中存活下来，证明你是真正的幸存者。收集血月中僵尸掉落的珍贵材料。"
+      ],
+      "icon": "qlmzombie:biohazard_sample",
+      "tasks": [
+        {
+          "id": "0000000000000095",
+          "type": "ftbquests:kill",
+          "title": "消灭血月僵尸",
+          "entity": "minecraft:zombie",
+          "value": 50
+        },
+        {
+          "id": "0000000000000096",
+          "type": "ftbquests:item",
+          "title": "收集生物样本",
+          "item": "qlmzombie:biohazard_sample",
+          "count": 2
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000097",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_sword",
+          "count": 1
+        },
+        {
+          "id": "0000000000000098",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_helmet",
+          "count": 1
+        },
+        {
+          "id": "0000000000000099",
+          "type": "ftbquests:item",
+          "item": "tacz:ak47",
+          "count": 1
+        },
+        {
+          "id": "000000000000009A",
+          "type": "ftbquests:item",
+          "item": "tacz:762x39",
+          "count": 120
+        },
+        {
+          "id": "000000000000009B",
+          "type": "ftbquests:item",
+          "item": "tacz:sight_coyote",
+          "count": 1
+        },
+        {
+          "id": "000000000000009C",
+          "type": "ftbquests:item",
+          "item": "tacz:762x39",
+          "count": 120
+        },
+        {
+          "id": "000000000000009D",
+          "type": "ftbquests:item",
+          "item": "minecraft:enchanted_golden_apple",
+          "count": 1
+        },
+        {
+          "id": "000000000000009E",
+          "type": "ftbquests:item",
+          "item": "infectious:medikit",
+          "count": 2
+        },
+        {
+          "id": "000000000000009F",
+          "type": "ftbquests:item",
+          "item": "craftingdead:adrenaline_syringe",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "000000000000001A",
+      "x": 3.0,
+      "y": 0.0,
+      "title": "尸潮幸存者",
+      "description": [
+        "在血月中抵挡5波尸潮攻击。只有最勇敢的幸存者才能做到这一点。获得来自TACZ和斯巴达的顶级武器作为奖励。"
+      ],
+      "icon": "minecraft:totem_of_undying",
+      "tasks": [
+        {
+          "id": "00000000000000A0",
+          "type": "ftbquests:kill",
+          "title": "消灭100个僵尸",
+          "entity": "minecraft:zombie",
+          "value": 100
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000A1",
+          "type": "ftbquests:item",
+          "item": "minecraft:totem_of_undying",
+          "count": 2
+        },
+        {
+          "id": "00000000000000A2",
+          "type": "ftbquests:item",
+          "item": "spartanweaponry:diamond_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000A3",
+          "type": "ftbquests:item",
+          "item": "spartanweaponry:diamond_helmet",
+          "count": 1
+        },
+        {
+          "id": "00000000000000A4",
+          "type": "ftbquests:item",
+          "item": "ironchest:diamond_chest",
+          "count": 1
+        },
+        {
+          "id": "00000000000000A5",
+          "type": "ftbquests:item",
+          "item": "tacz:m249",
+          "count": 1
+        },
+        {
+          "id": "00000000000000A6",
+          "type": "ftbquests:item",
+          "item": "tacz:556x45",
+          "count": 120
+        },
+        {
+          "id": "00000000000000A7",
+          "type": "ftbquests:item",
+          "item": "tacz:light_extended_mag_3",
+          "count": 1
+        },
+        {
+          "id": "00000000000000A8",
+          "type": "ftbquests:item",
+          "item": "minecraft:totem_of_undying",
+          "count": 1
+        },
+        {
+          "id": "00000000000000A9",
+          "type": "ftbquests:item",
+          "item": "infectious:medikit",
+          "count": 3
+        },
+        {
+          "id": "00000000000000AA",
+          "type": "ftbquests:item",
+          "item": "zombiekit:medical_kit",
+          "count": 2
+        }
+      ],
+      "dependencies": [
+        "0000000000000019"
+      ]
+    },
+    {
+      "id": "000000000000001B",
+      "x": 3.0,
+      "y": 3.0,
+      "title": "末日幸存者",
+      "description": [
+        "你已经成为末日中真正的幸存者。完成了所有挑战，收集了所有珍贵材料。你是这个世界的守护者。"
+      ],
+      "icon": "qlmzombie:zombie_core",
+      "tasks": [
+        {
+          "id": "00000000000000AB",
+          "type": "ftbquests:item",
+          "title": "收集僵尸核心",
+          "item": "qlmzombie:zombie_core",
+          "count": 10
+        },
+        {
+          "id": "00000000000000AC",
+          "type": "ftbquests:item",
+          "title": "收集感染精华",
+          "item": "qlmzombie:infected_essence",
+          "count": 8
+        },
+        {
+          "id": "00000000000000AD",
+          "type": "ftbquests:item",
+          "title": "收集生物样本",
+          "item": "qlmzombie:biohazard_sample",
+          "count": 5
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000AE",
+          "type": "ftbquests:item",
+          "item": "minecraft:enchanted_golden_apple",
+          "count": 5
+        },
+        {
+          "id": "00000000000000AF",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000B0",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_chestplate",
+          "count": 1
+        },
+        {
+          "id": "00000000000000B1",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_leggings",
+          "count": 1
+        },
+        {
+          "id": "00000000000000B2",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_boots",
+          "count": 1
+        },
+        {
+          "id": "00000000000000B3",
+          "type": "ftbquests:item",
+          "item": "tacz:minigun",
+          "count": 1
+        },
+        {
+          "id": "00000000000000B4",
+          "type": "ftbquests:item",
+          "item": "tacz:308",
+          "count": 120
+        },
+        {
+          "id": "00000000000000B5",
+          "type": "ftbquests:item",
+          "item": "tacz:stock_moe",
+          "count": 1
+        },
+        {
+          "id": "00000000000000B6",
+          "type": "ftbquests:item",
+          "item": "tacz:308",
+          "count": 120
+        },
+        {
+          "id": "00000000000000B7",
+          "type": "ftbquests:item",
+          "item": "minecraft:enchanted_golden_apple",
+          "count": 2
+        },
+        {
+          "id": "00000000000000B8",
+          "type": "ftbquests:item",
+          "item": "craftingdead:first_aid_kit",
+          "count": 4
+        },
+        {
+          "id": "00000000000000B9",
+          "type": "ftbquests:item",
+          "item": "craftingdead:adrenaline_syringe",
+          "count": 3
+        },
+        {
+          "id": "00000000000000BA",
+          "type": "ftbquests:item",
+          "item": "zombiekit:injector",
+          "count": 2
+        }
+      ],
+      "dependencies": [
+        "0000000000000019"
+      ]
+    }
+  ]
+}

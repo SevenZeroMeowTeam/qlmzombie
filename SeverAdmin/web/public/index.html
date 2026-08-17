@@ -105,17 +105,10 @@
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, var(--green), transparent); animation: pulseGreen 1.6s infinite;
   }
-  /* ===== 性能监控（TPS/延迟 曲线） ===== */
-  .section-title {
-    text-align: center; font-size: 22px; font-weight: 700; color: var(--text);
-    margin: 26px 0 6px; letter-spacing: 1px;
-    background: linear-gradient(90deg, var(--accent2), var(--gold));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  .section-sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
-  .monitor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 0 0 20px; }
+  /* ===== 性能监控（TPS/延迟 曲线，紧凑卡片） ===== */
+  .monitor-grid { padding: 20px 0 4px; }
   .chart-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px 14px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px 10px;
     position: relative; overflow: hidden; animation: fadeUp .6s both;
     transition: transform .25s, border-color .25s, box-shadow .25s;
   }
@@ -123,6 +116,9 @@
   .chart-card:nth-child(2) { animation-delay: .12s; }
   .chart-card:nth-child(3) { animation-delay: .19s; }
   .chart-card:nth-child(4) { animation-delay: .26s; }
+  .monitor-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .monitor-head .m-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .monitor-head .m-sub { font-size: 12px; color: var(--muted); }
   .chart-card:hover { transform: translateY(-4px); border-color: var(--accent2); box-shadow: 0 10px 26px rgba(88,166,255,.14); }
   .chart-val { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; transition: color .3s; }
   .chart-val .unit { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 2px; }
@@ -132,16 +128,16 @@
   .chart-val.na { color: var(--muted); }
   .chart-card canvas { width: 100%; display: block; }
   /* ===== 合并监控（单一综合图表） ===== */
-  .chart-main canvas { height: 230px; }
-  .metric-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .chart-main canvas { height: 100px; }
+  .metric-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
   .m-badge {
     display: inline-flex; align-items: center; gap: 6px;
     background: rgba(255,255,255,.04); border: 1px solid var(--border);
-    padding: 5px 12px; border-radius: 999px; font-size: 12px; color: var(--muted);
+    padding: 3px 10px; border-radius: 999px; font-size: 12px; color: var(--muted);
   }
   .m-badge .dot, .chart-legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-  .m-badge .chart-val { font-size: 16px; }
-  .chart-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+  .m-badge .chart-val { font-size: 15px; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; font-size: 11px; color: var(--muted); }
   /* ===== 内容卡片网格（独立卡片） ===== */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 20px 0 60px; }
   .card {
@@ -241,17 +237,19 @@
 </div>
 
 <div class="container">
-  <div class="section-title">📊 服务器性能监控</div>
-  <div class="section-sub">每 2 秒刷新 · TPS / MSPT / 延迟 / 在线人数 合并实时曲线</div>
   <div class="monitor-grid">
     <div class="chart-card chart-main">
+      <div class="monitor-head">
+        <span class="m-title">📊 服务器性能监控</span>
+        <span class="m-sub">每 2 秒刷新 · TPS / MSPT / 延迟 / 在线人数</span>
+      </div>
       <div class="metric-badges">
         <span class="m-badge"><i class="dot" style="background:#3fb950"></i>TPS <b class="chart-val na" id="valTps">--</b></span>
         <span class="m-badge"><i class="dot" style="background:#f85149"></i>MSPT <b class="chart-val na" id="valMspt">--</b></span>
         <span class="m-badge"><i class="dot" style="background:#58a6ff"></i>延迟 <b class="chart-val na" id="valLatency">--</b></span>
         <span class="m-badge"><i class="dot" style="background:#d29922"></i>在线 <b class="chart-val na" id="valPlayers">--</b></span>
       </div>
-      <canvas id="chartMain" height="230"></canvas>
+      <canvas id="chartMain" height="100"></canvas>
       <div class="chart-legend">
         <span><i class="dot" style="background:#3fb950"></i>TPS（满值 20）</span>
         <span><i class="dot" style="background:#f85149"></i>MSPT（阈值 50ms）</span>
@@ -462,7 +460,7 @@ function drawMultiChart(canvasId, series) {
   if (!canvas) return;
   const dpr = window.devicePixelRatio || 1;
   const w = Math.max(200, canvas.parentElement ? canvas.parentElement.clientWidth - 8 : 300);
-  const h = canvas.height || 230;
+  const h = canvas.height || 100;
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
   canvas.style.height = h + 'px';

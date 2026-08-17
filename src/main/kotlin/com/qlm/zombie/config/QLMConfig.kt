@@ -7,8 +7,8 @@ object QLMConfig {
 
     // ==================== 基础设置 ====================
     private val enableThirstConfig = builder
-        .comment("是否启用口渴系统（Thirst-Mod 整合）", "  true  - 开启口渴值管理，脱水会受伤甚至死亡", "  false - 关闭口渴值管理", "  默认: true")
-        .define("enableThirst", true)
+        .comment("是否启用口渴系统（Thirst-Mod 整合）", "  true  - 开启口渴值管理，脱水会受伤甚至死亡", "  false - 关闭口渴值管理", "  默认: false")
+        .define("enableThirst", false)
 
     private val enableDropTheMeatConfig = builder
         .comment("是否启用生物额外掉落肉类", "  true  - 击杀生物会额外掉落肉类物品", "  false - 仅保留原版掉落", "  默认: true")

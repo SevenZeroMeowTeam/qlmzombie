@@ -71,8 +71,8 @@ public class DropControlHandler {
         double base = QLMConfig.HOSTILE_GUNPOWDER_CHANCE.get();
         if (base <= 0.0) return;
 
-        int looting = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
-                net.minecraft.world.item.enchantment.Enchantments.MOB_LOOTING, killer.getMainHandItem());
+        int looting = killer.getMainHandItem().getEnchantmentLevel(
+                net.minecraft.world.item.enchantment.Enchantments.MOB_LOOTING);
         double chance = Math.min(GUNPOWDER_CHANCE_CAP,
                 base + looting * QLMConfig.HOSTILE_GUNPOWDER_LOOTING_BONUS.get());
 

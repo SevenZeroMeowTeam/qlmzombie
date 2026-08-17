@@ -192,6 +192,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量低于5%时自动触发生命恢复 III（60秒，冷却5分钟）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血月系统：前25天安全期，之后每14天一次血月降临（血月僵尸进化概率翻倍）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸进化系统：随天数增加，僵尸进化概率和血量提升（血月进化更高）"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸攻击力随天数增强：第25天后每过一天攻击力+1.5%（无上限），越到后期僵尸越致命"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7僵尸潮系统：每28天夜晚，5波僵尸潮+小Boss(死亡召唤精英僵尸)+大Boss 3阶段"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7新手保护：前25天不生成敌对生物，安心发育；25天后计分板更新为丰富emoji（🧟在线/☠附近敌人/🏆成就）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7维度封禁：下界/末地无法进入；末影人/苦力怕/女巫/猪灵族/蜘蛛/守卫者族已封禁"))
@@ -249,7 +250,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build41"
+        const val MOD_VERSION = "3.0.0.beta.build43"
 
         @JvmField
         @Volatile

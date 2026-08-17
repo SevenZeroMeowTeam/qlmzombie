@@ -4,6 +4,16 @@ out/
 bin/
 *.class
 
+# ==================== 服务器私钥 / 凭据（禁止提交） ====================
+SeverAdmin/*_id_ed25519*
+SeverAdmin/*.pem
+*.key
+*.pem
+*.ppk
+
+# ==================== 一次性热修复中的大构建产物（脚本保留，jar 不提交） ====================
+deploy-upload/hotfix_*/*.jar
+
 # ==================== Gradle ====================
 .gradle/
 gradle-app.setting

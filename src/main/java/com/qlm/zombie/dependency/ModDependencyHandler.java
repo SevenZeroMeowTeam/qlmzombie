@@ -41,9 +41,8 @@ import net.minecraftforge.fml.loading.FMLPaths;
  *   <li><b>禁用策略</b>：保守模式。只禁用 {@link #DEFAULT_DISABLED_PREFIXES}
  *       精确前缀匹配的"已知问题模组"（如 ToughAsNails，与项目"口渴"系统冲突），
  *       不再用模糊关键字扫描 mods 目录，避免误伤 create/refinedstorage/crafting-dead 等依赖。</li>
- *   <li><b>ThirstWasTaken 白名单</b>：ThirstWasTaken（modId=thirst，通道 thirst:main）不再禁用——
- *       客户端可能仍装有外置 ThirstWasTaken JAR，服务器端保留它以匹配客户端网络 channel，
- *       避免 "mismatched mod channel list" 拒连（服务器缺少 Thirst）。</li>
+ *   <li><b>口渴模组禁用</b>：ThirstWasTaken（modId=thirst，通道 thirst:main）纳入统一禁用——
+ *       本地与服务器两端均禁用，避免与本模组口渴系统重复叠加和配置/战利品冲突。</li>
  *   <li><b>恢复策略</b>：如果 mods 目录中存在 {@code .disabled} 文件，且文件名在白名单中、
  *       不在 DEFAULT_DISABLED 列表中，则自动恢复（取消禁用）。这样即便外部脚本误禁用
  *       kotlinforforge/kubejs/cloth-config，下次启动也会自动恢复。</li>
@@ -71,11 +70,8 @@ public class ModDependencyHandler {
      *
      * <p><b>双端通用</b>：无论 CLIENT 还是 DEDICATED_SERVER 都会匹配。
      *
-     * <p><b>注意</b>：ThirstWasTaken 系列不在此列表 —— 它是白名单模组（见上方类注释）。
-     * 客户端可能装有外置 ThirstWasTaken JAR（modId=thirst，通道 thirst:main），
-     * 服务器端必须保留它匹配客户端网络 channel，否则玩家连接报
-     * "Connection closed - mismatched mod channel list"（服务器缺少 Thirst）。
-     * 仅保留 ToughAsNails 与 ThirstMod/ThirstCanteen（不同作者/不同 modId）的禁用。
+    * <p><b>注意</b>：ThirstWasTaken 系列已纳入此列表并双端禁用（CLIENT + DEDICATED_SERVER）。
+    * 仅在确需外置 thirst 通道兼容时，才应从该列表移除并配套调整部署脚本。
      */
     private static final List<String> DEFAULT_DISABLED_PREFIXES = Collections.unmodifiableList(Arrays.asList(
             // ToughAsNails 常见变体（含连字符、下划线、空格、缩写）
@@ -84,7 +80,7 @@ public class ModDependencyHandler {
             "tough_as_nails",
             "tough as nails",
             "tough-as",
-            // ThirstMod / ThirstCanteen 系列（全部变体；ThirstWasTaken 不在内，见上）
+            // ThirstMod / ThirstCanteen / ThirstWasTaken 系列（全部变体）
             "thirstmod",
             "thirst-mod",
             "thirst_mod",
@@ -92,7 +88,12 @@ public class ModDependencyHandler {
             "thirstcanteen",
             "thirst-canteen",
             "thirst_canteen",
-            "thirst canteen"
+                "thirst canteen",
+                // ThirstWasTaken 系列（按用户要求双端禁用）
+                "thirstwastaken",
+                "thirst-was-taken",
+                "thirst_was_taken",
+                "thirst was taken"
     ));
 
     /**
@@ -115,18 +116,22 @@ public class ModDependencyHandler {
             "craftingdead",
             // 纯客户端渲染/UI 模组：专用服务端无作用，且 ETF 的 ResourceLocation mixin
             // 会在服务端触发客户端类加载（Screen）导致 ExceptionInInitializerError 崩溃。
-            // 注意：kleiders_custom_renderer 不在此列表 —— 它注册了网络 channel（客户端皮肤/模型
+            // 注意 1：kleiders_custom_renderer 不在此列表 —— 它注册了网络 channel（客户端皮肤/模型
             // 同步），服务器端缺失会导致玩家连接报 "mismatched mod channel list"；且其 mixin 配置为空、
             // 主类无客户端类引用，服务端加载安全（日志已证实 130 mods 含 Kleiders 正常启动），
             // 因此服务端必须保留它以匹配客户端 channel。
+            // 注意 2：yes_steve_model (ysm) 同样不在此列表 —— 它是 side=BOTH 模组，服务端必须加载：
+            // 其 ServerPlayerMixin 在服务端处理玩家模型数据同步，缺失会导致玩家自定义模型在不同客户端
+            // 间不同步、手持物品在模型上渲染错位（物品错位）；且其公共 mixin（AbstractArrow/Projectile/
+            // ServerPlayer）与 MixinTweaker 插件均无 net/minecraft/client 类引用，服务端加载安全
+            // （客户端专属 mixin 仅在 client 环境应用）。
             "entity_texture_features",
             "entity_model_features",
             "3d-armor",
             "skinlayers3d",
             "imblocker",
             "sodiumdynamiclights",
-            "sodiumoptionsapi",
-            "ysm"
+            "sodiumoptionsapi"
     ));
 
     /** @return 当前运行环境是否为独立专用服务端。 */

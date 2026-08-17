@@ -58,12 +58,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.item.*;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
@@ -74,7 +71,6 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
 
@@ -121,7 +117,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
 
     private final Set<UUID> myDamagedEntities = new HashSet<>();
     private final Map<UUID, BlockPos> myKillPositions = new HashMap<>();
-    private static final long KILL_TRACKING_TICKS = 200;
 
     // AI任务状态：当有活跃任务时，不执行自动跟随
     private boolean hasActiveTask = false;
@@ -197,7 +192,7 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
         if (!weapon.isEmpty()) {
             this.setItemSlot(EquipmentSlot.MAINHAND, weapon);
             if (isTaczWeapon(weapon)) {
-                giveTaczAmmo(weapon);
+                giveTaczAmmo();
             }
         }
     }
@@ -206,6 +201,7 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
         List<Item> modWeapons = new ArrayList<>();
         for (Item item : ForgeRegistries.ITEMS) {
             ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
+            if (id == null) continue;
             String namespace = id.getNamespace();
             if (namespace.equals("minecraft")) continue;
             String path = id.getPath();
@@ -366,13 +362,13 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
 
     private static boolean isTaczWeapon(ItemStack stack) {
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        return id.getNamespace().equals("tacz");
+        return id != null && id.getNamespace().equals("tacz");
     }
 
-    private void giveTaczAmmo(ItemStack weapon) {
+    private void giveTaczAmmo() {
         for (Item item : ForgeRegistries.ITEMS) {
             ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
-            if (id.getNamespace().equals("tacz") && id.getPath().contains("ammo")) {
+            if (id != null && id.getNamespace().equals("tacz") && id.getPath().contains("ammo")) {
                 ItemStack ammo = new ItemStack(item, 64);
                 for (int i = 0; i < inventory.getContainerSize(); i++) {
                     if (inventory.getItem(i).isEmpty()) {
@@ -393,9 +389,11 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             emap.put(Enchantments.FIRE_ASPECT, 2);
             emap.put(Enchantments.UNBREAKING, 3);
             int variant = rnd.nextInt(3);
-            if (variant == 0) emap.put(Enchantments.SMITE, 4 + rnd.nextInt(2));
-            else if (variant == 1) emap.put(Enchantments.BANE_OF_ARTHROPODS, 4 + rnd.nextInt(2));
-            else emap.put(Enchantments.KNOCKBACK, 2);
+            switch (variant) {
+                case 0 -> emap.put(Enchantments.SMITE, 4 + rnd.nextInt(2));
+                case 1 -> emap.put(Enchantments.BANE_OF_ARTHROPODS, 4 + rnd.nextInt(2));
+                default -> emap.put(Enchantments.KNOCKBACK, 2);
+            }
             net.minecraft.world.item.enchantment.EnchantmentHelper.setEnchantments(emap, stack);
         } catch (Exception ignored) {
             com.qlm.zombie.QLMZombieMod.LOGGER.debug("Failed to enchant default weapon: {}", ignored.getMessage());
@@ -625,8 +623,8 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
 
     public GameProfile getGameProfile() {
         if (this.gameProfile == null) {
-            UUID uuid = this.getPlayerUUID().orElse(UUID.randomUUID());
-            this.gameProfile = new GameProfile(uuid, this.getCustomNameStr());
+            UUID playerUuid = this.getPlayerUUID().orElse(UUID.randomUUID());
+            this.gameProfile = new GameProfile(playerUuid, this.getCustomNameStr());
         }
         return this.gameProfile;
     }
@@ -725,7 +723,7 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             }
         }
 
-        if (this.isTamed() && this.getOwnerUUID().map(uuid -> uuid.equals(player.getUUID())).orElse(false)) {
+        if (this.isTamed() && this.getOwnerUUID().map(ownerUuid -> ownerUuid.equals(player.getUUID())).orElse(false)) {
             if (stack.isEmpty()) {
                 if (player.isShiftKeyDown()) {
                     this.setSitting(!this.isSitting());
@@ -925,11 +923,11 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
         if (this.level().isClientSide) return;
         Iterator<UUID> it = myDamagedEntities.iterator();
         while (it.hasNext()) {
-            UUID uuid = it.next();
-            Entity entity = ((ServerLevel) this.level()).getEntity(uuid);
+            UUID entityUuid = it.next();
+            Entity entity = ((ServerLevel) this.level()).getEntity(entityUuid);
             if (entity == null || !entity.isAlive() || entity.isRemoved()) {
                 if (entity instanceof LivingEntity living && living.getLastHurtByMob() == this) {
-                    myKillPositions.put(uuid, new BlockPos((int) living.getX(), (int) living.getY(), (int) living.getZ()));
+                    myKillPositions.put(entityUuid, new BlockPos((int) living.getX(), (int) living.getY(), (int) living.getZ()));
                 }
                 it.remove();
             }
@@ -987,7 +985,7 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (source.getEntity() instanceof Player player && this.isTamed()) {
-            if (this.getOwnerUUID().map(uuid -> uuid.equals(player.getUUID())).orElse(false)) {
+            if (this.getOwnerUUID().map(ownerUuid -> ownerUuid.equals(player.getUUID())).orElse(false)) {
                 return false;
             }
         }
@@ -1037,7 +1035,7 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        getPlayerUUID().ifPresent(uuid -> tag.putUUID(TAG_PLAYER_UUID, uuid));
+        getPlayerUUID().ifPresent(playerUuid -> tag.putUUID(TAG_PLAYER_UUID, playerUuid));
         String skinURL = getSkinURL();
         if (!skinURL.isEmpty()) {
             tag.putString(TAG_SKIN_URL, skinURL);
@@ -1048,7 +1046,7 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             tag.putString(TAG_CUSTOM_NAME, name);
         }
         tag.putBoolean(TAG_TAMED, isTamed());
-        getOwnerUUID().ifPresent(uuid -> tag.putUUID(TAG_OWNER_UUID, uuid));
+        getOwnerUUID().ifPresent(ownerUuid -> tag.putUUID(TAG_OWNER_UUID, ownerUuid));
         tag.putBoolean(TAG_SITTING, isSitting());
         tag.putInt(TAG_FOOD_LEVEL, getFoodLevel());
         tag.putFloat(TAG_SATURATION, getSaturation());
@@ -1161,7 +1159,7 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
 
     @Override
     public boolean canBeLeashed(Player player) {
-        return this.isTamed() && this.getOwnerUUID().map(uuid -> uuid.equals(player.getUUID())).orElse(false);
+        return this.isTamed() && this.getOwnerUUID().map(ownerUuid -> ownerUuid.equals(player.getUUID())).orElse(false);
     }
 
     private static class TamableSitGoal extends Goal {
@@ -1347,7 +1345,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
         @Override
         public void start() {
             cooldown = 100;
-            boolean equippedSomething = false;
             for (int i = 0; i < entity.inventory.getContainerSize(); i++) {
                 ItemStack stack = entity.inventory.getItem(i);
                 if (!stack.isEmpty()) {
@@ -1706,9 +1703,9 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
         @Override
         public void start() {
             this.mob.setTarget(this.ownerLastHurt);
-            LivingEntity owner = entity.getOwner();
-            if (owner != null) {
-                this.timestamp = owner.getLastHurtMobTimestamp();
+            LivingEntity ownerEntity = entity.getOwner();
+            if (ownerEntity != null) {
+                this.timestamp = ownerEntity.getLastHurtMobTimestamp();
             }
             super.start();
         }
@@ -1721,7 +1718,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
         private int cooldown;
         private WorkstationType stationType;
         private String currentRecipe;
-        private int currentRecipeIndex;
 
         private enum WorkstationType {
             CRAFTING, FURNACE, BLAST_FURNACE, SMOKER,
@@ -1937,26 +1933,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
                 {"minecraft:chorus_fruit", "minecraft:popped_chorus_fruit"},
         };
 
-        private static final String[] LOGS = {
-                "minecraft:oak_log", "minecraft:spruce_log", "minecraft:birch_log",
-                "minecraft:jungle_log", "minecraft:acacia_log", "minecraft:dark_oak_log",
-                "minecraft:mangrove_log", "minecraft:cherry_log", "minecraft:crimson_stem",
-                "minecraft:warped_stem", "minecraft:oak_wood", "minecraft:spruce_wood",
-                "minecraft:birch_wood", "minecraft:jungle_wood", "minecraft:acacia_wood",
-                "minecraft:dark_oak_wood", "minecraft:mangrove_wood", "minecraft:cherry_wood",
-                "minecraft:crimson_hyphae", "minecraft:warped_hyphae",
-                "minecraft:stripped_oak_log", "minecraft:stripped_spruce_log",
-                "minecraft:stripped_birch_log", "minecraft:stripped_jungle_log",
-                "minecraft:stripped_acacia_log", "minecraft:stripped_dark_oak_log",
-                "minecraft:stripped_mangrove_log", "minecraft:stripped_cherry_log",
-                "minecraft:stripped_crimson_stem", "minecraft:stripped_warped_stem",
-                "minecraft:stripped_oak_wood", "minecraft:stripped_spruce_wood",
-                "minecraft:stripped_birch_wood", "minecraft:stripped_jungle_wood",
-                "minecraft:stripped_acacia_wood", "minecraft:stripped_dark_oak_wood",
-                "minecraft:stripped_mangrove_wood", "minecraft:stripped_cherry_wood",
-                "minecraft:stripped_crimson_hyphae", "minecraft:stripped_warped_hyphae",
-        };
-
         public AIWorkstationGoal(FakePlayerEntity entity) {
             this.entity = entity;
             this.setFlags(java.util.EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
@@ -1988,24 +1964,18 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
                         BlockState state = entity.level().getBlockState(pos);
                         WorkstationType type = getWorkstationType(state);
                         if (type == null) continue;
-                        String recipe = null;
-                        int recipeIdx = -1;
+                        String recipe;
 
                         if (type == WorkstationType.CRAFTING && hasCraftingRecipe() != null) {
                             recipe = hasCraftingRecipe();
-                            recipeIdx = 0;
                         } else if ((type == WorkstationType.FURNACE || type == WorkstationType.BLAST_FURNACE || type == WorkstationType.SMOKER) && hasSmeltingRecipe(type) != null) {
                             recipe = hasSmeltingRecipe(type);
-                            recipeIdx = 0;
                         } else if (type == WorkstationType.SMITHING && hasMaterial("minecraft:diamond_sword") && hasMaterial("minecraft:netherite_ingot")) {
                             recipe = "netherite_sword";
-                            recipeIdx = 0;
                         } else if (type == WorkstationType.FLETCHING && hasMaterial("minecraft:flint") && hasMaterial("minecraft:stick") && hasMaterial("minecraft:feather")) {
                             recipe = "arrows";
-                            recipeIdx = 0;
                         } else if (type == WorkstationType.STONECUTTER && hasMaterial("minecraft:stone")) {
                             recipe = "stone_bricks";
-                            recipeIdx = 0;
                         } else {
                             continue;
                         }
@@ -2016,7 +1986,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
                             best = pos;
                             bestType = type;
                             currentRecipe = recipe;
-                            currentRecipeIndex = recipeIdx;
                         }
                     }
                 }
@@ -2053,25 +2022,6 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
                 }
             }
             return null;
-        }
-
-        private boolean hasAllMaterials(String materials) {
-            String[] parts = materials.split(",");
-            for (String mat : parts) {
-                if (!hasMaterial(mat.trim())) return false;
-            }
-            return true;
-        }
-
-        private boolean consumeMaterials(String materials) {
-            String[] parts = materials.split(",");
-            for (String mat : parts) {
-                String materialId = mat.trim();
-                int slot = findMaterialSlot(materialId);
-                if (slot == -1) return false;
-                entity.inventory.getItem(slot).shrink(1);
-            }
-            return true;
         }
 
         private String hasSmeltingRecipe(WorkstationType type) {
@@ -2124,7 +2074,8 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             if (targetId == null) return false;
             for (int i = 0; i < entity.inventory.getContainerSize(); i++) {
                 ItemStack stack = entity.inventory.getItem(i);
-                if (!stack.isEmpty() && ForgeRegistries.ITEMS.getKey(stack.getItem()).equals(targetId)) {
+                ResourceLocation key = stack.isEmpty() ? null : ForgeRegistries.ITEMS.getKey(stack.getItem());
+                if (targetId.equals(key)) {
                     return true;
                 }
             }
@@ -2136,16 +2087,10 @@ public class FakePlayerEntity extends PathfinderMob implements MenuProvider {
             if (targetId == null) return -1;
             for (int i = 0; i < entity.inventory.getContainerSize(); i++) {
                 ItemStack stack = entity.inventory.getItem(i);
-                if (!stack.isEmpty() && ForgeRegistries.ITEMS.getKey(stack.getItem()).equals(targetId)) {
+                ResourceLocation key = stack.isEmpty() ? null : ForgeRegistries.ITEMS.getKey(stack.getItem());
+                if (targetId.equals(key)) {
                     return i;
                 }
-            }
-            return -1;
-        }
-
-        private int findEmptySlot() {
-            for (int i = 0; i < entity.inventory.getContainerSize(); i++) {
-                if (entity.inventory.getItem(i).isEmpty()) return i;
             }
             return -1;
         }

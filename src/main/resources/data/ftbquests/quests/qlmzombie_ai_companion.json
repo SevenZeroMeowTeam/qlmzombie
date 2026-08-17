@@ -26,18 +26,6 @@
   "rewards": [
     {
       "type": "ftbquests:item",
-      "id": "reward_1",
-      "item": "qlmzombie:fake_player_spawn_egg",
-      "count": 2
-    },
-    {
-      "type": "ftbquests:item",
-      "id": "reward_2",
-      "item": "qlmzombie:medical_supply",
-      "count": 2
-    },
-    {
-      "type": "ftbquests:item",
       "id": "reward_3",
       "item": "minecraft:iron_helmet",
       "count": 1
@@ -46,6 +34,24 @@
       "type": "ftbquests:item",
       "id": "reward_4",
       "item": "minecraft:iron_chestplate",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:glock_17",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "tacz:9mm",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "tacz:sight_rmr_dot",
       "count": 1
     }
   ],

@@ -51,13 +51,37 @@
     {
       "type": "ftbquests:item",
       "id": "reward_5",
-      "item": "qlmzombie:medical_supply",
-      "count": 5
+      "item": "tacz:m249",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_6",
-      "item": "qlmzombie:survival_kit",
+      "item": "tacz:556x45",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "tacz:light_extended_mag_3",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_8",
+      "item": "minecraft:totem_of_undying",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_9",
+      "item": "infectious:medikit",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_10",
+      "item": "zombiekit:medical_kit",
       "count": 2
     }
   ],

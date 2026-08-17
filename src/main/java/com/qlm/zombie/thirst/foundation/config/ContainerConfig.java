@@ -32,6 +32,7 @@ public class ContainerConfig {
         SPEC = BUILDER.build();
     }
 
+    @SuppressWarnings("deprecation")
     public static void setup()
     {
         Path configPath = FMLPaths.CONFIGDIR.get();

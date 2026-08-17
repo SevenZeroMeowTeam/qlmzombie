@@ -1,0 +1,658 @@
+{
+  "id": "000000000000000A",
+  "group": "",
+  "order_index": 1,
+  "filename": "gun_master",
+  "title": "僵尸猎手 · 枪械大师",
+  "quests": [
+    {
+      "id": "000000000000000B",
+      "x": 0.0,
+      "y": 0.0,
+      "title": "僵尸猎手",
+      "description": [
+        "你已经掌握了基本的生存技能。现在是时候消灭更多的僵尸，收集它们的核心来制作强大的装备。"
+      ],
+      "icon": "minecraft:iron_sword",
+      "tasks": [
+        {
+          "id": "0000000000000055",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 30
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000056",
+          "type": "ftbquests:item",
+          "item": "tacz:aa12",
+          "count": 1
+        },
+        {
+          "id": "0000000000000057",
+          "type": "ftbquests:item",
+          "item": "tacz:12g",
+          "count": 120
+        },
+        {
+          "id": "0000000000000058",
+          "type": "ftbquests:item",
+          "item": "tacz:muzzle_choke_sg",
+          "count": 1
+        },
+        {
+          "id": "0000000000000059",
+          "type": "ftbquests:item",
+          "item": "minecraft:golden_apple",
+          "count": 3
+        },
+        {
+          "id": "000000000000005A",
+          "type": "ftbquests:item",
+          "item": "tacz:12g",
+          "count": 120
+        },
+        {
+          "id": "000000000000005B",
+          "type": "ftbquests:item",
+          "item": "craftingdead:first_aid_kit",
+          "count": 2
+        },
+        {
+          "id": "000000000000005C",
+          "type": "ftbquests:item",
+          "item": "craftingdead:adrenaline_syringe",
+          "count": 2
+        }
+      ],
+      "dependencies": [
+        "0000000000000006"
+      ]
+    },
+    {
+      "id": "000000000000000C",
+      "x": 3.0,
+      "y": 0.0,
+      "title": "初识枪械",
+      "description": [
+        "枪械是末日中最可靠的伙伴。收集铁锭和火药，锻造属于你的第一把手枪。前往枪械工作台可以组装、改装你的武器。",
+        "",
+        "奖励：手枪 + 弹药 + 红点瞄具"
+      ],
+      "icon": "tacz:glock_17",
+      "tasks": [
+        {
+          "id": "000000000000005D",
+          "type": "ftbquests:item",
+          "title": "收集铁锭",
+          "item": "minecraft:iron_ingot",
+          "count": 16
+        },
+        {
+          "id": "000000000000005E",
+          "type": "ftbquests:item",
+          "title": "收集火药",
+          "item": "minecraft:gunpowder",
+          "count": 8
+        }
+      ],
+      "rewards": [
+        {
+          "id": "000000000000005F",
+          "type": "ftbquests:item",
+          "item": "tacz:glock_17",
+          "count": 1
+        },
+        {
+          "id": "0000000000000060",
+          "type": "ftbquests:item",
+          "item": "tacz:9mm",
+          "count": 64
+        },
+        {
+          "id": "0000000000000061",
+          "type": "ftbquests:item",
+          "item": "tacz:sight_rmr_dot",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "000000000000000B"
+      ]
+    },
+    {
+      "id": "000000000000000D",
+      "x": 6.0,
+      "y": 0.0,
+      "title": "弹药储备",
+      "description": [
+        "枪没有子弹就是烧火棍。大量储备弹药，才能在这场末日中活下去。利用弹药盒可以快速装填子弹。",
+        "",
+        "奖励：大量弹药 + 弹药盒 + 全被甲弹改装"
+      ],
+      "icon": "tacz:ammo_box.iron",
+      "tasks": [
+        {
+          "id": "0000000000000062",
+          "type": "ftbquests:item",
+          "title": "收集铁锭",
+          "item": "minecraft:iron_ingot",
+          "count": 32
+        },
+        {
+          "id": "0000000000000063",
+          "type": "ftbquests:item",
+          "title": "收集火药",
+          "item": "minecraft:gunpowder",
+          "count": 8
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000064",
+          "type": "ftbquests:item",
+          "item": "tacz:9mm",
+          "count": 128
+        },
+        {
+          "id": "0000000000000065",
+          "type": "ftbquests:item",
+          "item": "tacz:ammo_box.iron",
+          "count": 1
+        },
+        {
+          "id": "0000000000000066",
+          "type": "ftbquests:item",
+          "item": "tacz:ammo_mod_fmj",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "000000000000000C"
+      ]
+    },
+    {
+      "id": "000000000000000E",
+      "x": 9.0,
+      "y": 0.0,
+      "title": "冲锋枪手",
+      "description": [
+        "冲锋枪在近中距离火力凶猛。消灭一批僵尸，证明你有资格掌握更强大的武器。",
+        "",
+        "奖励：冲锋枪 + 弹药 + 垂直握把"
+      ],
+      "icon": "tacz:ump45",
+      "tasks": [
+        {
+          "id": "0000000000000067",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 15
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000068",
+          "type": "ftbquests:item",
+          "item": "tacz:ump45",
+          "count": 1
+        },
+        {
+          "id": "0000000000000069",
+          "type": "ftbquests:item",
+          "item": "tacz:45acp",
+          "count": 96
+        },
+        {
+          "id": "000000000000006A",
+          "type": "ftbquests:item",
+          "item": "tacz:grip_vertical_military",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "000000000000000D"
+      ]
+    },
+    {
+      "id": "000000000000000F",
+      "x": 12.0,
+      "y": 0.0,
+      "title": "突击步枪",
+      "description": [
+        "突击步枪是末日战场的中坚力量。收集大量钢铁与火药，换取一把传奇般的 AK-47。",
+        "",
+        "奖励：AK-47 + 弹药 + 简易反射瞄具"
+      ],
+      "icon": "tacz:ak47",
+      "tasks": [
+        {
+          "id": "000000000000006B",
+          "type": "ftbquests:item",
+          "title": "收集铁锭",
+          "item": "minecraft:iron_ingot",
+          "count": 64
+        },
+        {
+          "id": "000000000000006C",
+          "type": "ftbquests:item",
+          "title": "收集火药",
+          "item": "minecraft:gunpowder",
+          "count": 16
+        }
+      ],
+      "rewards": [
+        {
+          "id": "000000000000006D",
+          "type": "ftbquests:item",
+          "item": "tacz:ak47",
+          "count": 1
+        },
+        {
+          "id": "000000000000006E",
+          "type": "ftbquests:item",
+          "item": "tacz:762x39",
+          "count": 128
+        },
+        {
+          "id": "000000000000006F",
+          "type": "ftbquests:item",
+          "item": "tacz:sight_coyote",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "000000000000000E"
+      ]
+    },
+    {
+      "id": "0000000000000010",
+      "x": 15.0,
+      "y": 0.0,
+      "title": "精准射手",
+      "description": [
+        "远程精准打击往往能让你在危险发生前就解除威胁。消灭一批骷髅，获得一把栓动式狙击步枪。",
+        "",
+        "奖励：M700 狙击步枪 + 弹药 + 变倍瞄具"
+      ],
+      "icon": "tacz:m700",
+      "tasks": [
+        {
+          "id": "0000000000000070",
+          "type": "ftbquests:kill",
+          "title": "消灭骷髅",
+          "entity": "minecraft:skeleton",
+          "value": 20
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000071",
+          "type": "ftbquests:item",
+          "item": "tacz:m700",
+          "count": 1
+        },
+        {
+          "id": "0000000000000072",
+          "type": "ftbquests:item",
+          "item": "tacz:30_06",
+          "count": 64
+        },
+        {
+          "id": "0000000000000073",
+          "type": "ftbquests:item",
+          "item": "tacz:scope_lpvo_1_6",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "000000000000000F"
+      ]
+    },
+    {
+      "id": "0000000000000011",
+      "x": 18.0,
+      "y": 0.0,
+      "title": "无声行动",
+      "description": [
+        "消音器能让你在黑暗中悄无声息地行动，不被远处的僵尸发现。掌握寂静的杀戮艺术。",
+        "",
+        "奖励：消音器 + 斜握把 + 弹药"
+      ],
+      "icon": "tacz:muzzle_silencer_wraith",
+      "tasks": [
+        {
+          "id": "0000000000000074",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 20
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000075",
+          "type": "ftbquests:item",
+          "item": "tacz:muzzle_silencer_wraith",
+          "count": 1
+        },
+        {
+          "id": "0000000000000076",
+          "type": "ftbquests:item",
+          "item": "tacz:grip_rk0",
+          "count": 1
+        },
+        {
+          "id": "0000000000000077",
+          "type": "ftbquests:item",
+          "item": "tacz:9mm",
+          "count": 96
+        }
+      ],
+      "dependencies": [
+        "0000000000000010"
+      ]
+    },
+    {
+      "id": "0000000000000012",
+      "x": 21.0,
+      "y": 0.0,
+      "title": "步枪升级",
+      "description": [
+        "是时候升级你的火力了。收集 5.56 弹药，并消灭足够多的僵尸，换取一把现代步枪 HK416。",
+        "",
+        "奖励：HK416D + 弹药 + 扩容弹匣"
+      ],
+      "icon": "tacz:hk416d",
+      "tasks": [
+        {
+          "id": "0000000000000078",
+          "type": "ftbquests:item",
+          "title": "收集 5.56 弹药",
+          "item": "tacz:556x45",
+          "count": 64
+        },
+        {
+          "id": "0000000000000079",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 25
+        }
+      ],
+      "rewards": [
+        {
+          "id": "000000000000007A",
+          "type": "ftbquests:item",
+          "item": "tacz:hk416d",
+          "count": 1
+        },
+        {
+          "id": "000000000000007B",
+          "type": "ftbquests:item",
+          "item": "tacz:556x45",
+          "count": 128
+        },
+        {
+          "id": "000000000000007C",
+          "type": "ftbquests:item",
+          "item": "tacz:extended_mag_2",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "0000000000000011"
+      ]
+    },
+    {
+      "id": "0000000000000013",
+      "x": 24.0,
+      "y": 0.0,
+      "title": "近战压制",
+      "description": [
+        "当僵尸潮涌向你时，一把霰弹枪就是最好的答案。用自动霰弹枪 AA-12 在近距离碾压一切。",
+        "",
+        "奖励：AA-12 霰弹枪 + 霰弹 + 收束器"
+      ],
+      "icon": "tacz:aa12",
+      "tasks": [
+        {
+          "id": "000000000000007D",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 30
+        }
+      ],
+      "rewards": [
+        {
+          "id": "000000000000007E",
+          "type": "ftbquests:item",
+          "item": "tacz:aa12",
+          "count": 1
+        },
+        {
+          "id": "000000000000007F",
+          "type": "ftbquests:item",
+          "item": "tacz:12g",
+          "count": 128
+        },
+        {
+          "id": "0000000000000080",
+          "type": "ftbquests:item",
+          "item": "tacz:muzzle_choke_sg",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "0000000000000012"
+      ]
+    },
+    {
+      "id": "0000000000000014",
+      "x": 27.0,
+      "y": 0.0,
+      "title": "重火力支援",
+      "description": [
+        "面对无尽的尸潮，你需要持续输出的重火力。用 M249 轻机枪压制一切敌人。",
+        "",
+        "奖励：M249 轻机枪 + 弹药 + 轻量扩容弹匣"
+      ],
+      "icon": "tacz:m249",
+      "tasks": [
+        {
+          "id": "0000000000000081",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 40
+        },
+        {
+          "id": "0000000000000082",
+          "type": "ftbquests:item",
+          "title": "收集铁锭",
+          "item": "minecraft:iron_ingot",
+          "count": 32
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000083",
+          "type": "ftbquests:item",
+          "item": "tacz:m249",
+          "count": 1
+        },
+        {
+          "id": "0000000000000084",
+          "type": "ftbquests:item",
+          "item": "tacz:556x45",
+          "count": 192
+        },
+        {
+          "id": "0000000000000085",
+          "type": "ftbquests:item",
+          "item": "tacz:light_extended_mag_3",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "0000000000000013"
+      ]
+    },
+    {
+      "id": "0000000000000015",
+      "x": 30.0,
+      "y": 0.0,
+      "title": "致命狙杀",
+      "description": [
+        "用一发子弹解决一个敌人。猎杀骷髅，获得传奇狙击步枪 AWP 与高倍镜。",
+        "",
+        "奖励：AWP 狙击步枪 + 弹药 + 8 倍镜"
+      ],
+      "icon": "tacz:ai_awp",
+      "tasks": [
+        {
+          "id": "0000000000000086",
+          "type": "ftbquests:kill",
+          "title": "消灭骷髅",
+          "entity": "minecraft:skeleton",
+          "value": 30
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000087",
+          "type": "ftbquests:item",
+          "item": "tacz:ai_awp",
+          "count": 1
+        },
+        {
+          "id": "0000000000000088",
+          "type": "ftbquests:item",
+          "item": "tacz:338",
+          "count": 48
+        },
+        {
+          "id": "0000000000000089",
+          "type": "ftbquests:item",
+          "item": "tacz:scope_standard_8x",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "0000000000000014"
+      ]
+    },
+    {
+      "id": "0000000000000016",
+      "x": 33.0,
+      "y": 0.0,
+      "title": "反器材武器",
+      "description": [
+        "大口径反器材步枪能撕碎任何目标。用 M107 终结一切威胁，任何僵尸都无法抵挡。",
+        "",
+        "奖励：M107 反器材步枪 + 弹药 + 大型制退器"
+      ],
+      "icon": "tacz:m107",
+      "tasks": [
+        {
+          "id": "000000000000008A",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 40
+        },
+        {
+          "id": "000000000000008B",
+          "type": "ftbquests:kill",
+          "title": "消灭骷髅",
+          "entity": "minecraft:skeleton",
+          "value": 20
+        }
+      ],
+      "rewards": [
+        {
+          "id": "000000000000008C",
+          "type": "ftbquests:item",
+          "item": "tacz:m107",
+          "count": 1
+        },
+        {
+          "id": "000000000000008D",
+          "type": "ftbquests:item",
+          "item": "tacz:50bmg",
+          "count": 32
+        },
+        {
+          "id": "000000000000008E",
+          "type": "ftbquests:item",
+          "item": "tacz:muzzle_brake_trex",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "0000000000000015"
+      ]
+    },
+    {
+      "id": "0000000000000017",
+      "x": 36.0,
+      "y": 0.0,
+      "title": "枪械大师",
+      "description": [
+        "你已经征服了整条枪械之路。作为最终试炼，收集大量 7.62 弹药并消灭海量敌人，证明你当之无愧的枪械大师之名！",
+        "",
+        "奖励：加特林机枪 + 弹药 + 战术枪托 + 大型制退器"
+      ],
+      "icon": "tacz:minigun",
+      "tasks": [
+        {
+          "id": "000000000000008F",
+          "type": "ftbquests:item",
+          "title": "收集 7.62 弹药",
+          "item": "tacz:762x39",
+          "count": 128
+        },
+        {
+          "id": "0000000000000090",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 60
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000091",
+          "type": "ftbquests:item",
+          "item": "tacz:minigun",
+          "count": 1
+        },
+        {
+          "id": "0000000000000092",
+          "type": "ftbquests:item",
+          "item": "tacz:308",
+          "count": 128
+        },
+        {
+          "id": "0000000000000093",
+          "type": "ftbquests:item",
+          "item": "tacz:stock_moe",
+          "count": 1
+        },
+        {
+          "id": "0000000000000094",
+          "type": "ftbquests:item",
+          "item": "tacz:muzzle_brake_cthulhu",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "0000000000000016"
+      ]
+    }
+  ]
+}

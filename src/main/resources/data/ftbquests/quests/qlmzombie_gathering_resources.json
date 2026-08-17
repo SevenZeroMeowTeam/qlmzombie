@@ -46,21 +46,45 @@
   "rewards": [
     {
       "type": "ftbquests:item",
-      "id": "reward_1",
-      "item": "qlmzombie:survival_kit",
-      "count": 1
+      "id": "reward_3",
+      "item": "minecraft:iron_ingot",
+      "count": 5
     },
     {
       "type": "ftbquests:item",
       "id": "reward_2",
-      "item": "qlmzombie:reinforced_parts",
-      "count": 3
+      "item": "tacz:ump45",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_3",
-      "item": "minecraft:iron_ingot",
-      "count": 5
+      "item": "tacz:45acp",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "tacz:grip_vertical_military",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "minecraft:iron_block",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "craftingdead:clean_rag",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "craftingdead:bandage",
+      "count": 2
     }
   ],
   "relations": {

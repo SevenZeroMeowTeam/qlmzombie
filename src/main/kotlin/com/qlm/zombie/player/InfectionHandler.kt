@@ -22,6 +22,7 @@ object InfectionHandler {
     private val infectionStacks = mutableMapOf<String, Int>()
     private val lastInfectionTime = mutableMapOf<String, Long>()
 
+    @JvmStatic
     @SubscribeEvent
     fun onLivingHurt(event: LivingHurtEvent) {
         val entity = event.entity
@@ -96,6 +97,7 @@ object InfectionHandler {
         )
     }
 
+    @JvmStatic
     @SubscribeEvent
     fun onLevelTick(event: TickEvent.PlayerTickEvent) {
         if (event.phase != TickEvent.Phase.END) return

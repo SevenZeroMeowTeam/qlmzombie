@@ -71,8 +71,14 @@
     {
       "type": "ftbquests:item",
       "id": "reward_5",
-      "item": "qlmzombie:emergency_ration",
-      "count": 6
+      "item": "minecraft:cooked_beef",
+      "count": 16
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "minecraft:golden_carrot",
+      "count": 8
     }
   ],
   "relations": {

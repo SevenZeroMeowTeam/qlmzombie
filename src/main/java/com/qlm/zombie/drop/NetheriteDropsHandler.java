@@ -37,8 +37,8 @@ public class NetheriteDropsHandler {
         // 抢夺附魔提高掉落概率与数量
         int looting = 0;
         ItemStack weapon = player.getMainHandItem();
-        looting = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
-                net.minecraft.world.item.enchantment.Enchantments.MOB_LOOTING, weapon);
+        looting = weapon.getEnchantmentLevel(
+                net.minecraft.world.item.enchantment.Enchantments.MOB_LOOTING);
         double chance = BASE_DROP_CHANCE + looting * LOOTING_PER_LEVEL;
         RandomSource random = victim.getRandom();
         if (random.nextDouble() < chance) {

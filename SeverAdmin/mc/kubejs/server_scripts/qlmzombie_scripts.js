@@ -154,6 +154,19 @@ ServerEvents.recipes(event => {
         'minecraft:water_bucket'
     ]);
 
+    // 水瓶(水药水)熔炉烧制为纯净水瓶 - 任意水质等级的水瓶均可烧制
+    event.custom({
+        type: 'minecraft:smelting',
+        ingredient: {
+            type: 'forge:nbt',
+            item: 'minecraft:potion',
+            nbt: '{Potion:"minecraft:water"}'
+        },
+        result: 'qlmzombie:purified_water_bottle',
+        experience: 0.1,
+        cookingtime: 200
+    }).id('qlmzombie:purified_water_bottle_from_water_bottle');
+
     // Sleeping Bag - 3 wool in a row (only if item is registered)
     if (Ingredient.of('qlmzombie:sleeping_bag').itemIds.length > 0) {
         event.shaped('qlmzombie:sleeping_bag', ['WWW'], {

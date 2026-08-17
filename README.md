@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build41-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build43-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD41%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD43%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build41` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build41.jar` / `qlmzombie-3.0.0.beta.build41-server.jar` |
+| **当前版本** | `3.0.0.beta.build43` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build43.jar` / `qlmzombie-3.0.0.beta.build43-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,68 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build43（2026-08-17）
+
+**⚔️ 新增：僵尸攻击力随天数增强**
+- 僵尸攻击力随世界天数**线性增强**：第 25 天后每过一天攻击力 **+1.5%**（无上限）
+- 增长曲线：第25天 1.0x → 第50天 1.375x → 第76天 1.765x → 第100天 2.125x → 第200天 3.625x
+- 替代原阶段倍率的粗粒度攻击加成，更平滑且后期持续增长（生命/速度仍按昼夜阶段）
+- 游戏内登录公告同步更新
+
+**💊 FTB 任务新增医疗物品奖励**
+- 12 个生存/战斗任务追加 **26 个医疗奖励**（3 个模组）：
+  - **Crafting Dead**：急救包、绷带、肾上腺素注射器、血液注射器、空注射器、布料
+  - **Infectious**：医疗包、绷带
+  - **Zombie Survival Kit**：医疗包、绷带、酒精、樟脑、喷射器
+- 分配递进：初期绷带/布料 → 中期急救包 → 后期肾上腺素/医疗箱/喷射器
+
+**🐛 修复：Kotlin 事件订阅器未注册（@JvmStatic）**
+- **根因**：Forge `EventBus.registerClass` 只注册**静态** `@SubscribeEvent` 方法；Kotlin `object` 方法默认是实例方法，未加 `@JvmStatic` 时事件**永远不会触发**
+- **影响**：废弃建筑生成、昼夜阶段、僵尸进化、感染、快速合成、掉落肉、AI 聊天、玩家初始化等 11 个订阅器全部失效
+- **修复**：全部 11 个文件的事件方法补上 `@JvmStatic`（含 `Bus.MOD` 修正）
+
+**🐛 修复：ZombieAttributeHandler 重复注册原版僵尸属性崩溃**
+- `Duplicate DefaultAttributes entry: entity.minecraft.zombie` → 移除对原版僵尸的属性注册，+2 护甲改为生成时附加永久修饰符（效果等价）
+
+**🌙 修复：MoonHelper EnhancedCelestials API 错误**
+- `Holder.getKey()` 反射不存在 → 改用编译期 `Holder.unwrapKey()` + `ResourceKey.location()`
+
+**📦 构建产物**
+- `qlmzombie-3.0.0.beta.build43.jar`（主发行版）/ `-server.jar`（服务端专用）
+
+---
+
+### v3.0.0.beta.build42（2026-08-17）
+
+**📖 修复游戏内不显示 FTB 任务（服务器端任务数据缺失）**
+- **根因**：FTB Quests 1.20.1 只从服务器 `config/ftbquests/quests/` 目录读取任务（`ServerQuestFile.load()` → `Platform.getConfigFolder().resolve("ftbquests/quests")`），**不读取模组 jar 内的数据包 `data/ftbquests/quests/`**。此前 30 个任务文件放在 `src/main/resources/data/ftbquests/quests/`（被打进 jar 的数据包），服务器上 `config/ftbquests/quests` 不存在 → FTB Quests 加载空任务文件 → 游戏内无任务
+- **修复**：新增 `SeverAdmin/mc/config/ftbquests/quests/` 服务器配置版任务数据（4 章 30 任务 55 子任务 123 奖励）：
+  - `data.json5`（`version: 13`）+ `chapters/*.json5`（含任务/子任务/奖励/依赖，ID 采用 FTB Quests 16 位十六进制编码）
+  - `lang/en_us/` + `lang/zh_cn/` 翻译表（FTB Quests 1.20.1 的标题/描述存储在 `lang/<locale>/`，键 `quest.<HEX>.title` / `quest.<HEX>.quest_desc` / `task.<HEX>.title` / `chapter.<HEX>.title`）
+  - 任务类型修正：原 `ftbquests:entity` 类型在 1.20.1 不存在 → 击杀类转 `ftbquests:kill`（`#` 标签剥除为直接实体类型，`count`→`value`）；"驯服AI玩家"转 `ftbquests:checkmark` 手动勾选
+- **部署链路**：`entrypoint-wrapper.sh` 新增 1b 段——启动时将 `config/ftbquests/quests` 模板复制到 `/data/config/ftbquests/quests`（已存在文件保留，不覆盖游戏内编辑）；`deploy.sh` 新增 `verify_quests()` 部署自检
+- 原 `src/main/resources/data/ftbquests/quests/` 数据包文件保留（无害，客户端侧主题等仍可引用）
+
+**🧍 服务器启用 Yes Steve Model（修复物品错位）**
+- **Yes Steve Model（是，史蒂夫模型）2.6.5 现已在服务端启用**：它是 `side=BOTH` 模组，此前被误归类为纯客户端模组从服务端过滤（`SERVER_DISABLED_PREFIXES` / `CLIENT_ONLY_MODS` / entrypoint 三处），导致其 `ServerPlayerMixin`（服务端处理玩家模型数据同步）不生效
+- **修复物品错位**：服务端缺失 YSM 时，玩家自定义模型在不同客户端间不同步、手持物品在模型上渲染错位；启用后模型数据经服务端正确同步，手持物品渲染位置恢复正常
+- 已核验服务端加载安全：公共 mixin（`AbstractArrowEntityMixin` / `ProjectileEntityMixin` / `ServerPlayerMixin`）与 `MixinTweaker` 插件均无 `net/minecraft/client` 类引用，客户端专属 mixin 仅在 client 环境应用（与 ETF 崩溃情况不同）
+- 同步移除 `deploy.sh` / `entrypoint-wrapper.sh`（SeverAdmin 与 deploy-upload 两套）中的 `ysm` 过滤，服务器 mods 将保留 `[是，史蒂夫模型] ysm-2.6.5-forge+mc1.20.1-release.jar`
+
+**🧹 修复 18 个编译弃用警告（javac，build 日志从「18 个警告」降为 0）**
+- **ResourceLocation 构造器**（7 处）：`new ResourceLocation(String)` → `ResourceLocation.parse()`；`new ResourceLocation(String,String)` → `ResourceLocation.fromNamespaceAndPath()`（`StarterKitHandler` / `ConfigHelper`×2 / `ThirstBarRenderer` / `Thirst` / `ThirstModPacketHandler` / `ModDamageSource`）
+- **`ModLoadingContext.get()`**（5 处）：Forge 标记 `forRemoval` 且本 FML 版本无静态替代 → 5 个配置类 `setup()` 加 `@SuppressWarnings("deprecation")`（`ClientConfig` / `CommonConfig` / `ContainerConfig` / `ItemSettingsConfig` / `KeyWordConfig`）
+- **`EnchantmentHelper.getItemEnchantmentLevel(Enchantment,ItemStack)`**（2 处）：按 Forge 弃用说明改用 `ItemStack.getEnchantmentLevel(Enchantment)`（`DropControlHandler` 火药掉落 / `NetheriteDropsHandler` 下界合金掉落）
+- **`Item.getFoodProperties()`**（2 处）：改用 `IForgeItem.getFoodProperties(ItemStack, LivingEntity)`（`ThirstHelper`）
+- **`BlockBehaviour.getShape` 覆写**（1 处）：Forge 无替代的纯 `@Deprecated` → `SleepingBagBlock` 覆写加 `@SuppressWarnings("deprecation")`
+- **`WaterPurity.addContainer`**（1 处）：移除内部集成的 `@Deprecated` 注解（直接调用设计保留）
+
+**🧹 附带清理 Java 语言服务器警告（FakePlayerEntity / FakePlayerEntityRenderer）**
+- `FakePlayerEntity.java`：移除 4 个未使用导入、8 处局部变量遮蔽超类字段（`uuid`/`owner` 重命名）、5 处 `ForgeRegistries.ITEMS.getKey()` 可能的空指针（补充 null 防护）、`giveTaczAmmo` 未使用参数、死代码（`KILL_TRACKING_TICKS` / `equippedSomething` / `currentRecipeIndex` / `LOGS` 数组 / `hasAllMaterials` / `consumeMaterials` / `findEmptySlot`）、if 链改 switch、冗余初始赋值
+- `FakePlayerEntityRenderer.java`：移除从未使用的 `slimModel` / `defaultModel` 字段
+
+---
 
 ### v3.0.0.beta.build41（2026-08-17）
 
@@ -1235,7 +1297,7 @@ private static boolean isDedicatedServerEnv() {
 | 前缀表 | 生效范围 | 内容 |
 |:------|:---------|:-----|
 | `DEFAULT_DISABLED_PREFIXES` | 双端通用 | 17 条口渴冲突模组（ToughAsNails / ThirstWasTaken / thirstmod 等 4 家族 × 分隔符变体） |
-| `SERVER_DISABLED_PREFIXES`（**新增**） | 仅 DEDICATED_SERVER | 6 条 crafting-dead 变体（`crafting-dead` / `crafting_dead` / `crafting dead` / `[crafting-dead]` / `[craftingdead]` / `craftingdead`）+ 纯客户端渲染/UI 模组（`entity_texture_features` / `entity_model_features` / `3d-armor` / `skinlayers3d` / `imblocker` / `sodiumdynamiclights` / `sodiumoptionsapi` / `ysm`）。**不含 `kleiders_custom_renderer`**：它注册网络 channel（客户端皮肤/模型同步），服务器缺失会导致玩家连接报 `mismatched mod channel list`；其 mixin 配置为空、主类无客户端类引用，服务端加载安全（日志已证实含 Kleiders 正常启动），故服务端保留以匹配客户端 channel。 |
+| `SERVER_DISABLED_PREFIXES`（**新增**） | 仅 DEDICATED_SERVER | 6 条 crafting-dead 变体（`crafting-dead` / `crafting_dead` / `crafting dead` / `[crafting-dead]` / `[craftingdead]` / `craftingdead`）+ 纯客户端渲染/UI 模组（`entity_texture_features` / `entity_model_features` / `3d-armor` / `skinlayers3d` / `imblocker` / `sodiumdynamiclights` / `sodiumoptionsapi`）。**不含 `kleiders_custom_renderer`**：它注册网络 channel（客户端皮肤/模型同步），服务器缺失会导致玩家连接报 `mismatched mod channel list`；其 mixin 配置为空、主类无客户端类引用，服务端加载安全（日志已证实含 Kleiders 正常启动），故服务端保留以匹配客户端 channel。**也不含 `ysm`（Yes Steve Model）**：它是 `side=BOTH` 模组，`ServerPlayerMixin` 在服务端处理玩家模型数据同步，缺失会导致自定义模型在不同客户端间不同步、手持物品渲染错位（物品错位）；其公共 mixin 与 MixinTweaker 插件无客户端类引用，服务端加载安全，故服务端保留。 |
 
 新增聚合判断：
 

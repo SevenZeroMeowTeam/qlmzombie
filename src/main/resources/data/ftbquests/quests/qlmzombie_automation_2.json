@@ -65,14 +65,26 @@
     {
       "type": "ftbquests:item",
       "id": "reward_4",
-      "item": "qlmzombie:zombie_core",
-      "count": 5
+      "item": "tacz:hk416d",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_5",
-      "item": "qlmzombie:reinforced_parts",
-      "count": 8
+      "item": "tacz:556x45",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "tacz:extended_mag_2",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "minecraft:diamond_block",
+      "count": 4
     }
   ],
   "relations": {

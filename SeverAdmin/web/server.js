@@ -52,6 +52,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function detectDeployMode() {
   if (DEPLOY_MODE !== 'auto') return DEPLOY_MODE;
+  // web 容器内通常没有 docker CLI，优先用 docker.sock 探测
+  if (fs.existsSync(DOCKER_SOCKET)) return 'docker';
   try {
     execSync('docker ps >/dev/null 2>&1');
     return 'docker';
@@ -237,28 +239,115 @@ function writeJsonArray(name, arr) {
 }
 
 // ---------- Docker 监控（通过 docker.sock 只读） ----------
-function dockerRequest(method, urlPath) {
+// 发送 Docker API 请求，返回 { status, headers, body(Buffer) }。
+// 兼容 Content-Length 与 Transfer-Encoding: chunked（Docker daemon 常用 chunked，
+// 若按原样返回字符串，JSON.parse 会失败 → 前台报“docker 返回格式异常: string”）。
+function dockerRequestRaw(method, urlPath, body, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(DOCKER_SOCKET)) return reject(new Error('docker.sock 不可用'));
     const sock = net.connect(DOCKER_SOCKET);
-    // 超时保护：stats 等接口可能长时间不响应，避免 /api/admin/monitor 挂起
-    const timer = setTimeout(() => { sock.destroy(); reject(new Error('docker API 超时')); }, 8000);
-    const req = `${method} ${urlPath} HTTP/1.1\r\nHost: docker\r\nConnection: close\r\n\r\n`;
-    let data = Buffer.alloc(0);
-    sock.on('connect', () => sock.write(req));
-    sock.on('data', (c) => { data = Buffer.concat([data, c]); });
+    // 超时保护：stats/exec 等接口可能长时间不响应，避免请求挂起
+    const timer = setTimeout(() => { sock.destroy(); reject(new Error('docker API 超时')); }, timeoutMs);
+    let raw = Buffer.alloc(0);
+    sock.on('connect', () => {
+      let head = `${method} ${urlPath} HTTP/1.1\r\nHost: docker\r\nConnection: close\r\n`;
+      if (body != null) {
+        const buf = Buffer.isBuffer(body) ? body : Buffer.from(String(body), 'utf8');
+        head += `Content-Type: application/json\r\nContent-Length: ${buf.length}\r\n\r\n`;
+        sock.write(Buffer.concat([Buffer.from(head, 'utf8'), buf]));
+      } else {
+        head += '\r\n';
+        sock.write(head);
+      }
+    });
+    sock.on('data', (c) => { raw = Buffer.concat([raw, c]); });
     sock.on('error', (e) => { clearTimeout(timer); reject(e); });
     sock.on('close', () => {
       clearTimeout(timer);
-      const hdrEnd = data.indexOf('\r\n\r\n');
+      const hdrEnd = raw.indexOf('\r\n\r\n');
       if (hdrEnd < 0) return reject(new Error('docker 响应无效'));
-      const headers = data.subarray(0, hdrEnd).toString('utf8');
-      const body = data.subarray(hdrEnd + 4).toString('utf8');
-      const status = parseInt(headers.split(' ')[1] || '500', 10);
-      if (status >= 400) return reject(new Error(`docker API ${status}: ${body.slice(0, 200)}`));
-      try { resolve(JSON.parse(body)); } catch { resolve(body); }
+      const headStr = raw.subarray(0, hdrEnd).toString('utf8');
+      const status = parseInt(headStr.split(' ')[1] || '500', 10);
+      let bodyBuf = raw.subarray(hdrEnd + 4);
+      // Docker 部分接口（logs/stats 等）使用 chunked 传输，需还原真实 body
+      if (/transfer-encoding:\s*chunked/i.test(headStr)) bodyBuf = dechunkBody(bodyBuf);
+      if (status >= 400) return reject(new Error(`docker API ${status}: ${bodyBuf.toString('utf8').slice(0, 300)}`));
+      resolve({ status, headers: headStr, body: bodyBuf });
     });
   });
+}
+
+// 还原 HTTP chunked 编码（去掉每块的行长前缀与结尾 \r\n）
+function dechunkBody(buf) {
+  const parts = [];
+  let i = 0;
+  while (i < buf.length) {
+    const lineEnd = buf.indexOf('\r\n', i);
+    if (lineEnd < 0) break;
+    const size = parseInt(buf.subarray(i, lineEnd).toString('utf8').split(';')[0].trim(), 16);
+    if (!(size > 0)) break;
+    const start = lineEnd + 2;
+    const end = start + size;
+    if (end > buf.length) { parts.push(buf.subarray(start)); break; }
+    parts.push(buf.subarray(start, end));
+    i = end + 2; // 跳过该 chunk 后的 \r\n
+  }
+  return parts.length ? Buffer.concat(parts) : buf;
+}
+
+// JSON 封装：空响应 / 非 JSON 返回明确错误，不再把原始字符串当成功结果返回
+async function dockerRequest(method, urlPath, body, timeoutMs) {
+  const r = await dockerRequestRaw(method, urlPath, body, timeoutMs);
+  if (!r.body.length) throw new Error('docker API 返回空响应');
+  const text = r.body.toString('utf8');
+  try { return JSON.parse(text); } catch {
+    throw new Error('docker API 返回非 JSON 响应: ' + text.slice(0, 200));
+  }
+}
+
+// 无需响应体的操作（restart/stop/start 返回 204 空 body）
+async function dockerAction(method, urlPath, timeoutMs = 15000) {
+  await dockerRequestRaw(method, urlPath, null, timeoutMs);
+}
+
+// 按容器名查找容器 ID（兼容显式名 qlm-minecraft 与 compose 前缀名）
+async function dockerContainerId(name) {
+  const containers = await dockerRequest('GET', '/containers/json?all=1');
+  if (!Array.isArray(containers)) throw new Error('docker 返回格式异常: ' + typeof containers);
+  const hit = containers.find((c) => (c.Names || []).some((n) => n.replace(/^\//, '') === name));
+  return hit ? hit.Id : null;
+}
+
+// 读取容器日志（Docker API 多路复用流：每条 8 字节帧头 [1B 类型 + 3B 填充 + 4B 大端长度] + 内容）
+async function dockerContainerLogs(name, lines) {
+  const id = await dockerContainerId(name);
+  if (!id) throw new Error(`容器 ${name} 不存在`);
+  const tail = Math.min(Math.max(parseInt(lines, 10) || 50, 1), 500);
+  const r = await dockerRequestRaw('GET', `/containers/${id}/logs?stdout=1&stderr=1&tail=${tail}`, null, 15000);
+  const b = r.body;
+  const parts = [];
+  let i = 0;
+  while (i + 8 <= b.length) {
+    const size = b.readUInt32BE(i + 4);
+    const start = i + 8;
+    const end = start + size;
+    if (size <= 0 || end > b.length) break;
+    parts.push(b.subarray(start, end));
+    i = end;
+  }
+  if (parts.length) return Buffer.concat(parts).toString('utf8');
+  return b.toString('utf8'); // 非多路复用（TTY）时直接当文本
+}
+
+// docker exec（依赖同步等后台命令）
+async function dockerExec(name, cmd, timeoutMs = 60000) {
+  const id = await dockerContainerId(name);
+  if (!id) throw new Error(`容器 ${name} 不存在`);
+  const created = await dockerRequest('POST', `/containers/${id}/exec`, JSON.stringify({ AttachStdout: true, AttachStderr: true, Cmd: cmd }), 15000);
+  const execId = created && created.Id;
+  if (!execId) throw new Error('docker exec 创建失败');
+  const r = await dockerRequestRaw('POST', `/exec/${execId}/start`, '{"Detach":false,"Tty":false}', timeoutMs);
+  return r.body.toString('utf8');
 }
 
 // 判断是否为本项目容器：兼容显式名（qlm-minecraft）与 compose 项目前缀名（minecraftsc-minecraft-1）
@@ -599,11 +688,12 @@ app.get('/api/admin/monitor', authMiddleware, async (req, res) => {
   res.json({ mode, tcp, rcon, docker, java, uptime });
 });
 
-app.get('/api/admin/logs', authMiddleware, (req, res) => {
+app.get('/api/admin/logs', authMiddleware, async (req, res) => {
   const mode = detectDeployMode();
   try {
     if (mode === 'docker') {
-      const out = execSync(`docker logs --tail ${Math.min(parseInt(req.query.lines || '50', 10), 500)} ${MC_CONTAINER} 2>&1`).toString();
+      // web 容器内无 docker CLI，走 docker.sock 的 Docker API 拉取日志
+      const out = await dockerContainerLogs(MC_CONTAINER, req.query.lines);
       res.json({ success: true, logs: out });
     } else {
       const out = execSync(`journalctl -u ${MC_SERVICE} -n ${Math.min(parseInt(req.query.lines || '50', 10), 500)} --no-pager 2>&1`).toString();
@@ -631,13 +721,15 @@ app.post('/api/admin/restart', authMiddleware, async (req, res) => {
   }
 });
 
-function doRestart(mode) {
+async function doRestart(mode) {
   try {
     // 再次保存并公告
-    try { rconCommand('say [SeverAdmin] 正在重启服务器...'); } catch {}
-    try { rconCommand('save-all'); } catch {}
+    try { await rconCommand('say [SeverAdmin] 正在重启服务器...'); } catch {}
+    try { await rconCommand('save-all'); } catch {}
     if (mode === 'docker') {
-      execSync(`docker restart ${MC_CONTAINER}`, { stdio: 'inherit' });
+      const id = await dockerContainerId(MC_CONTAINER);
+      if (!id) throw new Error(`容器 ${MC_CONTAINER} 不存在`);
+      await dockerAction('POST', `/containers/${id}/restart`);
     } else {
       execSync(`systemctl restart ${MC_SERVICE}`, { stdio: 'inherit' });
     }
@@ -651,10 +743,14 @@ app.post('/api/admin/stop', authMiddleware, async (req, res) => {
   const mode = detectDeployMode();
   try {
     try { await rconCommand('say [SeverAdmin] 服务器即将停止，请退出！'); await rconCommand('save-all'); } catch {}
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        if (mode === 'docker') execSync(`docker stop ${MC_CONTAINER}`, { stdio: 'inherit' });
-        else execSync(`systemctl stop ${MC_SERVICE}`, { stdio: 'inherit' });
+        if (mode === 'docker') {
+          const id = await dockerContainerId(MC_CONTAINER);
+          if (id) await dockerAction('POST', `/containers/${id}/stop`);
+        } else {
+          execSync(`systemctl stop ${MC_SERVICE}`, { stdio: 'inherit' });
+        }
       } catch (e) { console.error('[stop] 失败:', e.message); }
     }, 3000);
     res.json({ success: true, message: '已安排停止服务器（3 秒后）' });
@@ -664,17 +760,22 @@ app.post('/api/admin/stop', authMiddleware, async (req, res) => {
 app.post('/api/admin/start', authMiddleware, async (req, res) => {
   const mode = detectDeployMode();
   try {
-    if (mode === 'docker') execSync(`docker start ${MC_CONTAINER}`, { stdio: 'inherit' });
-    else execSync(`systemctl start ${MC_SERVICE}`, { stdio: 'inherit' });
+    if (mode === 'docker') {
+      const id = await dockerContainerId(MC_CONTAINER);
+      if (!id) throw new Error(`容器 ${MC_CONTAINER} 不存在`);
+      await dockerAction('POST', `/containers/${id}/start`);
+    } else {
+      execSync(`systemctl start ${MC_SERVICE}`, { stdio: 'inherit' });
+    }
     res.json({ success: true, message: '服务器启动中...' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ---- 依赖同步（自动释放模组，防止玩家无法加入） ----
-app.post('/api/admin/sync-mods', authMiddleware, (req, res) => {
+app.post('/api/admin/sync-mods', authMiddleware, async (req, res) => {
   try {
     if (detectDeployMode() === 'docker') {
-      execSync(`docker exec ${MC_CONTAINER} bash /entrypoint-wrapper.sh >/dev/null 2>&1 || true`);
+      await dockerExec(MC_CONTAINER, ['bash', '/entrypoint-wrapper.sh']).catch(() => {});
     } else {
       execSync('bash /opt/qlm/scripts/sync-mods.sh', { stdio: 'inherit' });
     }

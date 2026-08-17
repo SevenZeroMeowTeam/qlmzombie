@@ -14,6 +14,7 @@ import net.minecraftforge.fml.common.Mod
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 object FastCraftingFeature {
 
+    @JvmStatic
     @SubscribeEvent
     fun onItemCrafted(event: PlayerEvent.ItemCraftedEvent) {
         val player = event.entity

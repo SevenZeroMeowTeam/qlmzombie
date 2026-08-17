@@ -37,7 +37,7 @@ mkdir -p "$MC_MODS_DIR"
 # 注意：kleiders_custom_renderer 不在列表 —— 它注册网络 channel（客户端皮肤/模型同步），
 # 服务器缺失会导致玩家连接报 "mismatched mod channel list"；服务端加载安全（空 mixin、无客户端类引用），
 # 因此保留在服务端以匹配客户端 channel。
-CLIENT_ONLY_MODS="entity_texture_features entity_model_features 3d-armor skinlayers3d imblocker sodiumdynamiclights sodiumoptionsapi ysm"
+CLIENT_ONLY_MODS="entity_texture_features entity_model_features 3d-armor skinlayers3d imblocker sodiumdynamiclights sodiumoptionsapi"
 
 is_client_only() { # 文件名
   local f="$1" lower
@@ -99,7 +99,7 @@ for mjar in "$MC_MODS_DIR"/qlmzombie-*.jar; do
     python3 - "$mjar" "$MC_MODS_DIR" <<'PYEOF' || echo "[qlm]   python3 提取失败"
 import sys, os, zipfile, shutil
 src, dest = sys.argv[1], sys.argv[2]
-skip = ('entity_texture_features','entity_model_features','3d-armor','skinlayers3d','imblocker','sodiumdynamiclights','sodiumoptionsapi','ysm')
+skip = ('entity_texture_features','entity_model_features','3d-armor','skinlayers3d','imblocker','sodiumdynamiclights','sodiumoptionsapi')
 def is_mojibake(n):
     # 无效 UTF-8 字节（os.listdir 以 surrogateescape 返回 \udc80-\udcff）
     if any(0xDC80 <= ord(c) <= 0xDCFF for c in n):
@@ -166,22 +166,30 @@ for f in "$MC_MODS_DIR"/kleiders_custom_renderer*.jar.disabled; do
   echo "[qlm]   恢复关键模组为 active（移除 .disabled）: $(basename "$f")"
   rm -f "$f"
 done
-#     ThirstWasTaken 同理：客户端装有外置 JAR（modId=thirst，通道 thirst:main），服务器端
-#     必须保留以匹配客户端 channel（否则报 "服务器缺少 Thirst was Taken"），若历史部署
-#     曾禁用为 .disabled，启动时一并恢复为 active。
-for f in "$MC_MODS_DIR"/*ThirstWasTaken*.jar.disabled; do
-  [ -e "$f" ] || continue
-  echo "[qlm]   恢复 ThirstWasTaken 为 active（移除 .disabled）: $(basename "$f")"
-  rm -f "$f"
-done
 #     ToughAsNails 预禁用：与口渴系统冲突，必须在 Forge 扫描前保持 .disabled
 #     （运行时禁用太晚：模组已加载，外部 ThirstWasTaken 的 compat/toughasnails 配方
 #      会因 null ItemStack 触发 NPE —— Zeta 配方扫描报错 + 玩家登录配方同步 EncoderException）。
 #     ModDependencyHandler 见 .disabled 存在时会保持禁用，不会重新释放。
 for f in "$MC_MODS_DIR"/*ToughAsNails*.jar; do
   [ -e "$f" ] || continue
-  [ -e "${f}.disabled" ] && continue
+  if [ -e "${f}.disabled" ]; then
+    echo "[qlm]   移除与 .disabled 并存的 ToughAsNails active jar: $(basename "$f")"
+    rm -f "$f"
+    continue
+  fi
   echo "[qlm]   预禁用冲突模组（ToughAsNails）: $(basename "$f")"
+  mv -f "$f" "${f}.disabled"
+done
+
+#     ThirstWasTaken 统一禁用：按当前策略本地/服务器都禁用口渴模组。
+for f in "$MC_MODS_DIR"/*ThirstWasTaken*.jar; do
+  [ -e "$f" ] || continue
+  if [ -e "${f}.disabled" ]; then
+    echo "[qlm]   移除与 .disabled 并存的 ThirstWasTaken active jar: $(basename "$f")"
+    rm -f "$f"
+    continue
+  fi
+  echo "[qlm]   预禁用口渴模组（ThirstWasTaken）: $(basename "$f")"
   mv -f "$f" "${f}.disabled"
 done
 

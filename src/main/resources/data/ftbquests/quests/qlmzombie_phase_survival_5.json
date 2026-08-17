@@ -82,21 +82,57 @@
     },
     {
       "type": "ftbquests:item",
-      "id": "reward_7",
-      "item": "qlmzombie:biohazard_sample",
-      "count": 5
+      "id": "reward_9",
+      "item": "minecraft:enchanted_golden_apple",
+      "count": 10
     },
     {
       "type": "ftbquests:item",
       "id": "reward_8",
-      "item": "qlmzombie:tactical_ammo",
-      "count": 48
+      "item": "tacz:ai_awp",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_9",
-      "item": "minecraft:enchanted_golden_apple",
-      "count": 10
+      "item": "tacz:338",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_10",
+      "item": "tacz:scope_standard_8x",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_11",
+      "item": "tacz:338",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_12",
+      "item": "minecraft:netherite_ingot",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_13",
+      "item": "craftingdead:first_aid_kit",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_14",
+      "item": "craftingdead:adrenaline_syringe",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_15",
+      "item": "zombiekit:medical_kit",
+      "count": 3
     }
   ],
   "relations": {

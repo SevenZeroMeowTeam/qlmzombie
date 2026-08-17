@@ -94,6 +94,7 @@ class DropTheMeatLootModifier : IGlobalLootModifier {
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 object DropTheMeatEventHandler {
 
+    @JvmStatic
     @SubscribeEvent
     fun onLivingDrops(event: LivingDropsEvent) {
         if (!QLMConfig.enableDropTheMeat) return

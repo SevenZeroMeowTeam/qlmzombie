@@ -44,6 +44,7 @@ object NonConflictKeysFeature {
         )
     }
 
+    @JvmStatic
     @SubscribeEvent
     fun onKeyRegister(event: RegisterKeyMappingsEvent) {
         for (keyMapping in keyMappings) {

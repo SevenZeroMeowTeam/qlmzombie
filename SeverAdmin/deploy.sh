@@ -109,9 +109,9 @@ deploy_qlmzombie_jar() {
   # 服务端移除纯客户端模组与乱码文件名（避免 ETF 崩溃 / CrashAssistant 重复检测）
   cleanup_client_only_mods "${SEVERADMIN_DIR}/mc/mods"
   cleanup_garbled_files "${SEVERADMIN_DIR}/mc/mods"
-  # 确保关键模组 active（清理历史 .disabled 残留，如 Kleiders / ThirstWasTaken）
+  # 确保关键模组 active（清理历史 .disabled 残留，如 Kleiders）
   ensure_required_mods_active "${SEVERADMIN_DIR}/mc/mods"
-  # 预禁用冲突模组（ToughAsNails，避免 Thirst 兼容配方 NPE）
+  # 预禁用冲突模组（ToughAsNails / ThirstWasTaken）
   disable_conflict_mods "${SEVERADMIN_DIR}/mc/mods"
   # 应用 KubeJS 补丁（修复 ConcurrentModificationException 启动失败）
   apply_kubejs_patch "${SEVERADMIN_DIR}/mc/mods"
@@ -288,10 +288,13 @@ PYEOF
 # ---------- 纯客户端模组过滤（专用服务端移除） ----------
 # ETF 的 ResourceLocation mixin 会在服务端加载客户端类 Screen 导致崩溃，
 # 其余为无服务端功能的纯渲染/UI 模组。仅精确前缀匹配，绝不误删其他依赖/核心模组。
-# 注意：kleiders_custom_renderer 不在过滤列表 —— 它注册网络 channel（客户端皮肤/模型同步），
+# 注意 1：kleiders_custom_renderer 不在过滤列表 —— 它注册网络 channel（客户端皮肤/模型同步），
 # 服务器缺失会导致玩家连接报 "mismatched mod channel list"；服务端加载安全（空 mixin、无客户端类引用），
 # 因此保留在服务端以匹配客户端 channel。
-CLIENT_ONLY_MODS="entity_texture_features entity_model_features 3d-armor skinlayers3d imblocker sodiumdynamiclights sodiumoptionsapi ysm"
+# 注意 2：ysm (yes_steve_model) 不在过滤列表 —— side=BOTH 模组，服务端必须加载以同步玩家模型数据
+# （ServerPlayerMixin 服务端处理，缺失会导致自定义模型客户端间不同步、手持物品渲染错位）；
+# 公共 mixin 无客户端类引用，服务端加载安全。
+CLIENT_ONLY_MODS="entity_texture_features entity_model_features 3d-armor skinlayers3d imblocker sodiumdynamiclights sodiumoptionsapi"
 
 is_client_only_mod() { # 文件名
   local f="$1" lower p
@@ -350,9 +353,6 @@ PYEOF
 # Kleiders Custom Renderer 注册网络 channel（客户端皮肤/模型同步），服务器端缺失会拒绝
 # 对端连接（"mismatched mod channel list" / 服务器缺少 Kleiders）。旧版 ModDependencyHandler
 # 或历史部署曾将其禁用为 .disabled，部署时主动恢复为 active，避免首次启动仍不加载。
-# ThirstWasTaken 同理：客户端装有外置 JAR（modId=thirst，通道 thirst:main），服务器端必须
-# 保留它以匹配客户端网络 channel（否则玩家报 "服务器缺少 Thirst was Taken"），
-# 若历史部署曾禁用为 .disabled，部署时一并恢复。
 ensure_required_mods_active() { # dir
   local dir="$1" f name
   [ -d "${dir}" ] || return 0
@@ -362,15 +362,9 @@ ensure_required_mods_active() { # dir
     rm -f "$f"
     info "恢复关键模组为 active（移除 .disabled）: ${name}"
   done
-  for f in "${dir}"/*ThirstWasTaken*.jar.disabled; do
-    [ -e "$f" ] || continue
-    name=$(basename "$f")
-    rm -f "$f"
-    info "恢复 ThirstWasTaken 为 active（移除 .disabled）: ${name}"
-  done
 }
 
-# ---------- 预禁用冲突模组（ToughAsNails） ----------
+# ---------- 预禁用冲突模组（ToughAsNails / ThirstWasTaken） ----------
 # ToughAsNails 与项目口渴系统冲突，必须让 Forge 在扫描 mods 前就看到 .disabled
 # （运行时 ModDependencyHandler 禁用太晚——模组已被加载，且外部 ThirstWasTaken 的
 #  compat/toughasnails 配方会因 null ItemStack 触发 NPE：
@@ -393,6 +387,17 @@ disable_conflict_mods() { # dir
     mv -f "$f" "${f}.disabled"
     info "预禁用冲突模组（ToughAsNails，避免 Thirst 兼容配方 NPE）: ${name}"
   done
+  for f in "${dir}"/*ThirstWasTaken*.jar; do
+    [ -e "$f" ] || continue
+    name=$(basename "$f")
+    if [ -e "${f}.disabled" ]; then
+      rm -f "$f"
+      info "移除与 .disabled 并存的 ThirstWasTaken active jar（保留禁用）: ${name}"
+      continue
+    fi
+    mv -f "$f" "${f}.disabled"
+    info "预禁用口渴模组（ThirstWasTaken）: ${name}"
+  done
 }
 
 # ---------- 部署后自检：关键模组在位 ----------
@@ -413,9 +418,24 @@ verify_mods() { # dir
   fi
   if ls "${dir}"/*ThirstWasTaken*.jar >/dev/null 2>&1; then
     k=$(ls "${dir}"/*ThirstWasTaken*.jar | head -1 | xargs basename)
-    info "✓ ThirstWasTaken 在位（thirst:main 通道匹配）: ${k}"
+    warn "⚠ 检测到 ThirstWasTaken 仍为 active（按当前策略应禁用）: ${k}"
   else
-    warn "⚠ ThirstWasTaken 不在 mods，玩家可能报 mismatched mod channel list（服务器缺少 Thirst）"
+    info "✓ ThirstWasTaken 已禁用（本地/服务器统一禁用策略）"
+  fi
+}
+
+# ---------- FTB Quests 任务配置自检 ----------
+# FTB Quests 从 config/ftbquests/quests 读取任务（不读模组 jar 内的数据包 data/ftbquests/quests）。
+# 缺失则游戏内无任务（玩家按任务键无反应）。任务文件位于 SeverAdmin/mc/config/ftbquests/quests，
+# entrypoint 启动时复制到 /data/config/ftbquests/quests。
+# ★ 2001.4.22 只读取 *.snbt（不读 .json5 / lang/ 目录），标题描述已内联在 quest 中。
+verify_quests() { # dir=config/ftbquests/quests
+  local qdir="$1"
+  if [ -f "${qdir}/data.snbt" ] && ls "${qdir}"/chapters/*.snbt >/dev/null 2>&1; then
+    info "✓ FTB Quests 任务数据在位（data.snbt + $(ls "${qdir}"/chapters/*.snbt 2>/dev/null | wc -l) 章）"
+  else
+    warn "⚠ FTB Quests 任务数据缺失（${qdir}）—— 游戏内将不显示任务！"
+    warn "  请确认 SeverAdmin/mc/config/ftbquests/quests 已同步（含 data.snbt 与 chapters/*.snbt）"
   fi
 }
 
@@ -486,8 +506,9 @@ deploy_docker() {
   cd "${SEVERADMIN_DIR}"
   info "启动容器（首次拉取镜像可能需要几分钟）..."
   docker compose up -d --build
-  # 部署后自检：关键模组在位（channel 匹配）
+  # 部署后自检：关键模组在位（channel 匹配）+ FTB 任务数据
   verify_mods "${SEVERADMIN_DIR}/mc/mods"
+  verify_quests "${SEVERADMIN_DIR}/mc/config/ftbquests/quests"
   info "========== 部署完成 =========="
   # 域名不带端口（25565 为 MC 默认端口，玩家直连域名即可；非默认端口才显示端口）
   local mc_port; mc_port=$(env_get NGINX_MC_PORT 25565)

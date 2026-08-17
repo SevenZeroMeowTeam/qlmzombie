@@ -46,24 +46,6 @@
   "rewards": [
     {
       "type": "ftbquests:item",
-      "id": "reward_1",
-      "item": "qlmzombie:survival_kit",
-      "count": 3
-    },
-    {
-      "type": "ftbquests:item",
-      "id": "reward_2",
-      "item": "qlmzombie:medical_supply",
-      "count": 5
-    },
-    {
-      "type": "ftbquests:item",
-      "id": "reward_3",
-      "item": "qlmzombie:tactical_ammo",
-      "count": 32
-    },
-    {
-      "type": "ftbquests:item",
       "id": "reward_4",
       "item": "minecraft:enchanted_golden_apple",
       "count": 5
@@ -91,6 +73,54 @@
       "id": "reward_8",
       "item": "minecraft:diamond_boots",
       "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "tacz:minigun",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "tacz:308",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_8",
+      "item": "tacz:stock_moe",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_9",
+      "item": "tacz:308",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_10",
+      "item": "minecraft:enchanted_golden_apple",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_11",
+      "item": "craftingdead:first_aid_kit",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_12",
+      "item": "craftingdead:adrenaline_syringe",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_13",
+      "item": "zombiekit:injector",
+      "count": 2
     }
   ],
   "relations": {

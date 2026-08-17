@@ -1,7 +1,42 @@
-# 远程服务器部署说明（2026-08-16 23:35 更新）
+# 远程服务器部署说明（2026-08-17 build43 更新）
 
 > 目标：`154.222.28.103`（`mc.sh197.dpdns.org`）
 > 远程路径：mcmod `/www/wwwroot`，SeverAdmin `/www/wwwroot/minecraftsc`
+
+## 🆕 2026-08-17 build43：僵尸攻击力随天数增强 + FTB 任务医疗奖励 + Kotlin 事件修复
+
+- **僵尸攻击力随天数增强**：第 25 天后每过一天攻击力 +1.5%（无上限）——`ZombieEvolutionHandler.kt`
+- **FTB 任务医疗奖励**：12 个任务追加 26 个医疗奖励（craftingdead / infectious / zombiekit）
+- **Kotlin @JvmStatic 修复**：11 个 Kotlin object 事件订阅器补上 @JvmStatic（此前事件永不触发）
+- **ZombieAttributeHandler 崩溃修复**：移除原版僵尸重复属性注册（Duplicate DefaultAttributes），+2 护甲改为生成时修饰符
+- **MoonHelper 修复**：Enhanced Celestials `Holder.unwrapKey()` 编译期调用
+- **必须上传**：`build/libs/qlmzombie-3.0.0.beta.build43.jar`（→ `/www/wwwroot/build/libs/`）
+- **部署**：`python build/ftbq_check/deploy_server.py`（MD5 校验 → 复制到 mods → docker compose up -d）
+- **部署后验证**：日志无 `Duplicate DefaultAttributes`、无 `getCurrentMoonId failed`；`建筑生成` 日志出现；FTB Quests 加载 4 chapters 30 quests
+
+## 🆕 2026-08-17 修复：游戏内无任务（FTB Quests 只读 .snbt）
+
+- **根因**：FTB Quests 2001.4.22（1.20.1）从 `config/ftbquests/quests` 只读取 **`*.snbt`** 文件
+  （`data.snbt` + `chapters/*.snbt`），**不读 .json5、不读 lang/ 目录**。之前部署的是 `.json5`
+  且标题只放 lang/ → 日志 `Loaded 1 chapter groups, 0 chapters, 0 quests` → 游戏内无任务。
+- **修复**：由 `build/convert_quests_snbt.py` 生成 `.snbt` 任务文件（标题/描述内联在每个 quest），
+  生成到 `SeverAdmin/mc/config/ftbquests/quests/`；`#` 标签物品（如 `#minecraft:logs`）映射为
+  具体物品（2001.4.22 ItemTask 不支持标签）。entrypoint/deploy.sh 已改为检查 `*.snbt`。
+- **部署时必须上传**：`SeverAdmin/mc/config/ftbquests/quests/`（→ `/www/wwwroot/minecraftsc/mc/config/ftbquests/quests/`）
+- **改格式/改内容后必须清容器旧数据再重启**（entrypoint 仅"缺失时复制"）：
+  `docker exec qlm-minecraft rm -rf /data/config/ftbquests/quests && docker restart qlm-minecraft`
+- **部署后验证**：日志出现 `Loaded 1 chapter groups, 4 chapters, 30 quests`（此前为 0 chapters）
+
+## 🆕 2026-08-17 build42：服务器启用 Yes Steve Model（修复物品错位）+ 修复 18 个编译警告
+
+- **Yes Steve Model（是，史蒂夫模型）2.6.5 在服务端启用**（`side=BOTH`，修复物品错位）：
+  - `ModDependencyHandler.SERVER_DISABLED_PREFIXES` 移除 `ysm`
+  - `deploy.sh` / `entrypoint-wrapper.sh`（SeverAdmin 与 deploy-upload 两套）的 `CLIENT_ONLY_MODS` 与 python `skip` 均移除 `ysm`
+  - 已核验服务端安全：公共 mixin（AbstractArrow/Projectile/ServerPlayer）与 MixinTweaker 无客户端类引用
+- **版本**：`3.0.0.beta.build42`（gradle.properties + QLMZombieMod.kt）
+- **18 个 javac 弃用警告已修复**（ResourceLocation.parse/fromNamespaceAndPath、ItemStack.getEnchantmentLevel、getFoodProperties(ItemStack,null)、@SuppressWarnings 等）
+- **本次必须上传**：`build/libs/qlmzombie-3.0.0.beta.build42.jar`（→ `/www/wwwroot/build/libs/`）、`deploy.sh`、`mc/entrypoint-wrapper.sh`（→ `/www/wwwroot/minecraftsc/`）
+- **部署后验证**：mods 含 `[是，史蒂夫模型] ysm-2.6.5-forge+mc1.20.1-release.jar`（无"服务端跳过纯客户端模组"日志）；加载列表含 `yes_steve_model`；玩家手持物品位置正常
 
 ## 🆕 2026-08-16 23:35 修复：ToughAsNails 已从源头移除（自动释放清单同步）
 

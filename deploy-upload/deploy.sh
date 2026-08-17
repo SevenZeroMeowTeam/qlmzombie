@@ -193,7 +193,7 @@ PYEOF
 # 注意：kleiders_custom_renderer 不在过滤列表 —— 它注册网络 channel（客户端皮肤/模型同步），
 # 服务器缺失会导致玩家连接报 "mismatched mod channel list"；服务端加载安全（空 mixin、无客户端类引用），
 # 因此保留在服务端以匹配客户端 channel。
-CLIENT_ONLY_MODS="entity_texture_features entity_model_features 3d-armor skinlayers3d imblocker sodiumdynamiclights sodiumoptionsapi ysm"
+CLIENT_ONLY_MODS="entity_texture_features entity_model_features 3d-armor skinlayers3d imblocker sodiumdynamiclights sodiumoptionsapi"
 
 is_client_only_mod() { # 文件名
   local f="$1" lower p
@@ -252,9 +252,6 @@ PYEOF
 # Kleiders Custom Renderer 注册网络 channel（客户端皮肤/模型同步），服务器端缺失会拒绝
 # 对端连接（"mismatched mod channel list" / 服务器缺少 Kleiders）。旧版 ModDependencyHandler
 # 或历史部署曾将其禁用为 .disabled，部署时主动恢复为 active，避免首次启动仍不加载。
-# ThirstWasTaken 同理：客户端装有外置 JAR（modId=thirst，通道 thirst:main），服务器端必须
-# 保留它以匹配客户端网络 channel（否则玩家报 "服务器缺少 Thirst was Taken"），
-# 若历史部署曾禁用为 .disabled，部署时一并恢复。
 ensure_required_mods_active() { # dir
   local dir="$1" f name
   [ -d "${dir}" ] || return 0
@@ -264,15 +261,9 @@ ensure_required_mods_active() { # dir
     rm -f "$f"
     info "恢复关键模组为 active（移除 .disabled）: ${name}"
   done
-  for f in "${dir}"/*ThirstWasTaken*.jar.disabled; do
-    [ -e "$f" ] || continue
-    name=$(basename "$f")
-    rm -f "$f"
-    info "恢复 ThirstWasTaken 为 active（移除 .disabled）: ${name}"
-  done
 }
 
-# ---------- 预禁用冲突模组（ToughAsNails） ----------
+# ---------- 预禁用冲突模组（ToughAsNails / ThirstWasTaken） ----------
 # ToughAsNails 与项目口渴系统冲突，必须让 Forge 在扫描 mods 前就看到 .disabled
 # （运行时 ModDependencyHandler 禁用太晚——模组已被加载，且外部 ThirstWasTaken 的
 #  compat/toughasnails 配方会因 null ItemStack 触发 NPE：
@@ -290,6 +281,17 @@ disable_conflict_mods() { # dir
       mv -f "$f" "${f}.disabled"
       info "预禁用冲突模组（ToughAsNails，避免 Thirst 兼容配方 NPE）: ${name}"
     fi
+  done
+  for f in "${dir}"/*ThirstWasTaken*.jar; do
+    [ -e "$f" ] || continue
+    name=$(basename "$f")
+    if [ -e "${f}.disabled" ]; then
+      rm -f "$f"
+      info "移除与 .disabled 并存的 ThirstWasTaken active jar（保留禁用）: ${name}"
+      continue
+    fi
+    mv -f "$f" "${f}.disabled"
+    info "预禁用口渴模组（ThirstWasTaken）: ${name}"
   done
 }
 
@@ -311,9 +313,9 @@ verify_mods() { # dir
   fi
   if ls "${dir}"/*ThirstWasTaken*.jar >/dev/null 2>&1; then
     k=$(ls "${dir}"/*ThirstWasTaken*.jar | head -1 | xargs basename)
-    info "✓ ThirstWasTaken 在位（thirst:main 通道匹配）: ${k}"
+    warn "⚠ 检测到 ThirstWasTaken 仍为 active（按当前策略应禁用）: ${k}"
   else
-    warn "⚠ ThirstWasTaken 不在 mods，玩家可能报 mismatched mod channel list（服务器缺少 Thirst）"
+    info "✓ ThirstWasTaken 已禁用（本地/服务器统一禁用策略）"
   fi
 }
 

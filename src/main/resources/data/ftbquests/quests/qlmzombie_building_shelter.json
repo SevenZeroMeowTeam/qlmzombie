@@ -36,18 +36,6 @@
   "rewards": [
     {
       "type": "ftbquests:item",
-      "id": "reward_1",
-      "item": "qlmzombie:zombie_core",
-      "count": 3
-    },
-    {
-      "type": "ftbquests:item",
-      "id": "reward_2",
-      "item": "qlmzombie:reinforced_parts",
-      "count": 5
-    },
-    {
-      "type": "ftbquests:item",
       "id": "reward_3",
       "item": "minecraft:iron_leg_greaves",
       "count": 1
@@ -57,6 +45,18 @@
       "id": "reward_4",
       "item": "minecraft:iron_boots",
       "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "minecraft:iron_block",
+      "count": 5
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "minecraft:diamond",
+      "count": 3
     }
   ],
   "relations": {

@@ -1,0 +1,431 @@
+{
+  "id": "0000000000000002",
+  "group": "",
+  "order_index": 0,
+  "filename": "survival_main",
+  "title": "末日求生指南",
+  "quests": [
+    {
+      "id": "0000000000000003",
+      "x": 0.0,
+      "y": 0.0,
+      "title": "末日求生指南",
+      "description": [
+        "欢迎来到僵尸末日。这里是你生存的起点。完成任务链来解锁更多内容，获得稀有物资和强大的装备。",
+        "",
+        "📖 任务线：",
+        "• 第一滴血 → 资源收集 → AI伙伴",
+        "• AI伙伴 → 建造庇护所 / 僵尸猎手",
+        "• 建造庇护所 + 僵尸猎手 → 血月幸存者",
+        "• 血月幸存者 → 末日幸存者",
+        "",
+        "💡 提示：空手右键AI玩家可打开背包GUI管理物资"
+      ],
+      "icon": "minecraft:book"
+    },
+    {
+      "id": "0000000000000004",
+      "x": 0.0,
+      "y": 3.0,
+      "title": "第一滴血",
+      "description": [
+        "末日生存的第一课：消灭你的第一个僵尸。在这个充满危险的世界里，每一个敌人都可能成为你的威胁。"
+      ],
+      "icon": "minecraft:zombie_head",
+      "tasks": [
+        {
+          "id": "0000000000000024",
+          "type": "ftbquests:kill",
+          "title": "消灭僵尸",
+          "entity": "minecraft:zombie",
+          "value": 5
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000025",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_sword",
+          "count": 1
+        },
+        {
+          "id": "0000000000000026",
+          "type": "ftbquests:item",
+          "item": "minecraft:golden_apple",
+          "count": 3
+        },
+        {
+          "id": "0000000000000027",
+          "type": "ftbquests:item",
+          "item": "minecraft:emerald",
+          "count": 4
+        },
+        {
+          "id": "0000000000000028",
+          "type": "ftbquests:item",
+          "item": "craftingdead:bandage",
+          "count": 3
+        },
+        {
+          "id": "0000000000000029",
+          "type": "ftbquests:item",
+          "item": "craftingdead:dirty_rag",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "0000000000000005",
+      "x": 3.0,
+      "y": 0.0,
+      "title": "资源收集",
+      "description": [
+        "没有物资就无法生存。收集基础资源来制作装备和建造庇护所。挖矿砍树，让世界为你所用。"
+      ],
+      "icon": "minecraft:iron_pickaxe",
+      "tasks": [
+        {
+          "id": "000000000000002A",
+          "type": "ftbquests:item",
+          "title": "挖掘圆石",
+          "item": "minecraft:cobblestone",
+          "count": 32
+        },
+        {
+          "id": "000000000000002B",
+          "type": "ftbquests:item",
+          "title": "砍伐原木",
+          "item": "minecraft:oak_log",
+          "count": 16
+        },
+        {
+          "id": "000000000000002C",
+          "type": "ftbquests:item",
+          "title": "制作工作台",
+          "item": "minecraft:crafting_table",
+          "count": 1
+        }
+      ],
+      "rewards": [
+        {
+          "id": "000000000000002D",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_ingot",
+          "count": 5
+        },
+        {
+          "id": "000000000000002E",
+          "type": "ftbquests:item",
+          "item": "tacz:ump45",
+          "count": 1
+        },
+        {
+          "id": "000000000000002F",
+          "type": "ftbquests:item",
+          "item": "tacz:45acp",
+          "count": 120
+        },
+        {
+          "id": "0000000000000030",
+          "type": "ftbquests:item",
+          "item": "tacz:grip_vertical_military",
+          "count": 1
+        },
+        {
+          "id": "0000000000000031",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_block",
+          "count": 3
+        },
+        {
+          "id": "0000000000000032",
+          "type": "ftbquests:item",
+          "item": "craftingdead:clean_rag",
+          "count": 4
+        },
+        {
+          "id": "0000000000000033",
+          "type": "ftbquests:item",
+          "item": "craftingdead:bandage",
+          "count": 2
+        }
+      ],
+      "dependencies": [
+        "0000000000000004"
+      ]
+    },
+    {
+      "id": "0000000000000006",
+      "x": 6.0,
+      "y": 0.0,
+      "title": "AI伙伴",
+      "description": [
+        "孤独的生存是困难的。驯服一个AI玩家成为你的伙伴，它会帮你砍树、挖矿、建造和战斗。用骨头或食物右键AI玩家来驯服它。"
+      ],
+      "icon": "qlmzombie:fake_player_spawn_egg",
+      "tasks": [
+        {
+          "id": "0000000000000034",
+          "type": "ftbquests:checkmark",
+          "title": "驯服AI玩家"
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000035",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_helmet",
+          "count": 1
+        },
+        {
+          "id": "0000000000000036",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_chestplate",
+          "count": 1
+        },
+        {
+          "id": "0000000000000037",
+          "type": "ftbquests:item",
+          "item": "tacz:glock_17",
+          "count": 1
+        },
+        {
+          "id": "0000000000000038",
+          "type": "ftbquests:item",
+          "item": "tacz:9mm",
+          "count": 120
+        },
+        {
+          "id": "0000000000000039",
+          "type": "ftbquests:item",
+          "item": "tacz:sight_rmr_dot",
+          "count": 1
+        }
+      ],
+      "dependencies": [
+        "0000000000000005"
+      ]
+    },
+    {
+      "id": "0000000000000007",
+      "x": 9.0,
+      "y": 0.0,
+      "title": "建造庇护所",
+      "description": [
+        "夜晚是危险的，你需要一个安全的庇护所。让你的AI伙伴为你建造一座房子，或者自己收集材料建造。"
+      ],
+      "icon": "minecraft:oak_planks",
+      "tasks": [
+        {
+          "id": "000000000000003A",
+          "type": "ftbquests:item",
+          "title": "收集木板",
+          "item": "minecraft:oak_planks",
+          "count": 32
+        },
+        {
+          "id": "000000000000003B",
+          "type": "ftbquests:item",
+          "title": "收集石头",
+          "item": "minecraft:stone",
+          "count": 16
+        }
+      ],
+      "rewards": [
+        {
+          "id": "000000000000003C",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_leg_greaves",
+          "count": 1
+        },
+        {
+          "id": "000000000000003D",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_boots",
+          "count": 1
+        },
+        {
+          "id": "000000000000003E",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_block",
+          "count": 5
+        },
+        {
+          "id": "000000000000003F",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond",
+          "count": 3
+        }
+      ],
+      "dependencies": [
+        "0000000000000006"
+      ]
+    },
+    {
+      "id": "0000000000000008",
+      "x": 6.0,
+      "y": 3.0,
+      "title": "末日探索者",
+      "description": [
+        "探索末日世界的各个角落。在废弃建筑、地牢和神殿中寻找珍贵的战利品。使用旅行地图来帮助你导航。"
+      ],
+      "icon": "minecraft:compass",
+      "tasks": [
+        {
+          "id": "0000000000000040",
+          "type": "ftbquests:item",
+          "title": "收集指南针",
+          "item": "minecraft:compass",
+          "count": 1
+        },
+        {
+          "id": "0000000000000041",
+          "type": "ftbquests:item",
+          "title": "收集地图",
+          "item": "minecraft:map",
+          "count": 3
+        },
+        {
+          "id": "0000000000000042",
+          "type": "ftbquests:kill",
+          "title": "消灭40个僵尸",
+          "entity": "minecraft:zombie",
+          "value": 40
+        }
+      ],
+      "rewards": [
+        {
+          "id": "0000000000000043",
+          "type": "ftbquests:item",
+          "item": "journeymap:fullscreenmap",
+          "count": 1
+        },
+        {
+          "id": "0000000000000044",
+          "type": "ftbquests:item",
+          "item": "minecraft:spyglass",
+          "count": 1
+        },
+        {
+          "id": "0000000000000045",
+          "type": "ftbquests:item",
+          "item": "travelerstitles:travelers_title",
+          "count": 1
+        },
+        {
+          "id": "0000000000000046",
+          "type": "ftbquests:item",
+          "item": "tacz:m700",
+          "count": 1
+        },
+        {
+          "id": "0000000000000047",
+          "type": "ftbquests:item",
+          "item": "tacz:30_06",
+          "count": 120
+        },
+        {
+          "id": "0000000000000048",
+          "type": "ftbquests:item",
+          "item": "tacz:scope_lpvo_1_6",
+          "count": 1
+        },
+        {
+          "id": "0000000000000049",
+          "type": "ftbquests:item",
+          "item": "minecraft:golden_carrot",
+          "count": 8
+        },
+        {
+          "id": "000000000000004A",
+          "type": "ftbquests:item",
+          "item": "craftingdead:blood_syringe",
+          "count": 2
+        },
+        {
+          "id": "000000000000004B",
+          "type": "ftbquests:item",
+          "item": "craftingdead:syringe",
+          "count": 3
+        }
+      ],
+      "dependencies": [
+        "0000000000000005"
+      ]
+    },
+    {
+      "id": "0000000000000009",
+      "x": 6.0,
+      "y": 6.0,
+      "title": "食物生产",
+      "description": [
+        "没有食物就没有长久的生存。建立你的农场，使用农夫乐事等模组来生产稳定的食物供应。"
+      ],
+      "icon": "farmersdelight:tomato",
+      "tasks": [
+        {
+          "id": "000000000000004C",
+          "type": "ftbquests:item",
+          "title": "收集农作物",
+          "item": "minecraft:wheat",
+          "count": 32
+        },
+        {
+          "id": "000000000000004D",
+          "type": "ftbquests:item",
+          "title": "收集肉类",
+          "item": "minecraft:beef",
+          "count": 16
+        },
+        {
+          "id": "000000000000004E",
+          "type": "ftbquests:item",
+          "title": "制作烹饪锅",
+          "item": "farmersdelight:cooking_pot",
+          "count": 1
+        }
+      ],
+      "rewards": [
+        {
+          "id": "000000000000004F",
+          "type": "ftbquests:item",
+          "item": "farmersdelight:cooked_rice",
+          "count": 16
+        },
+        {
+          "id": "0000000000000050",
+          "type": "ftbquests:item",
+          "item": "farmersdelight:fruit_salad",
+          "count": 4
+        },
+        {
+          "id": "0000000000000051",
+          "type": "ftbquests:item",
+          "item": "farmersdelight:stuffed_pumpkin",
+          "count": 2
+        },
+        {
+          "id": "0000000000000052",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_hoe",
+          "count": 1
+        },
+        {
+          "id": "0000000000000053",
+          "type": "ftbquests:item",
+          "item": "minecraft:cooked_beef",
+          "count": 16
+        },
+        {
+          "id": "0000000000000054",
+          "type": "ftbquests:item",
+          "item": "minecraft:golden_carrot",
+          "count": 8
+        }
+      ],
+      "dependencies": [
+        "0000000000000005"
+      ]
+    }
+  ]
+}

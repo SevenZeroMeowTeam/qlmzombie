@@ -55,7 +55,7 @@ public class ThirstModPacketHandler
         if (FMLEnvironment.dist.isDedicatedServer() && !externalThirstLoaded)
         {
             THIRST_CHANNEL = NetworkRegistry.newSimpleChannel(
-                    new ResourceLocation("thirst", "main"),
+                    ResourceLocation.fromNamespaceAndPath("thirst", "main"),
                     () -> PROTOCOL_VERSION,
                     PROTOCOL_VERSION::equals,
                     NetworkRegistry.acceptMissingOr(PROTOCOL_VERSION::equals)

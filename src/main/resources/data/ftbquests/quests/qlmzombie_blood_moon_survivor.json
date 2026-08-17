@@ -36,24 +36,6 @@
   "rewards": [
     {
       "type": "ftbquests:item",
-      "id": "reward_1",
-      "item": "qlmzombie:biohazard_sample",
-      "count": 1
-    },
-    {
-      "type": "ftbquests:item",
-      "id": "reward_2",
-      "item": "qlmzombie:tactical_ammo",
-      "count": 16
-    },
-    {
-      "type": "ftbquests:item",
-      "id": "reward_3",
-      "item": "qlmzombie:infected_essence",
-      "count": 5
-    },
-    {
-      "type": "ftbquests:item",
       "id": "reward_4",
       "item": "minecraft:diamond_sword",
       "count": 1
@@ -63,6 +45,48 @@
       "id": "reward_5",
       "item": "minecraft:diamond_helmet",
       "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:ak47",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "tacz:762x39",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "tacz:sight_coyote",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "tacz:762x39",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "minecraft:enchanted_golden_apple",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_8",
+      "item": "infectious:medikit",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_9",
+      "item": "craftingdead:adrenaline_syringe",
+      "count": 2
     }
   ],
   "relations": {

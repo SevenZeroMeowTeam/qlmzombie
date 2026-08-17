@@ -26,21 +26,33 @@
   "rewards": [
     {
       "type": "ftbquests:item",
-      "id": "reward_1",
-      "item": "qlmzombie:emergency_ration",
-      "count": 3
+      "id": "reward_3",
+      "item": "minecraft:iron_sword",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_2",
-      "item": "qlmzombie:reinforced_parts",
-      "count": 2
+      "item": "minecraft:golden_apple",
+      "count": 3
     },
     {
       "type": "ftbquests:item",
       "id": "reward_3",
-      "item": "minecraft:iron_sword",
-      "count": 1
+      "item": "minecraft:emerald",
+      "count": 4
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "craftingdead:bandage",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "craftingdead:dirty_rag",
+      "count": 2
     }
   ],
   "relations": {

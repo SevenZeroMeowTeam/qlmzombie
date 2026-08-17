@@ -1,0 +1,594 @@
+{
+  "id": "000000000000001C",
+  "group": "",
+  "order_index": 3,
+  "filename": "phase_survival",
+  "title": "阶段生存",
+  "quests": [
+    {
+      "id": "000000000000001D",
+      "x": 0.0,
+      "y": 0.0,
+      "title": "艰难求生",
+      "description": [
+        "随着末日生存难度上升，你需要更好的装备和物资。完成此任务来获得来自斯巴达武器的基础武器和TACZ弹药，为更艰难的挑战做准备。"
+      ],
+      "icon": "spartanweaponry:iron_sword",
+      "tasks": [
+        {
+          "id": "00000000000000BB",
+          "type": "ftbquests:kill",
+          "title": "消灭15个僵尸",
+          "entity": "minecraft:zombie",
+          "value": 15
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000BC",
+          "type": "ftbquests:item",
+          "item": "spartanweaponry:iron_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000BD",
+          "type": "ftbquests:item",
+          "item": "spartanweaponry:iron_helmet",
+          "count": 1
+        },
+        {
+          "id": "00000000000000BE",
+          "type": "ftbquests:item",
+          "item": "tacz:pistol_ammo",
+          "count": 32
+        },
+        {
+          "id": "00000000000000BF",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_block",
+          "count": 3
+        },
+        {
+          "id": "00000000000000C0",
+          "type": "ftbquests:item",
+          "item": "minecraft:gold_ingot",
+          "count": 8
+        },
+        {
+          "id": "00000000000000C1",
+          "type": "ftbquests:item",
+          "item": "craftingdead:bandage",
+          "count": 3
+        },
+        {
+          "id": "00000000000000C2",
+          "type": "ftbquests:item",
+          "item": "infectious:bandage",
+          "count": 2
+        }
+      ],
+      "dependencies": [
+        "000000000000001B"
+      ]
+    },
+    {
+      "id": "000000000000001E",
+      "x": 3.0,
+      "y": 0.0,
+      "title": "武装升级",
+      "description": [
+        "你已经度过了初期的困难。现在是时候升级你的武器装备。获得拔刀剑、斯巴达盾牌和TACZ步枪来应对越来越多的僵尸。"
+      ],
+      "icon": "spartanweaponry:diamond_sword",
+      "tasks": [
+        {
+          "id": "00000000000000C3",
+          "type": "ftbquests:kill",
+          "title": "消灭30个僵尸",
+          "entity": "minecraft:zombie",
+          "value": 30
+        },
+        {
+          "id": "00000000000000C4",
+          "type": "ftbquests:item",
+          "title": "收集钻石",
+          "item": "minecraft:diamond",
+          "count": 3
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000C5",
+          "type": "ftbquests:item",
+          "item": "spartanweaponry:diamond_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000C6",
+          "type": "ftbquests:item",
+          "item": "spartanshields:diamond_shield",
+          "count": 1
+        },
+        {
+          "id": "00000000000000C7",
+          "type": "ftbquests:item",
+          "item": "slashblade:slash_blade",
+          "count": 1
+        },
+        {
+          "id": "00000000000000C8",
+          "type": "ftbquests:item",
+          "item": "tacz:rifle_ammo",
+          "count": 64
+        },
+        {
+          "id": "00000000000000C9",
+          "type": "ftbquests:item",
+          "item": "farmersdelight:iron_knife",
+          "count": 1
+        },
+        {
+          "id": "00000000000000CA",
+          "type": "ftbquests:item",
+          "item": "craftingdead:first_aid_kit",
+          "count": 2
+        },
+        {
+          "id": "00000000000000CB",
+          "type": "ftbquests:item",
+          "item": "zombiekit:bandage",
+          "count": 3
+        }
+      ],
+      "dependencies": [
+        "000000000000001D"
+      ]
+    },
+    {
+      "id": "000000000000001F",
+      "x": 6.0,
+      "y": 0.0,
+      "title": "机械革命",
+      "description": [
+        "在这个阶段，科技成为你最大的武器。使用机械动力、沉浸工程的物品来建立你的末日基地，并获得强大的装备。"
+      ],
+      "icon": "create:andesite_alloy",
+      "tasks": [
+        {
+          "id": "00000000000000CC",
+          "type": "ftbquests:item",
+          "title": "收集安山合金",
+          "item": "create:andesite_alloy",
+          "count": 8
+        },
+        {
+          "id": "00000000000000CD",
+          "type": "ftbquests:item",
+          "title": "收集铁锭",
+          "item": "minecraft:iron_ingot",
+          "count": 16
+        },
+        {
+          "id": "00000000000000CE",
+          "type": "ftbquests:kill",
+          "title": "消灭50个僵尸",
+          "entity": "minecraft:zombie",
+          "value": 50
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000CF",
+          "type": "ftbquests:item",
+          "item": "minecraft:iron_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000D0",
+          "type": "ftbquests:item",
+          "item": "spartanweaponry:iron_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000D1",
+          "type": "ftbquests:item",
+          "item": "create:belt_connector",
+          "count": 4
+        },
+        {
+          "id": "00000000000000D2",
+          "type": "ftbquests:item",
+          "item": "ironchest:iron_chest",
+          "count": 2
+        },
+        {
+          "id": "00000000000000D3",
+          "type": "ftbquests:item",
+          "item": "tacz:m107",
+          "count": 1
+        },
+        {
+          "id": "00000000000000D4",
+          "type": "ftbquests:item",
+          "item": "tacz:50bmg",
+          "count": 120
+        },
+        {
+          "id": "00000000000000D5",
+          "type": "ftbquests:item",
+          "item": "tacz:muzzle_brake_trex",
+          "count": 1
+        },
+        {
+          "id": "00000000000000D6",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_block",
+          "count": 2
+        },
+        {
+          "id": "00000000000000D7",
+          "type": "ftbquests:item",
+          "item": "zombiekit:medical_kit",
+          "count": 2
+        },
+        {
+          "id": "00000000000000D8",
+          "type": "ftbquests:item",
+          "item": "zombiekit:alcohol",
+          "count": 4
+        }
+      ],
+      "dependencies": [
+        "000000000000001E"
+      ]
+    },
+    {
+      "id": "0000000000000020",
+      "x": 9.0,
+      "y": 0.0,
+      "title": "自动化基础",
+      "description": [
+        "建立自动化系统来节省时间和精力。使用机械动力的传送带和其他自动化模组物品来实现资源的自动处理。"
+      ],
+      "icon": "create:belt_connector",
+      "tasks": [
+        {
+          "id": "00000000000000D9",
+          "type": "ftbquests:item",
+          "title": "收集传送装置",
+          "item": "create:belt_connector",
+          "count": 8
+        },
+        {
+          "id": "00000000000000DA",
+          "type": "ftbquests:item",
+          "title": "收集存储组件",
+          "item": "ironchest:iron_chest",
+          "count": 4
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000DB",
+          "type": "ftbquests:item",
+          "item": "create:belt_connector",
+          "count": 16
+        },
+        {
+          "id": "00000000000000DC",
+          "type": "ftbquests:item",
+          "item": "ironchest:gold_chest",
+          "count": 2
+        },
+        {
+          "id": "00000000000000DD",
+          "type": "ftbquests:item",
+          "item": "minecraft:hopper",
+          "count": 8
+        }
+      ],
+      "dependencies": [
+        "000000000000001F"
+      ]
+    },
+    {
+      "id": "0000000000000021",
+      "x": 12.0,
+      "y": 0.0,
+      "title": "高级自动化",
+      "description": [
+        "升级你的自动化系统，使用更先进的存储和处理模组。沉浸工程和AE2等模组将帮助你建立真正的末日基地。"
+      ],
+      "icon": "create:industrial_iron_block",
+      "tasks": [
+        {
+          "id": "00000000000000DE",
+          "type": "ftbquests:item",
+          "title": "收集钢材",
+          "item": "create:industrial_iron_block",
+          "count": 4
+        },
+        {
+          "id": "00000000000000DF",
+          "type": "ftbquests:item",
+          "title": "收集高级存储",
+          "item": "ironchest:diamond_chest",
+          "count": 2
+        },
+        {
+          "id": "00000000000000E0",
+          "type": "ftbquests:kill",
+          "title": "消灭100个僵尸",
+          "entity": "minecraft:zombie",
+          "value": 100
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000E1",
+          "type": "ftbquests:item",
+          "item": "ironchest:diamond_chest",
+          "count": 2
+        },
+        {
+          "id": "00000000000000E2",
+          "type": "ftbquests:item",
+          "item": "minecraft:dispenser",
+          "count": 4
+        },
+        {
+          "id": "00000000000000E3",
+          "type": "ftbquests:item",
+          "item": "minecraft:comparator",
+          "count": 4
+        },
+        {
+          "id": "00000000000000E4",
+          "type": "ftbquests:item",
+          "item": "tacz:hk416d",
+          "count": 1
+        },
+        {
+          "id": "00000000000000E5",
+          "type": "ftbquests:item",
+          "item": "tacz:556x45",
+          "count": 120
+        },
+        {
+          "id": "00000000000000E6",
+          "type": "ftbquests:item",
+          "item": "tacz:extended_mag_2",
+          "count": 1
+        },
+        {
+          "id": "00000000000000E7",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_block",
+          "count": 4
+        }
+      ],
+      "dependencies": [
+        "0000000000000020"
+      ]
+    },
+    {
+      "id": "0000000000000022",
+      "x": 9.0,
+      "y": 3.0,
+      "title": "魔法与钢铁",
+      "description": [
+        "这个阶段结合了科技与魔法。获得斯巴达钻石武器和TACZ现代武器，对抗越来越强大的敌人。"
+      ],
+      "icon": "minecraft:diamond_sword",
+      "tasks": [
+        {
+          "id": "00000000000000E8",
+          "type": "ftbquests:kill",
+          "title": "消灭75个僵尸",
+          "entity": "minecraft:zombie",
+          "value": 75
+        },
+        {
+          "id": "00000000000000E9",
+          "type": "ftbquests:item",
+          "title": "收集钻石",
+          "item": "minecraft:diamond",
+          "count": 5
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000EA",
+          "type": "ftbquests:item",
+          "item": "spartanweaponry:diamond_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000EB",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_helmet",
+          "count": 1
+        },
+        {
+          "id": "00000000000000EC",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_chestplate",
+          "count": 1
+        },
+        {
+          "id": "00000000000000ED",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_leggings",
+          "count": 1
+        },
+        {
+          "id": "00000000000000EE",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond_boots",
+          "count": 1
+        },
+        {
+          "id": "00000000000000EF",
+          "type": "ftbquests:item",
+          "item": "farmersdelight:cooked_rice",
+          "count": 8
+        },
+        {
+          "id": "00000000000000F0",
+          "type": "ftbquests:item",
+          "item": "minecraft:diamond",
+          "count": 8
+        },
+        {
+          "id": "00000000000000F1",
+          "type": "ftbquests:item",
+          "item": "minecraft:experience_bottle",
+          "count": 16
+        },
+        {
+          "id": "00000000000000F2",
+          "type": "ftbquests:item",
+          "item": "infectious:medikit",
+          "count": 2
+        },
+        {
+          "id": "00000000000000F3",
+          "type": "ftbquests:item",
+          "item": "zombiekit:camphor",
+          "count": 4
+        }
+      ],
+      "dependencies": [
+        "000000000000001F"
+      ]
+    },
+    {
+      "id": "0000000000000023",
+      "x": 12.0,
+      "y": 3.0,
+      "title": "末日王者",
+      "description": [
+        "你已经成为末日中真正的王者。完成此终极任务来获得最强大的装备，包括下界合金装备、拔刀剑、血魔法物品和丰厚奖励。"
+      ],
+      "icon": "minecraft:netherite_sword",
+      "tasks": [
+        {
+          "id": "00000000000000F4",
+          "type": "ftbquests:kill",
+          "title": "消灭150个僵尸",
+          "entity": "minecraft:zombie",
+          "value": 150
+        },
+        {
+          "id": "00000000000000F5",
+          "type": "ftbquests:item",
+          "title": "收集远古残骸",
+          "item": "minecraft:ancient_debris",
+          "count": 4
+        },
+        {
+          "id": "00000000000000F6",
+          "type": "ftbquests:item",
+          "title": "收集僵尸核心",
+          "item": "qlmzombie:zombie_core",
+          "count": 8
+        }
+      ],
+      "rewards": [
+        {
+          "id": "00000000000000F7",
+          "type": "ftbquests:item",
+          "item": "minecraft:netherite_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000F8",
+          "type": "ftbquests:item",
+          "item": "minecraft:netherite_helmet",
+          "count": 1
+        },
+        {
+          "id": "00000000000000F9",
+          "type": "ftbquests:item",
+          "item": "minecraft:netherite_chestplate",
+          "count": 1
+        },
+        {
+          "id": "00000000000000FA",
+          "type": "ftbquests:item",
+          "item": "minecraft:netherite_leggings",
+          "count": 1
+        },
+        {
+          "id": "00000000000000FB",
+          "type": "ftbquests:item",
+          "item": "minecraft:netherite_boots",
+          "count": 1
+        },
+        {
+          "id": "00000000000000FC",
+          "type": "ftbquests:item",
+          "item": "spartanweaponry:netherite_sword",
+          "count": 1
+        },
+        {
+          "id": "00000000000000FD",
+          "type": "ftbquests:item",
+          "item": "minecraft:enchanted_golden_apple",
+          "count": 10
+        },
+        {
+          "id": "00000000000000FE",
+          "type": "ftbquests:item",
+          "item": "tacz:ai_awp",
+          "count": 1
+        },
+        {
+          "id": "00000000000000FF",
+          "type": "ftbquests:item",
+          "item": "tacz:338",
+          "count": 120
+        },
+        {
+          "id": "0000000000000100",
+          "type": "ftbquests:item",
+          "item": "tacz:scope_standard_8x",
+          "count": 1
+        },
+        {
+          "id": "0000000000000101",
+          "type": "ftbquests:item",
+          "item": "tacz:338",
+          "count": 120
+        },
+        {
+          "id": "0000000000000102",
+          "type": "ftbquests:item",
+          "item": "minecraft:netherite_ingot",
+          "count": 4
+        },
+        {
+          "id": "0000000000000103",
+          "type": "ftbquests:item",
+          "item": "craftingdead:first_aid_kit",
+          "count": 3
+        },
+        {
+          "id": "0000000000000104",
+          "type": "ftbquests:item",
+          "item": "craftingdead:adrenaline_syringe",
+          "count": 3
+        },
+        {
+          "id": "0000000000000105",
+          "type": "ftbquests:item",
+          "item": "zombiekit:medical_kit",
+          "count": 3
+        }
+      ],
+      "dependencies": [
+        "0000000000000022"
+      ]
+    }
+  ]
+}

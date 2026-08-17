@@ -15,6 +15,7 @@ object DayPhaseManager {
     private var lastDay: Int = -1
     private var lockApplied: Boolean = false
 
+    @JvmStatic
     @SubscribeEvent
     fun onLevelTick(event: TickEvent.LevelTickEvent) {
         if (event.phase != TickEvent.Phase.END) return

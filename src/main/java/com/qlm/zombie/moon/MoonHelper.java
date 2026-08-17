@@ -2,12 +2,15 @@ package com.qlm.zombie.moon;
 
 import com.qlm.zombie.QLMZombieMod;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fml.ModList;
+
+import java.util.Optional;
 
 /**
  * EnhancedCelestials 5.x 兼容层。
@@ -19,7 +22,7 @@ import net.minecraftforge.fml.ModList;
  *   <li>从 {@code EnhancedCelestials.LUNAR_FORECAST_WORLD_DATA} 获取 TrackedDataKey</li>
  *   <li>通过 Level mixin 的 {@code dataAnchor$getTrackedData(key)} 获取数据实例</li>
  *   <li>调用 {@code currentLunarEventHolder()} 获取当前月亮事件 Holder</li>
- *   <li>通过 {@code Holder.getKey()} 获取 ResourceKey，转为字符串 ID</li>
+ *   <li>通过 {@code Holder.unwrapKey()} 获取 ResourceKey，用 {@code location().toString()} 转为字符串 ID</li>
  * </ol>
  */
 public class MoonHelper {
@@ -39,7 +42,6 @@ public class MoonHelper {
     private static java.lang.reflect.Method getTrackedDataMethod;
     private static Object lunarForecastKey; // EnhancedCelestials.LUNAR_FORECAST_WORLD_DATA
     private static java.lang.reflect.Method currentLunarEventHolderMethod;
-    private static java.lang.reflect.Method holderGetKeyMethod;
     private static java.lang.reflect.Method setLunarEventMethod;
 
     // DefaultLunarEvents 常量缓存
@@ -176,20 +178,24 @@ public class MoonHelper {
             Object holder = currentLunarEventHolderMethod.invoke(data);
             if (holder == null) return "none";
 
-            // 调用 Holder.getKey() 获取 ResourceKey<LunarEvent>
-            if (holderGetKeyMethod == null) {
-                holderGetKeyMethod = holder.getClass().getMethod("getKey");
+            // ★ 直接使用 MC 的 Holder 接口（编译期方法调用，reobf 时自动映射到运行时名称 m_203543_）。
+            //   不能用反射 getMethod("getKey")：1.20.1 中该方法正式名为 unwrapKey（不是 getKey），
+            //   且字符串不会随 reobf 重映射，运行时必然 NoSuchMethodException。
+            if (holder instanceof Holder<?> h) {
+                Optional<? extends ResourceKey<?>> keyOpt = h.unwrapKey();
+                if (keyOpt.isPresent()) {
+                    // 用 location().toString() 得到 "enhancedcelestials:blood_moon"；
+                    // ResourceKey.toString() 是 "ResourceKey[注册表 / 位置]" 格式，不能直接用于比较
+                    String result = keyOpt.get().location().toString();
+
+                    // 更新缓存
+                    cachedMoonId = result;
+                    cachedMoonIdTime = now;
+                    reportedApiFailure = false; // 成功后重置失败标志
+                    return result;
+                }
             }
-            Object resourceKey = holderGetKeyMethod.invoke(holder);
-            if (resourceKey == null) return "none";
-
-            String result = resourceKey.toString();
-
-            // 更新缓存
-            cachedMoonId = result;
-            cachedMoonIdTime = now;
-            reportedApiFailure = false; // 成功后重置失败标志
-            return result;
+            return "none";
         } catch (Exception e) {
             // 只报告一次失败，避免日志刷屏
             if (!reportedApiFailure) {

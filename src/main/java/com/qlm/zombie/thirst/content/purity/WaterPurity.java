@@ -139,8 +139,6 @@ public class WaterPurity
      * the container will be taken into consider of purity
      * Don't use it directly. Trying to subscribe #{@link RegisterThirstValueEvent}
      */
-    @Deprecated
-    @SuppressWarnings("unused")
     public static void addContainer(ContainerWithPurity container)
     {
         waterContainers.add(container);

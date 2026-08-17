@@ -98,6 +98,6 @@ public final class Thirst
     // 原模组注释：this is from Create but it looked very cool
     public static ResourceLocation asResource(String path)
     {
-        return new ResourceLocation(ID, path);
+        return ResourceLocation.fromNamespaceAndPath(ID, path);
     }
 }

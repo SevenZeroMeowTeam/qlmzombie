@@ -71,14 +71,38 @@
     {
       "type": "ftbquests:item",
       "id": "reward_5",
-      "item": "qlmzombie:zombie_core",
-      "count": 3
+      "item": "tacz:m107",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_6",
-      "item": "qlmzombie:reinforced_parts",
-      "count": 5
+      "item": "tacz:50bmg",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "tacz:muzzle_brake_trex",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_8",
+      "item": "minecraft:diamond_block",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_9",
+      "item": "zombiekit:medical_kit",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_10",
+      "item": "zombiekit:alcohol",
+      "count": 4
     }
   ],
   "relations": {

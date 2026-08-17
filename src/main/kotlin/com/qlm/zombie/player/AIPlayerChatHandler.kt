@@ -15,12 +15,14 @@ object AIPlayerChatHandler {
 
     private const val COMMAND_PREFIX = "ai "
 
+    @JvmStatic
     @SubscribeEvent
     fun onServerTick(event: TickEvent.ServerTickEvent) {
         if (event.phase != TickEvent.Phase.END) return
         CompanionManager.getInstance().tickAll()
     }
 
+    @JvmStatic
     @SubscribeEvent
     fun onServerChat(event: ServerChatEvent) {
         val player = event.player

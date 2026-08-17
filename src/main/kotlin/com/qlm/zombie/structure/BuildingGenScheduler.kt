@@ -59,6 +59,7 @@ object BuildingGenScheduler {
     )
 
     // ==================== 快速路径：区块加载时立即尝试 ====================
+    @JvmStatic
     @SubscribeEvent
     fun onChunkLoad(event: ChunkEvent.Load) {
         if (event.level.isClientSide) return
@@ -68,6 +69,7 @@ object BuildingGenScheduler {
     }
 
     // ==================== 玩家登录：延迟扫描出生点周围 ====================
+    @JvmStatic
     @SubscribeEvent
     fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {
         val player = event.entity ?: return
@@ -94,6 +96,7 @@ object BuildingGenScheduler {
     }
 
     // ==================== 周期性扫描：兜底确保生成 ====================
+    @JvmStatic
     @SubscribeEvent
     fun onServerTick(event: TickEvent.ServerTickEvent) {
         if (event.phase != TickEvent.Phase.END) return

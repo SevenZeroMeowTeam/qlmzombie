@@ -35,7 +35,7 @@ public class ConfigHelper
             }
             else
             {
-                Item newItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemID));
+                Item newItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(itemID));
 
 
                 if (newItem != null) map.put(newItem, new Number[]{(Number) entry.get(1), (Number) entry.get(2)});
@@ -57,7 +57,7 @@ public class ConfigHelper
             }
             else
             {
-                Item newItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemID));
+                Item newItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(itemID));
 
 
                 if (newItem != null) list.add(newItem);

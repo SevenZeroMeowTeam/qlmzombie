@@ -50,9 +50,10 @@ public class ThirstHelper
         }
 
         VALID_DRINKS.forEach((item, numbers) -> {
-            if (item.getFoodProperties() != null) {
+            ItemStack stack = new ItemStack(item);
+            if (item.getFoodProperties(stack, null) != null) {
                 if (!CommonConfig.ENABLE_DRINKS_NUTRITION.get()){
-                    item.getFoodProperties().nutrition = 0;
+                    item.getFoodProperties(stack, null).nutrition = 0;
                 }
             }
         });

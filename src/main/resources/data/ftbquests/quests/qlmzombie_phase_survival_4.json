@@ -73,8 +73,26 @@
     {
       "type": "ftbquests:item",
       "id": "reward_7",
-      "item": "qlmzombie:infected_essence",
-      "count": 3
+      "item": "minecraft:diamond",
+      "count": 8
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_8",
+      "item": "minecraft:experience_bottle",
+      "count": 16
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_9",
+      "item": "infectious:medikit",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_10",
+      "item": "zombiekit:camphor",
+      "count": 4
     }
   ],
   "relations": {

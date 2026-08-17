@@ -27,26 +27,44 @@
     {
       "type": "ftbquests:item",
       "id": "reward_1",
-      "item": "qlmzombie:medical_supply",
-      "count": 2
+      "item": "tacz:aa12",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_2",
-      "item": "qlmzombie:emergency_ration",
-      "count": 5
+      "item": "tacz:12g",
+      "count": 120
     },
     {
       "type": "ftbquests:item",
       "id": "reward_3",
-      "item": "qlmzombie:infected_essence",
-      "count": 3
+      "item": "tacz:muzzle_choke_sg",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_4",
-      "item": "qlmzombie:tactical_ammo",
-      "count": 8
+      "item": "minecraft:golden_apple",
+      "count": 3
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_5",
+      "item": "tacz:12g",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "craftingdead:first_aid_kit",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "craftingdead:adrenaline_syringe",
+      "count": 2
     }
   ],
   "relations": {

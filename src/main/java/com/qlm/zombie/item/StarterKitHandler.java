@@ -186,7 +186,7 @@ public class StarterKitHandler {
     }
 
     private static Enchantment resolve(String id) {
-        return ForgeRegistries.ENCHANTMENTS.getValue(new ResourceLocation(id));
+        return ForgeRegistries.ENCHANTMENTS.getValue(ResourceLocation.parse(id));
     }
 
     /** 获取附魔池（按目标分类） */

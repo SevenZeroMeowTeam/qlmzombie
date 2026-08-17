@@ -13,6 +13,7 @@ object PlayerInitHandler {
      * 玩家重生时补充部分口渴值（防御"因脱水死亡后无限死亡循环"）。
      * 口渴能力的持久化 / 玩家克隆同步已由 Thirst-Mod 能力系统（PlayerThirstManager）接管。
      */
+    @JvmStatic
     @SubscribeEvent
     fun onPlayerRespawn(event: PlayerEvent.PlayerRespawnEvent) {
         if (event.isEndConquered) return

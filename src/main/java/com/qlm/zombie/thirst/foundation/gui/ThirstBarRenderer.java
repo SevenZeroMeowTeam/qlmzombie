@@ -21,7 +21,7 @@ public class ThirstBarRenderer
     public static IThirst PLAYER_THIRST = null;
     public static ResourceLocation THIRST_ICONS = Thirst.asResource("textures/gui/thirst_icons.png");
 
-    public static final ResourceLocation MC_ICONS = new ResourceLocation("textures/gui/icons.png");
+    public static final ResourceLocation MC_ICONS = ResourceLocation.parse("textures/gui/icons.png");
     public static Boolean cancelRender = false;
     static Minecraft minecraft = Minecraft.getInstance();
     protected final static RandomSource random = RandomSource.create();

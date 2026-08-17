@@ -32,17 +32,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FakePlayerEntityRenderer extends HumanoidMobRenderer<FakePlayerEntity, PlayerModel<FakePlayerEntity>> {
 
-    private final PlayerModel<FakePlayerEntity> defaultModel;
-    private final PlayerModel<FakePlayerEntity> slimModel;
     private static final Map<String, ResourceLocation> SKIN_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Long> RATE_LIMIT = new ConcurrentHashMap<>();
     private static final long RATE_LIMIT_MS = 5000;
 
     public FakePlayerEntityRenderer(EntityRendererProvider.Context ctx) {
         super(ctx, new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false), 0.5F);
-
-        this.defaultModel = new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false);
-        this.slimModel = new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER_SLIM), true);
 
         this.addLayer(new HumanoidArmorLayer<>(
                 this,

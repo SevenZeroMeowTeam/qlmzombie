@@ -65,13 +65,37 @@
     {
       "type": "ftbquests:item",
       "id": "reward_4",
-      "item": "qlmzombie:emergency_ration",
-      "count": 5
+      "item": "tacz:m700",
+      "count": 1
     },
     {
       "type": "ftbquests:item",
       "id": "reward_5",
-      "item": "qlmzombie:reinforced_parts",
+      "item": "tacz:30_06",
+      "count": 120
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_6",
+      "item": "tacz:scope_lpvo_1_6",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_7",
+      "item": "minecraft:golden_carrot",
+      "count": 8
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_8",
+      "item": "craftingdead:blood_syringe",
+      "count": 2
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_9",
+      "item": "craftingdead:syringe",
       "count": 3
     }
   ],

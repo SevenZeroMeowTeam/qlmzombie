@@ -17,6 +17,7 @@ object QLMClientMod {
     @JvmField
     var initialized = false
 
+    @JvmStatic
     @SubscribeEvent
     fun onClientSetup(event: FMLClientSetupEvent) {
         event.enqueueWork {
@@ -37,6 +38,7 @@ object QLMClientMod {
 )
 object QLMClientForgeEvents {
 
+    @JvmStatic
     @SubscribeEvent
     fun onClientLogin(event: ClientPlayerNetworkEvent.LoggingIn) {
         if (!QLMClientMod.initialized) {
@@ -45,6 +47,7 @@ object QLMClientForgeEvents {
         }
     }
 
+    @JvmStatic
     @SubscribeEvent
     fun onClientLogout(event: ClientPlayerNetworkEvent.LoggingOut) {
         QLMZombieMod.LOGGER.debug("[QLM Zombie] 玩家登出, 清理客户端数据")

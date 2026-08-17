@@ -12,6 +12,7 @@ import net.minecraftforge.fml.common.Mod
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 object AlwaysEatFeature {
 
+    @JvmStatic
     @SubscribeEvent
     fun onPlayerRightClickItem(event: PlayerInteractEvent.RightClickItem) {
         val player = event.entity
