@@ -89,7 +89,7 @@ object StructureGenSupport {
         return modItems ?: emptyList()
     }
 
-    /** 填充箱子：主题物品 + 概率混入其他模组物品 */
+    /** 填充箱子：主题物品 + 概率混入其他模组物品（保证至少 1 个其他模组物品） */
     fun fillChest(
         level: Level,
         pos: BlockPos,
@@ -102,8 +102,15 @@ object StructureGenSupport {
         val chest = level.getBlockEntity(pos) as? ChestBlockEntity ?: return
         val modList = getModItems()
         val itemsToAdd = minItems + random.nextInt(maxItems - minItems + 1)
+        var modAdded = false
         for (i in 0 until itemsToAdd) {
-            val item: Item = if (modList.isNotEmpty() && random.nextDouble() < modItemChance) {
+            // 默认按概率选其他模组物品；最后一个槽位若还没混入过则强制补一个，保证宝箱必有其他模组物品
+            var useMod = modList.isNotEmpty() && random.nextDouble() < modItemChance
+            if (modList.isNotEmpty() && !modAdded && i == itemsToAdd - 1) {
+                useMod = true
+            }
+            val item: Item = if (useMod) {
+                modAdded = true
                 modList[random.nextInt(modList.size)]
             } else {
                 themedLoot[random.nextInt(themedLoot.size)]

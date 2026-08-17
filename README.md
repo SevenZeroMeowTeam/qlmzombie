@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build43-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build44-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD43%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD44%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build43` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build43.jar` / `qlmzombie-3.0.0.beta.build43-server.jar` |
+| **当前版本** | `3.0.0.beta.build44` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build44.jar` / `qlmzombie-3.0.0.beta.build44-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,24 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build44（2026-08-18）
+
+**🎨 补全物品材质（自动生成，修复紫黑方块）**
+- 自动生成 **55 个**缺失物品贴图（PIL 脚本 `build/gen_item_textures.py`），覆盖全部 12 个主物品 + 43 个 CD 物品
+- 图标主题化：枪械（AK/M4/MP5/巴雷特/AWM...）、瞄具/握把/枪管/弹匣配件、医疗（绷带/急救包/肾上腺素/止痛药...）、护甲（防弹头盔/战术背心/战斗靴）、弹药、手雷、近战武器、生化样本/僵尸核心/感染精华等
+- 修复命名不一致：`infected_essence` 贴图缺失 → 生成对应贴图
+- 为 46 个 CD 注册物品补充中英文 lang（此前显示原始键名）
+- 清理 4 个过期 lang 键（grenade/smoke_grenade/flash_grenade/giant_zombie_spawn_egg 未注册）
+
+**📦 建筑箱子保证含其他模组物品**
+- `StructureGenSupport.fillChest` 增强：每个建筑箱子**保证至少 1 个其他模组物品**（此前仅 50% 概率）
+- 已自动扫描 10954 个其他模组物品用于宝箱填充
+
+**📄 文档/版本**
+- 版本号升级至 `3.0.0.beta.build44`，游戏内登录公告新增「物品材质已补全」
+
+---
 
 ### v3.0.0.beta.build43（2026-08-17）
 
