@@ -328,5 +328,9 @@
   "subtitles.qlmzombie.boss.phase2": "尸潮领主 · 阶段 2 [攻击强化]",
   "subtitles.qlmzombie.boss.phase3": "尸潮领主 · 阶段 3 [狂暴]",
   "subtitles.qlmzombie.epic.main_theme": "史诗开场主题",
-  "subtitles.qlmzombie.horde.ambient": "尸潮氛围"
+  "subtitles.qlmzombie.horde.ambient": "尸潮氛围",
+  "itemGroup.qlmzombie.cd_blocks": "方块",
+  "item.qlmzombie.medical_supply_crate": "医疗补给箱",
+  "item.qlmzombie.ammo_crate": "弹药箱",
+  "item.qlmzombie.supply_crate": "补给箱"
 }

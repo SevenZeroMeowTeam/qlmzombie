@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "qlmzombie:block/medical_supply_crate"
+    }
+  }
+}
