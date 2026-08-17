@@ -157,9 +157,24 @@ fix_crlf() {
 }
 
 port_in_use() { (exec 3<>"/dev/tcp/127.0.0.1/${1}") 2>/dev/null && exec 3>&- && return 0 || return 1; }
+# 端口是否被【外部服务】占用：忽略 docker-proxy（本项目容器转发）。
+# 重新部署（容器仍在运行）时旧容器会短暂占用端口，若按普通端口占用处理会误判
+# 并改写 .env 的 NGINX_MC_PORT（如 25565→25585），导致主端口漂移。
+port_in_use_external() {
+  local p="$1"
+  (exec 3<>"/dev/tcp/127.0.0.1/${p}") 2>/dev/null && exec 3>&- || return 1
+  if command -v ss >/dev/null 2>&1; then
+    local line
+    line=$(ss -tlnp 2>/dev/null | grep "[:.]${p} " | head -1)
+    if echo "${line}" | grep -qi "docker-proxy"; then
+      return 1  # 本项目 docker 转发占用 → 视为可用（compose 会重新绑定）
+    fi
+  fi
+  return 0
+}
 find_free_port() {
   local p="${1}"
-  while port_in_use "${p}"; do p=$((p + 10)); done
+  while port_in_use_external "${p}"; do p=$((p + 10)); done
   echo "${p}"
 }
 
@@ -448,11 +463,11 @@ deploy_docker() {
   generate_stream_extra
   # 同步 qlmzombie jar 到 mods（完整性校验 + 去重，见 deploy_qlmzombie_jar）
   deploy_qlmzombie_jar || true
-  # 检查主入口端口
+  # 检查主入口端口（忽略 docker-proxy 自身占用，避免重新部署时误改端口）
   local mc_port; mc_port=$(env_get NGINX_MC_PORT 25565)
-  if port_in_use "${mc_port}"; then
+  if port_in_use_external "${mc_port}"; then
     local new_port; new_port=$(find_free_port "${mc_port}")
-    warn "端口 ${mc_port} 被占用，改用 ${new_port}（修改 .env 的 NGINX_MC_PORT）"
+    warn "端口 ${mc_port} 被外部服务占用，改用 ${new_port}（修改 .env 的 NGINX_MC_PORT）"
     set_env_var "NGINX_MC_PORT" "${new_port}" "${SEVERADMIN_DIR}/.env"
   fi
   # 检查额外转发入口端口占用
