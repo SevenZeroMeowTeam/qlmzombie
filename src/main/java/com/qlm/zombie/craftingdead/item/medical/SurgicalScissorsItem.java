@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class SurgicalScissorsItem extends Item {
+public class SurgicalScissorsItem extends MedicalUseItem {
 
     public SurgicalScissorsItem() {
         super(new Item.Properties()
@@ -31,26 +31,24 @@ public class SurgicalScissorsItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        if (!level.isClientSide) {
-            Map<MobEffect, MobEffectInstance> activeEffects = player.getActiveEffectsMap();
-            for (Map.Entry<MobEffect, MobEffectInstance> entry : activeEffects.entrySet()) {
-                if (entry.getKey().getCategory() == MobEffectCategory.HARMFUL) {
-                    player.removeEffect(entry.getKey());
-                }
+    protected void applyEffect(Level level, Player player, ItemStack stack) {
+        Map<MobEffect, MobEffectInstance> activeEffects = player.getActiveEffectsMap();
+        for (Map.Entry<MobEffect, MobEffectInstance> entry : activeEffects.entrySet()) {
+            if (entry.getKey().getCategory() == MobEffectCategory.HARMFUL) {
+                player.removeEffect(entry.getKey());
             }
-            player.removeEffect(CDEffects.BROKEN_BONE.get());
-            player.removeEffect(CDEffects.BLEEDING.get());
-            player.heal(15.0F);
-            level.playSound(null, player.blockPosition(), SoundEvents.SHEEP_SHEAR, SoundSource.PLAYERS, 1.0F, 1.0F);
         }
+        player.removeEffect(CDEffects.BROKEN_BONE.get());
+        player.removeEffect(CDEffects.BLEEDING.get());
+        player.heal(15.0F);
+        level.playSound(null, player.blockPosition(), SoundEvents.SHEEP_SHEAR, SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
 
+    @Override
+    protected void consumeStack(Player player, ItemStack stack) {
         if (!player.getAbilities().instabuild) {
-            stack.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(hand));
+            stack.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(net.minecraft.world.InteractionHand.MAIN_HAND));
         }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
     @Override

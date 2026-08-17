@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build44-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build45-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD44%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD45%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build44` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build44.jar` / `qlmzombie-3.0.0.beta.build44-server.jar` |
+| **当前版本** | `3.0.0.beta.build45` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build45.jar` / `qlmzombie-3.0.0.beta.build45-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,23 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build45（2026-08-18）
+
+**💉 医疗用品新增使用动画**
+- 新增 `MedicalUseItem` 基类：标准「使用动画」模式（DRINK 动画 + 1.6 秒使用时长，使用中手臂抬起）
+- 9 个医疗物品改造：绷带 / 急救包 / 肾上腺素注射器 / 止痛药 / 止血带 / 夹板 / 生理盐水袋 / 手术剪 / 解毒剂
+- 条件使用（绷带仅出血时、夹板仅骨折时）保持原逻辑；手术剪改为耐久消耗不变
+
+**🎨 物品贴图增强（AI 生图风格程序化生成）**
+- 增强 20 个无原始贴图的物品图标（32×32 渐变 + 高光 + 阴影）：
+  - 主物品：AI 召唤符/恢复药剂/护盾/加速药丸、解毒剂、生化样本、应急口粮、感染精华、医疗补给、模式切换器、强化零件、生存工具包
+  - CD 物品：止血带、生理盐水袋、夹板、手术剪、战斗靴、三种弹药
+
+**📦 建筑箱子保证含其他模组物品（build44 延续）**
+- 每个建筑箱子至少 1 个其他模组物品（10954 个扫描池）
+
+---
 
 ### v3.0.0.beta.build44（2026-08-18）
 

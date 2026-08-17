@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class SalineBagItem extends Item {
+public class SalineBagItem extends MedicalUseItem {
 
     public SalineBagItem() {
         super(new Item.Properties()
@@ -28,27 +28,15 @@ public class SalineBagItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        if (!level.isClientSide) {
-            FoodData foodData = player.getFoodData();
-            if (foodData != null) {
-                foodData.setFoodLevel(foodData.getFoodLevel() + 8);
-            }
-            player.heal(10.0F);
-            player.addEffect(new MobEffectInstance(MobEffects.SATURATION, 200, 0));
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 1));
-            level.playSound(null, player.blockPosition(), SoundEvents.BOTTLE_EMPTY, SoundSource.PLAYERS, 1.0F, 1.0F);
+    protected void applyEffect(Level level, Player player, ItemStack stack) {
+        FoodData foodData = player.getFoodData();
+        if (foodData != null) {
+            foodData.setFoodLevel(foodData.getFoodLevel() + 8);
         }
-
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                return InteractionResultHolder.sidedSuccess(ItemStack.EMPTY, level.isClientSide());
-            }
-        }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+        player.heal(10.0F);
+        player.addEffect(new MobEffectInstance(MobEffects.SATURATION, 200, 0));
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 1));
+        level.playSound(null, player.blockPosition(), SoundEvents.BOTTLE_EMPTY, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     @Override

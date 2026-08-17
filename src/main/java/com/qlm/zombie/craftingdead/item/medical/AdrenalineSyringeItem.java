@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class AdrenalineSyringeItem extends Item {
+public class AdrenalineSyringeItem extends MedicalUseItem {
 
     public AdrenalineSyringeItem() {
         super(new Item.Properties()
@@ -28,23 +28,11 @@ public class AdrenalineSyringeItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        if (!level.isClientSide) {
-            player.addEffect(new MobEffectInstance(CDEffects.ADRENALINE_RUSH.get(), 800, 0));
-            player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 1));
-            player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 400, 1));
-            level.playSound(null, player.blockPosition(), SoundEvents.HONEY_DRINK, SoundSource.PLAYERS, 1.0F, 1.0F);
-        }
-
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                return InteractionResultHolder.sidedSuccess(ItemStack.EMPTY, level.isClientSide());
-            }
-        }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+    protected void applyEffect(Level level, Player player, ItemStack stack) {
+        player.addEffect(new MobEffectInstance(CDEffects.ADRENALINE_RUSH.get(), 800, 0));
+        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 1));
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 400, 1));
+        level.playSound(null, player.blockPosition(), SoundEvents.HONEY_DRINK, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     @Override

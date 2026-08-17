@@ -216,6 +216,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7废弃建筑：废墟/商店/加油站/9层高楼(每层箱子+楼梯可通行)/学校(5间房含床蜘蛛网箱子)/军事基地/海底遗迹"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7建筑箱子自动包含其他模组物品，无需手动注册"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7物品材质已补全：全部七零喵物品已生成专属图标（枪械/医疗/弹药/护甲等），不再显示紫黑方块"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7医疗用品新增使用动画：绷带/急救包/肾上腺素/止痛药/止血带/夹板/生理盐水/手术剪/解毒剂 使用时有饮用动画"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7睡袋系统：3羊毛合成，夜晚可入睡不重置出生点，白天自动收起可拾取"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：仅保留自定义绿色血量条+护甲/饱食度数值，原版心形隐藏"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖释放 v4.2：§r§7crafting-dead 4模组升级（core 1.9.4.8 / decoration 1.0.6.8 / survival 1.2.5.8 / worldguard 0.0.6.8），119模组零重复"))
@@ -251,7 +252,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build44"
+        const val MOD_VERSION = "3.0.0.beta.build45"
 
         @JvmField
         @Volatile

@@ -1,7 +1,17 @@
-# 远程服务器部署说明（2026-08-18 build44 更新）
+# 远程服务器部署说明（2026-08-18 build45 更新）
 
 > 目标：`154.222.28.103`（`mc.sh197.dpdns.org`）
 > 远程路径：mcmod `/www/wwwroot`，SeverAdmin `/www/wwwroot/minecraftsc`
+
+## 🆕 2026-08-18 build45：医疗物品使用动画 + 贴图增强
+
+- **9 个医疗物品新增 DRINK 使用动画**（MedicalUseItem 基类：绷带/急救包/肾上腺素/止痛药/止血带/夹板/生理盐水/手术剪/解毒剂）
+- **20 个物品贴图程序化增强**（32×32 渐变+高光+阴影，AI 生图风格）
+- **建筑箱子保证至少 1 个其他模组物品**（StructureGenSupport，10954 物品池）
+- 版本号 `3.0.0.beta.build45`，登录公告新增「医疗用品使用动画」
+- **必须上传**：`build/libs/qlmzombie-3.0.0.beta.build45.jar`（→ `/www/wwwroot/build/libs/`）
+- **部署**：`python build/ftbq_check/deploy_server.py`（MD5 校验 → 清理旧 jar → 复制 → compose up → docker restart）
+- **部署后验证**：日志 `v3.0.0.beta.build45 已加载`、无崩溃、FTB Quests 4 chapters 30 quests
 
 ## 🆕 2026-08-18 build44：物品材质补全 + 建筑箱子其他模组物品
 

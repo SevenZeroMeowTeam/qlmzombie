@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class SplintItem extends Item {
+public class SplintItem extends MedicalUseItem {
 
     public SplintItem() {
         super(new Item.Properties()
@@ -28,32 +28,22 @@ public class SplintItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
+    protected boolean canUse(Level level, Player player, ItemStack stack) {
+        return player.hasEffect(CDEffects.BROKEN_BONE.get());
+    }
 
-        if (player.hasEffect(CDEffects.BROKEN_BONE.get())) {
-            if (!level.isClientSide) {
-                player.removeEffect(CDEffects.BROKEN_BONE.get());
-                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 1200, 0));
-                level.playSound(null, player.blockPosition(), SoundEvents.WOOD_PLACE, SoundSource.PLAYERS, 1.0F, 1.0F);
-            }
-
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-                if (stack.isEmpty()) {
-                    return InteractionResultHolder.sidedSuccess(ItemStack.EMPTY, level.isClientSide());
-                }
-            }
-            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
-        } else {
-            if (!level.isClientSide) {
-                player.displayClientMessage(
-                        Component.literal("§7未发现骨折，夹板未使用"),
-                        true
-                );
-            }
-            return InteractionResultHolder.pass(stack);
+    @Override
+    protected void onCannotUse(Level level, Player player, ItemStack stack) {
+        if (!level.isClientSide) {
+            player.displayClientMessage(Component.literal("§7未发现骨折，夹板未使用"), true);
         }
+    }
+
+    @Override
+    protected void applyEffect(Level level, Player player, ItemStack stack) {
+        player.removeEffect(CDEffects.BROKEN_BONE.get());
+        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 1200, 0));
+        level.playSound(null, player.blockPosition(), SoundEvents.WOOD_PLACE, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     @Override

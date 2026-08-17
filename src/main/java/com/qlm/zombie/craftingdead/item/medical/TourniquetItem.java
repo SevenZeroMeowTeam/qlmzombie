@@ -18,7 +18,7 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class TourniquetItem extends Item {
+public class TourniquetItem extends MedicalUseItem {
 
     public TourniquetItem() {
         super(new Item.Properties()
@@ -27,22 +27,10 @@ public class TourniquetItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        if (!level.isClientSide) {
-            player.removeEffect(CDEffects.BLEEDING.get());
-            player.addEffect(new MobEffectInstance(CDEffects.PAIN_SUPPRESSION.get(), 2400, 1));
-            level.playSound(null, player.blockPosition(), SoundEvents.LEASH_KNOT_PLACE, SoundSource.PLAYERS, 1.0F, 1.0F);
-        }
-
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                return InteractionResultHolder.sidedSuccess(ItemStack.EMPTY, level.isClientSide());
-            }
-        }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+    protected void applyEffect(Level level, Player player, ItemStack stack) {
+        player.removeEffect(CDEffects.BLEEDING.get());
+        player.addEffect(new MobEffectInstance(CDEffects.PAIN_SUPPRESSION.get(), 2400, 1));
+        level.playSound(null, player.blockPosition(), SoundEvents.LEASH_KNOT_PLACE, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     @Override

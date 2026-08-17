@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class FirstAidKitItem extends Item {
+public class FirstAidKitItem extends MedicalUseItem {
 
     public FirstAidKitItem() {
         super(new Item.Properties()
@@ -28,25 +28,13 @@ public class FirstAidKitItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        if (!level.isClientSide) {
-            player.removeEffect(CDEffects.BLEEDING.get());
-            player.removeEffect(CDEffects.BROKEN_BONE.get());
-            player.removeEffect(CDEffects.PAIN_SUPPRESSION.get());
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 2));
-            player.heal(12.0F);
-            level.playSound(null, player.blockPosition(), SoundEvents.ARMOR_EQUIP_LEATHER, SoundSource.PLAYERS, 1.0F, 1.0F);
-        }
-
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                return InteractionResultHolder.sidedSuccess(ItemStack.EMPTY, level.isClientSide());
-            }
-        }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+    protected void applyEffect(Level level, Player player, ItemStack stack) {
+        player.removeEffect(CDEffects.BLEEDING.get());
+        player.removeEffect(CDEffects.BROKEN_BONE.get());
+        player.removeEffect(CDEffects.PAIN_SUPPRESSION.get());
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 2));
+        player.heal(12.0F);
+        level.playSound(null, player.blockPosition(), SoundEvents.ARMOR_EQUIP_LEATHER, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     @Override

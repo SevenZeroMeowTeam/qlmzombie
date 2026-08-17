@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class PainkillersItem extends Item {
+public class PainkillersItem extends MedicalUseItem {
 
     public PainkillersItem() {
         super(new Item.Properties()
@@ -28,25 +28,13 @@ public class PainkillersItem extends Item {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        if (!level.isClientSide) {
-            player.addEffect(new MobEffectInstance(CDEffects.PAIN_SUPPRESSION.get(), 1800, 0));
-            FoodData foodData = player.getFoodData();
-            if (foodData != null) {
-                foodData.setFoodLevel(foodData.getFoodLevel() + 2);
-            }
-            level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EAT, SoundSource.PLAYERS, 1.0F, 1.0F);
+    protected void applyEffect(Level level, Player player, ItemStack stack) {
+        player.addEffect(new MobEffectInstance(CDEffects.PAIN_SUPPRESSION.get(), 1800, 0));
+        FoodData foodData = player.getFoodData();
+        if (foodData != null) {
+            foodData.setFoodLevel(foodData.getFoodLevel() + 2);
         }
-
-        if (!player.getAbilities().instabuild) {
-            stack.shrink(1);
-            if (stack.isEmpty()) {
-                return InteractionResultHolder.sidedSuccess(ItemStack.EMPTY, level.isClientSide());
-            }
-        }
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+        level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EAT, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     @Override
