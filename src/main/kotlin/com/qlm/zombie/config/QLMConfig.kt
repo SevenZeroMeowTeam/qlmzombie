@@ -339,6 +339,14 @@ object QLMConfig {
         .comment("敌对生物掉落物保留概率", "  击杀敌对生物时，每个掉落物按该概率保留（减少地面物品堆积导致的卡顿）", "  1.0 = 全部保留（原版）", "  默认: 0.6 (60%)", "  范围: 0.0 ~ 1.0")
         .defineInRange("hostileDropChance", 0.6, 0.0, 1.0)
 
+    @JvmField val HOSTILE_GUNPOWDER_CHANCE = builder
+        .comment("击杀敌对生物掉落火药概率", "  苦力怕已被封禁，火药只能靠击杀敌对生物获取（用于 TaCZ 弹药/火药相关合成）", "  概率受控，不会满地图都是", "  默认: 0.12 (12%)", "  范围: 0.0 ~ 0.5")
+        .defineInRange("hostileGunpowderChance", 0.12, 0.0, 0.5)
+
+    @JvmField val HOSTILE_GUNPOWDER_LOOTING_BONUS = builder
+        .comment("每级抢夺附魔增加的火药掉落概率", "  默认: 0.03 (每级+3%，最多不超过 50%)", "  范围: 0.0 ~ 0.2")
+        .defineInRange("hostileGunpowderLootingBonus", 0.03, 0.0, 0.2)
+
     @JvmField val DROP_CLEANUP_ENABLED = builder
         .comment("是否启用掉落物定期清理", "  true  - 每隔一段时间自动清理地面上的部分陈旧掉落物", "  默认: true")
         .define("dropCleanupEnabled", true)
