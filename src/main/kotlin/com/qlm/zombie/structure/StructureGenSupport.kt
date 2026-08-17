@@ -6,8 +6,25 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.entity.ChestBlockEntity
+import net.minecraft.world.level.chunk.LevelChunk
 import net.minecraftforge.registries.ForgeRegistries
 import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * 废弃建筑生成器统一接口。
+ * 所有生成器实现该接口，由 [BuildingGenScheduler] 统一驱动，
+ * 保证生成时机可靠（区块加载 + 登录扫描 + 周期扫描三层兜底）。
+ */
+interface BuildingGenerator {
+    /**
+     * 尝试在指定区块生成建筑。
+     * 实现方需保证：
+     *  - 每区块仅评估一次（decidedChunks），多次调用幂等
+     *  - 生成成功后写入 [StructureGenSupport.generatedChunks] 防止重叠
+     * @return 是否成功生成了建筑
+     */
+    fun tryGenerate(level: Level, chunk: LevelChunk): Boolean
+}
 
 /**
  * 建筑生成共享支持：

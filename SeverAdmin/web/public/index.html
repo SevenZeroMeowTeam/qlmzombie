@@ -4,63 +4,206 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>七零喵僵尸末日生存 - 服务器主页</title>
+<link rel="icon" type="image/png" href="/favicon.png">
 <style>
   :root {
     --bg: #0d1117; --card: #161b22; --border: #30363d; --accent: #f85149;
     --accent2: #58a6ff; --text: #e6edf3; --muted: #8b949e; --gold: #d29922;
+    --green: #3fb950;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-    background: var(--bg); color: var(--text); min-height: 100vh;
+    background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden;
     background-image: radial-gradient(circle at 20% 0%, rgba(248,81,73,.08), transparent 40%),
                       radial-gradient(circle at 80% 100%, rgba(88,166,255,.06), transparent 40%);
   }
+  /* 自定义滚动条 */
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #2a3038; border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
   .container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
   header {
     border-bottom: 1px solid var(--border); background: rgba(13,17,23,.9);
     position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px);
   }
-  nav { display: flex; align-items: center; gap: 24px; padding: 14px 0; }
-  .logo { font-weight: 700; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
-  nav a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; }
+  nav { display: flex; align-items: center; gap: 24px; padding: 10px 0; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+  .logo img {
+    height: 36px; width: 36px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--accent); animation: logoGlow 3s ease-in-out infinite;
+  }
+  @keyframes logoGlow {
+    0%,100% { box-shadow: 0 0 8px rgba(248,81,73,.4); }
+    50% { box-shadow: 0 0 20px rgba(248,81,73,.9); }
+  }
+  nav a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; position: relative; }
   nav a:hover, nav a.active { color: var(--text); }
+  nav a::after {
+    content: ''; position: absolute; left: 0; bottom: -4px; width: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--gold)); transition: width .25s;
+  }
+  nav a:hover::after, nav a.active::after { width: 100%; }
   nav .right { margin-left: auto; }
-  .hero { text-align: center; padding: 80px 20px 60px; }
-  .hero h1 { font-size: 42px; margin-bottom: 12px; background: linear-gradient(90deg, var(--accent), var(--gold));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero { text-align: center; padding: 66px 20px 50px; }
+  .hero-logo {
+    width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+    border: 3px solid var(--accent); margin-bottom: 22px;
+    box-shadow: 0 0 30px rgba(248,81,73,.55), 0 0 60px rgba(248,81,73,.25);
+    animation: heroLogoFloat 4s ease-in-out infinite;
+  }
+  @keyframes heroLogoFloat {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .hero h1 {
+    font-size: 44px; margin-bottom: 12px;
+    background: linear-gradient(90deg, var(--accent), var(--gold), var(--accent2), var(--accent));
+    background-size: 300% 100%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: gradientMove 6s linear infinite;
+  }
+  @keyframes gradientMove { 0% { background-position: 0% 0; } 100% { background-position: 300% 0; } }
   .hero p { color: var(--muted); font-size: 16px; margin-bottom: 28px; }
   .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; font-size: 13px;
     border: 1px solid var(--border); background: var(--card); color: var(--muted); margin: 0 6px; }
-  .badge.online { border-color: #3fb950; color: #3fb950; }
+  .badge.online { border-color: var(--green); color: var(--green); animation: pulseGreen 1.6s ease-in-out infinite; }
   .badge.offline { border-color: var(--accent); color: var(--accent); }
-  .copy-ip { display: inline-flex; align-items: center; gap: 10px; margin-top: 24px;
-    padding: 12px 24px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 16px;
-    cursor: pointer; border: none; transition: transform .15s, box-shadow .15s; }
-  .copy-ip:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(248,81,73,.35); }
+  @keyframes pulseGreen {
+    0%,100% { box-shadow: 0 0 0 0 rgba(63,185,80,.5); }
+    50% { box-shadow: 0 0 0 8px rgba(63,185,80,0); }
+  }
+  .copy-ip {
+    display: inline-flex; align-items: center; gap: 10px; margin-top: 24px;
+    padding: 12px 24px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), #d6365f);
+    color: #fff; font-size: 16px; cursor: pointer; border: none; position: relative; overflow: hidden;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .copy-ip:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(248,81,73,.45); }
+  .copy-ip::after {
+    content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    animation: shimmer 2.6s infinite;
+  }
+  @keyframes shimmer { 0% { left: -100%; } 60%, 100% { left: 160%; } }
+  /* ===== 状态统计（独立卡片） ===== */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-top: 40px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 14px; text-align: center; position: relative; overflow: hidden;
+    transition: transform .2s, border-color .2s, box-shadow .2s; animation: fadeUp .6s both;
+  }
+  .stat-card:nth-child(1) { animation-delay: .05s; }
+  .stat-card:nth-child(2) { animation-delay: .12s; }
+  .stat-card:nth-child(3) { animation-delay: .19s; }
+  .stat-card:nth-child(4) { animation-delay: .26s; }
+  .stat-card:hover { transform: translateY(-4px); border-color: var(--accent2); box-shadow: 0 10px 24px rgba(88,166,255,.18); }
+  .stat-card .num { font-size: 26px; font-weight: 700; color: var(--accent2); }
+  .stat-card .lbl { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .stat-card.online::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--green), transparent); animation: pulseGreen 1.6s infinite;
+  }
+  /* ===== 性能监控（TPS/延迟 曲线） ===== */
+  .section-title {
+    text-align: center; font-size: 22px; font-weight: 700; color: var(--text);
+    margin: 26px 0 6px; letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--accent2), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .section-sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+  .monitor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 0 0 20px; }
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px 14px;
+    position: relative; overflow: hidden; animation: fadeUp .6s both;
+    transition: transform .25s, border-color .25s, box-shadow .25s;
+  }
+  .chart-card:nth-child(1) { animation-delay: .05s; }
+  .chart-card:nth-child(2) { animation-delay: .12s; }
+  .chart-card:nth-child(3) { animation-delay: .19s; }
+  .chart-card:nth-child(4) { animation-delay: .26s; }
+  .chart-card:hover { transform: translateY(-4px); border-color: var(--accent2); box-shadow: 0 10px 26px rgba(88,166,255,.14); }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .chart-head h3 { color: var(--accent2); font-size: 15px; margin: 0; }
+  .chart-val { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; transition: color .3s; }
+  .chart-val .unit { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 2px; }
+  .chart-val.good { color: var(--green); }
+  .chart-val.warn { color: var(--gold); }
+  .chart-val.bad { color: var(--accent); }
+  .chart-val.na { color: var(--muted); }
+  .chart-card canvas { width: 100%; display: block; }
+  /* ===== 内容卡片网格（独立卡片） ===== */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 20px 0 60px; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-  .card h3 { margin-bottom: 14px; color: var(--accent2); font-size: 17px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+    position: relative; overflow: hidden;
+    transition: transform .25s, border-color .25s, box-shadow .25s; animation: fadeUp .6s both;
+  }
+  .card:nth-child(1) { animation-delay: .05s; }
+  .card:nth-child(2) { animation-delay: .12s; }
+  .card:nth-child(3) { animation-delay: .19s; }
+  .card:nth-child(4) { animation-delay: .26s; }
+  .card:nth-child(5) { animation-delay: .33s; }
+  .card:nth-child(6) { animation-delay: .40s; }
+  .card:nth-child(7) { animation-delay: .47s; }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent);
+    transition: left .6s;
+  }
+  .card:hover::before { left: 100%; }
+  .card:hover { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 12px 30px rgba(210,153,34,.15); }
+  .card h3 { margin-bottom: 14px; color: var(--accent2); font-size: 17px; display: flex; align-items: center; gap: 8px; }
   .card ul { list-style: none; }
   .card li { padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 14px; color: var(--text); }
   .card li:last-child { border: none; }
   .card li::before { content: "▸ "; color: var(--gold); }
-  .status-row { display: flex; gap: 16px; flex-wrap: wrap; }
-  .stat { flex: 1; min-width: 140px; text-align: center; padding: 16px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
-  .stat .num { font-size: 28px; font-weight: 700; color: var(--accent2); }
-  .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
   footer { text-align: center; padding: 30px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card);
     border: 1px solid var(--border); padding: 12px 24px; border-radius: 8px; font-size: 14px; opacity: 0;
-    transition: opacity .3s; pointer-events: none; }
+    transition: opacity .3s; pointer-events: none; z-index: 20; }
   .toast.show { opacity: 1; }
+  /* ===== 二次元随机背景（自动选延时最低的 API） ===== */
+  .bg-layer {
+    position: fixed; inset: 0; z-index: -2;
+    background-color: var(--bg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image .6s ease;
+  }
+  .bg-layer::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(rgba(13,17,23,.78), rgba(13,17,23,.86));
+    pointer-events: none;
+  }
+  /* ===== 漂浮粒子特效 ===== */
+  #particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .particle {
+    position: absolute; bottom: -20px; border-radius: 50%; opacity: 0;
+    animation: rise linear infinite;
+  }
+  @keyframes rise {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: .9; }
+    90% { opacity: .4; }
+    100% { transform: translateY(-110vh) translateX(40px); opacity: 0; }
+  }
 </style>
 </head>
 <body>
+<div class="bg-layer" id="bgLayer"></div>
+<div id="particles"></div>
 <header>
   <div class="container">
     <nav>
-      <span class="logo">🧟 七零喵 · 僵尸末日生存</span>
+      <span class="logo"><img src="/logo.png" alt="七零喵" /> 七零喵 · 僵尸末日生存</span>
       <a href="/" class="active">主页</a>
       <a href="/downloads">下载中心</a>
       <div class="right"><a href="/admin">后台管理</a></div>
@@ -69,6 +212,7 @@
 </header>
 
 <div class="hero">
+  <img class="hero-logo" src="/logo.png" alt="七零喵 logo" />
   <h1>七零喵僵尸末日生存</h1>
   <p>1.20.1 Forge · 僵尸末日 · 动态难度 · 神话品质装备 · 生存挑战</p>
   <div>
@@ -78,11 +222,35 @@
   <div>
     <button class="copy-ip" onclick="copyIp()">📋 复制服务器地址：<b id="serverIp">mc.sh197.dpdns.org</b></button>
   </div>
-  <div class="status-row" style="margin-top:36px">
-    <div class="stat"><div class="num" id="sOnline">-</div><div class="lbl">服务器状态</div></div>
-    <div class="stat"><div class="num" id="sPlayers">-</div><div class="lbl">当前在线</div></div>
-    <div class="stat"><div class="num" id="sVersion">1.20.1</div><div class="lbl">游戏版本</div></div>
-    <div class="stat"><div class="num" id="sMax">50</div><div class="lbl">最大人数</div></div>
+
+  <div class="stats">
+    <div class="stat-card" id="statOnlineCard"><div class="num" id="sOnline">-</div><div class="lbl">服务器状态</div></div>
+    <div class="stat-card"><div class="num" id="sPlayers">-</div><div class="lbl">当前在线</div></div>
+    <div class="stat-card"><div class="num" id="sVersion">1.20.1</div><div class="lbl">游戏版本</div></div>
+    <div class="stat-card"><div class="num" id="sMax">50</div><div class="lbl">最大人数</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="section-title">📊 服务器性能监控</div>
+  <div class="section-sub">每 2 秒刷新 · TPS / 延迟 / 在线人数 / MSPT 实时曲线</div>
+  <div class="monitor-grid">
+    <div class="chart-card">
+      <div class="chart-head"><h3>⚡ TPS</h3><span class="chart-val na" id="valTps">--</span></div>
+      <canvas id="chartTps" height="140"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head"><h3>⏱️ 延迟</h3><span class="chart-val na" id="valLatency">--</span></div>
+      <canvas id="chartLatency" height="140"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head"><h3>👥 在线人数</h3><span class="chart-val na" id="valPlayers">--</span></div>
+      <canvas id="chartPlayers" height="140"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head"><h3>⏲️ MSPT</h3><span class="chart-val na" id="valMspt">--</span></div>
+      <canvas id="chartMspt" height="140"></canvas>
+    </div>
   </div>
 </div>
 
@@ -91,24 +259,54 @@
     <div class="card">
       <h3>🌍 服务器特色</h3>
       <ul>
-        <li>动态难度：0-25天和平 · 26-50天简单 · 51-75天普通 · 76-100天困难 · 100天+锁定困难</li>
-        <li>装备品质 10 级：劣质 → 一般 → 普通 → 精良 → 优秀 → 稀有 → 卓越 → 史诗 → 传说 → 神话</li>
-        <li>神话品质：无视游戏规则，神话盔甲套装缺一不可</li>
+        <li>装备品质 10 级：劣质 → 神话</li>
+        <li>神话品质：无视游戏规则，盔甲套装缺一不可</li>
         <li>合成随机品质 + Apotheosis 风格属性词缀</li>
-        <li>特殊僵尸 18 种 / 特殊骷髅 9 种（血量各异，昼夜行为）</li>
-        <li>僵尸潮：每28天5波，白天自动清除，成功/失败都有奖励</li>
-        <li>废弃建筑：废墟/加油站/学校/军事基地/9层高楼（建筑内刷怪+含模组物品宝箱）</li>
-        <li>成就 22 项 + 技能点系统 · 下界/末地及 11 种生物封禁</li>
-        <li>僵尸末日生存：口渴系统 · 空投补给 · 月亮事件</li>
+        <li>成就 22 项 + 技能点 · 口渴系统 · 空投补给 · 月亮事件</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📜 动态难度</h3>
+      <ul>
+        <li>0-25 天：和平 · 26-50 天：简单</li>
+        <li>51-75 天：普通 · 76-100 天：困难</li>
+        <li>100 天+：锁定困难，无法更改</li>
+        <li>游戏天数越长，僵尸越强，生存越难</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🧟 特殊生物</h3>
+      <ul>
+        <li>特殊僵尸 18 种：巨人/木桶/召唤/烈焰/剧毒/自爆/弓箭手/军阀...</li>
+        <li>特殊骷髅 9 种：凋零/剧毒/爆破/铁甲/狙击/剑士/狂战士/守卫/迅捷</li>
+        <li>昼夜行为：白天游荡不燃烧，夜晚锁定追击</li>
+        <li>下界/末地及 11 种生物封禁</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🎪 事件系统</h3>
+      <ul>
+        <li>僵尸潮：每 28 天 5 波，成功/失败都有奖励</li>
+        <li>血月事件：僵尸进化概率翻倍</li>
+        <li>僵尸进化：随天数提升血量与强度</li>
+        <li>僵尸方块破坏/搭建 · 白天自动清除</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🏚️ 建筑探索</h3>
+      <ul>
+        <li>废弃建筑：废墟/加油站/学校/军事基地/9 层高楼</li>
+        <li>建筑内刷怪 + 含模组物品宝箱</li>
+        <li>睡袋系统：3 羊毛合成，夜晚可入睡</li>
+        <li>血量 UI：自定义绿色血量条 + 护甲/饱食度数值</li>
       </ul>
     </div>
     <div class="card">
       <h3>⚔️ 玩法说明</h3>
       <ul>
-        <li>游戏天数越长，僵尸越强，生存越难</li>
-        <li>100 天后难度锁定为困难，无法更改</li>
         <li>高品质装备可通过合成获得随机品质</li>
         <li>神话系列需要核心武器/盔甲/工具才能合成</li>
+        <li>击杀敌对生物获得永久生命/攻击上限</li>
       </ul>
     </div>
     <div class="card">
@@ -123,7 +321,7 @@
   </div>
 </div>
 
-<footer>© 七零喵 · 僵尸末日生存 SeverAdmin · 联系管理员获取帮助</footer>
+<footer>© 七零喵团队 · 僵尸末日生存 SeverAdmin · 联系管理员获取帮助</footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -132,12 +330,15 @@ async function loadStatus() {
     const r = await fetch('/api/status');
     const d = await r.json();
     const badge = document.getElementById('statusBadge');
+    const statCard = document.getElementById('statOnlineCard');
     if (d.online) {
       badge.textContent = '● 在线';
       badge.className = 'badge online';
+      if (statCard) statCard.classList.add('online');
     } else {
       badge.textContent = '○ 离线';
       badge.className = 'badge offline';
+      if (statCard) statCard.classList.remove('online');
     }
     document.getElementById('playerCount').textContent = d.players ? d.players.online : '0';
     document.getElementById('sOnline').textContent = d.online ? '在线' : '离线';
@@ -145,14 +346,24 @@ async function loadStatus() {
     document.getElementById('sVersion').textContent = d.version || '1.20.1';
     document.getElementById('sMax').textContent = d.players ? d.players.max : '50';
   } catch (e) {
-    document.getElementById('statusBadge').textContent = '无法连接';
+    const badge = document.getElementById('statusBadge');
+    badge.textContent = '○ 离线';
+    badge.className = 'badge offline';
+    const statCard = document.getElementById('statOnlineCard');
+    if (statCard) statCard.classList.remove('online');
+    document.getElementById('playerCount').textContent = '0';
+    document.getElementById('sOnline').textContent = '离线';
+    document.getElementById('sPlayers').textContent = '0/50';
+    document.getElementById('sVersion').textContent = '1.20.1';
+    document.getElementById('sMax').textContent = '50';
   }
 }
 async function loadInfo() {
   try {
     const r = await fetch('/api/info');
     const d = await r.json();
-    if (d.address) document.getElementById('serverIp').textContent = d.address + ':' + d.port;
+    // 域名不带端口（25565 为 MC 默认端口，非默认端口才追加）
+    if (d.address) document.getElementById('serverIp').textContent = (d.port && d.port !== 25565) ? d.address + ':' + d.port : d.address;
     document.title = d.name + ' - 服务器主页';
   } catch (e) {}
 }
@@ -165,8 +376,212 @@ function toast(msg) {
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
+
+// ==================== 二次元随机背景（自动选延时最低 API） ====================
+const BG_APIS = [
+  'https://t.alcy.cc/ycy',
+  'https://sex.nyan.run/api/v2/img',
+  'https://imgapi.xl0408.top/index.php',
+  'https://www.dmoe.cc/random.php',
+  'https://api.paugram.com/wallpaper/',
+  'https://api.mtyqx.cn/tapi/random.php'
+];
+
+// 探测图片：仅成功加载时 resolve（失败/超时不 resolve，由整体超时兜底）
+function probeImage(url, timeoutMs = 10000) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const timer = setTimeout(() => { img.src = ''; }, timeoutMs);
+    img.onload = () => { clearTimeout(timer); resolve(url); };
+    img.onerror = () => { clearTimeout(timer); };
+    img.src = url;
+  });
+}
+
+async function pickFastestBackground() {
+  // Promise.race：首个成功加载的 API = 当前延时最低
+  const url = await Promise.race([
+    ...BG_APIS.map((u) => probeImage(u)),
+    new Promise((r) => setTimeout(() => r(null), 15000)) // 全部失败兜底
+  ]);
+  if (!url) return; // 全部失败，保留渐变背景
+  const layer = document.getElementById('bgLayer');
+  if (layer) layer.style.backgroundImage = `url('${url}')`;
+}
+
 loadStatus(); loadInfo();
+pickFastestBackground();
+setInterval(pickFastestBackground, 10 * 60 * 1000); // 每 10 分钟重新选最低延迟
 setInterval(loadStatus, 15000);
+
+// ==================== 漂浮粒子特效 ====================
+function spawnParticles() {
+  const box = document.getElementById('particles');
+  if (!box) return;
+  const colors = ['rgba(88,166,255,.30)', 'rgba(63,185,80,.30)', 'rgba(210,153,34,.28)', 'rgba(248,81,73,.22)'];
+  for (let i = 0; i < 26; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 3 + Math.random() * 6;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = (Math.random() * 100) + 'vw';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (9 + Math.random() * 12) + 's';
+    p.style.animationDelay = (Math.random() * 12) + 's';
+    box.appendChild(p);
+  }
+}
+spawnParticles();
+
+// ==================== 服务器性能监控（TPS/延迟 曲线） ====================
+// 轻量 Canvas 折线图（无外部依赖）
+function drawLineChart(canvasId, data, opts) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(200, canvas.parentElement ? canvas.parentElement.clientWidth - 8 : 300);
+  const h = canvas.height || 140;
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const padL = 36, padR = 10, padT = 10, padB = 22;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+
+  const drawEmpty = () => {
+    ctx.fillStyle = 'rgba(139,148,158,.55)';
+    ctx.font = '12px "Microsoft YaHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('等待数据...', w / 2, h / 2);
+    ctx.textAlign = 'left';
+  };
+
+  // 数据范围
+  let lo = opts.min, hi = opts.max;
+  const vals = data.filter(v => v != null);
+  if (!vals.length) { drawEmpty(); return; }
+  if (lo == null) lo = Math.min(...vals);
+  if (hi == null) hi = Math.max(...vals);
+  if (hi - lo < 1e-6) { hi = lo + 1; lo = lo - 1; }
+  const span = hi - lo;
+  if (opts.min == null) lo -= span * 0.12;
+  if (opts.max == null) hi += span * 0.12;
+
+  const xFor = (i) => padL + plotW * (data.length <= 1 ? 0.5 : i / (data.length - 1));
+  const yFor = (v) => padT + plotH * (1 - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo));
+
+  // 网格 + Y 轴刻度
+  ctx.font = '10px "Microsoft YaHei", sans-serif';
+  ctx.strokeStyle = 'rgba(255,255,255,.07)';
+  ctx.fillStyle = 'rgba(139,148,158,.85)';
+  ctx.lineWidth = 1;
+  const steps = 4;
+  for (let i = 0; i <= steps; i++) {
+    const y = padT + plotH * (i / steps);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+    const v = hi - (hi - lo) * (i / steps);
+    ctx.fillText(v.toFixed(v >= 100 ? 0 : (opts.decimals || 1)), 2, y + 3);
+  }
+
+  // 目标参考线（如 TPS=20）
+  if (opts.target != null && opts.target >= lo && opts.target <= hi) {
+    const ty = yFor(opts.target);
+    ctx.strokeStyle = 'rgba(210,153,34,.55)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(padL, ty); ctx.lineTo(w - padR, ty); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // 渐变填充
+  const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+  grad.addColorStop(0, opts.fill + '55');
+  grad.addColorStop(1, opts.fill + '00');
+  ctx.beginPath();
+  let started = false;
+  for (let i = 0; i < data.length; i++) {
+    const v = data[i];
+    if (v == null) { started = false; continue; }
+    const x = xFor(i), y = yFor(v);
+    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+  }
+  ctx.lineTo(xFor(data.length - 1), padT + plotH);
+  ctx.lineTo(xFor(0), padT + plotH);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // 折线
+  ctx.beginPath();
+  started = false;
+  for (let i = 0; i < data.length; i++) {
+    const v = data[i];
+    if (v == null) { started = false; continue; }
+    const x = xFor(i), y = yFor(v);
+    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = opts.color;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // 最新点高亮
+  let lastIdx = -1;
+  for (let i = data.length - 1; i >= 0; i--) {
+    if (data[i] != null) { lastIdx = i; break; }
+  }
+  if (lastIdx >= 0) {
+    const x = xFor(lastIdx), y = yFor(data[lastIdx]);
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = opts.color; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+}
+
+function setChartVal(id, text, cls, unit) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'chart-val ' + (cls || 'na');
+  el.innerHTML = text + (unit ? '<span class="unit">' + unit + '</span>' : '');
+}
+
+// 按阈值着色
+function tpsCls(t) { return t == null ? 'na' : (t >= 18 ? 'good' : (t >= 15 ? 'warn' : 'bad')); }
+function latCls(l) { return l == null ? 'na' : (l <= 60 ? 'good' : (l <= 120 ? 'warn' : 'bad')); }
+function msptCls(m) { return m == null ? 'na' : (m <= 50 ? 'good' : (m <= 75 ? 'warn' : 'bad')); }
+function pCls(p) { return p == null ? 'na' : 'good'; }
+
+const metricSeries = { tps: [], latency: [], players: [], mspt: [] };
+async function loadMetrics() {
+  try {
+    const r = await fetch('/api/metrics');
+    const d = await r.json();
+    const hist = d.history || [];
+    metricSeries.tps = hist.map(p => (p.tps != null ? p.tps : null));
+    metricSeries.latency = hist.map(p => (p.latency != null ? p.latency : null));
+    metricSeries.players = hist.map(p => (p.players != null ? p.players : null));
+    metricSeries.mspt = hist.map(p => (p.mspt != null ? p.mspt : null));
+    const last = d.latest || {};
+
+    setChartVal('valTps', last.tps != null ? last.tps.toFixed(1) : '--', tpsCls(last.tps));
+    setChartVal('valLatency', last.latency != null ? Math.round(last.latency) + '' : '--', latCls(last.latency), 'ms');
+    setChartVal('valPlayers', last.players != null ? last.players + '' : '--', pCls(last.players), '人');
+    setChartVal('valMspt', last.mspt != null ? last.mspt.toFixed(1) : '--', msptCls(last.mspt), 'ms/tick');
+
+    drawLineChart('chartTps', metricSeries.tps, { min: 0, max: 20, color: '#3fb950', fill: '#3fb950', target: 20, decimals: 1 });
+    drawLineChart('chartLatency', metricSeries.latency, { min: 0, max: null, color: '#58a6ff', fill: '#58a6ff', decimals: 0 });
+    drawLineChart('chartPlayers', metricSeries.players, { min: 0, max: null, color: '#d29922', fill: '#d29922', decimals: 0 });
+    drawLineChart('chartMspt', metricSeries.mspt, { min: 0, max: 50, color: '#f85149', fill: '#f85149', target: 50, decimals: 1 });
+  } catch (e) { /* 接口不可用时保持"等待数据" */ }
+}
+loadMetrics();
+setInterval(loadMetrics, 2000);
+window.addEventListener('resize', loadMetrics);
 </script>
 </body>
 </html>

@@ -52,7 +52,8 @@
   "relations": {
     "parent": "qlmzombie:ai_companion",
     "children": [
-      "qlmzombie:blood_moon_survivor"
+      "qlmzombie:blood_moon_survivor",
+      "qlmzombie:tacz_01_handgun"
     ]
   }
 }

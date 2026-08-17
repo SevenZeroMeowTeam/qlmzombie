@@ -1,0 +1,52 @@
+{
+  "id": "qlmzombie:tacz_08_shotgun",
+  "title": {
+    "zh_cn": "近战压制",
+    "en_us": "Close Quarters"
+  },
+  "description": {
+    "zh_cn": "当僵尸潮涌向你时，一把霰弹枪就是最好的答案。用自动霰弹枪 AA-12 在近距离碾压一切。\n\n奖励：AA-12 霰弹枪 + 霰弹 + 收束器",
+    "en_us": "When the horde rushes you, a shotgun is the best answer. Crush everything up close with the AA-12 automatic shotgun.\n\nReward: AA-12 Shotgun + Shells + Choke"
+  },
+  "icon": {
+    "item": "tacz:aa12"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies8",
+      "title": {
+        "zh_cn": "消灭僵尸",
+        "en_us": "Kill Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 30
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "tacz:aa12",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "tacz:12g",
+      "count": 128
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:muzzle_choke_sg",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:tacz_07_advanced_rifle",
+    "children": [
+      "qlmzombie:tacz_09_heavy"
+    ]
+  }
+}

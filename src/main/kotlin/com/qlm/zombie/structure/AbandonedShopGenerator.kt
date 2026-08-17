@@ -8,24 +8,18 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.levelgen.Heightmap
-import net.minecraftforge.event.entity.player.PlayerEvent
-import net.minecraftforge.event.level.ChunkEvent
-import net.minecraftforge.eventbus.api.SubscribeEvent
-import net.minecraftforge.fml.common.Mod
 import java.util.concurrent.ConcurrentHashMap
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-object AbandonedShopGenerator {
+object AbandonedShopGenerator : BuildingGenerator {
 
     private const val SPAWN_CHANCE = 0.30
     private const val MIN_SPACING = 3
     private const val SHOP_WIDTH = 9
     private const val SHOP_DEPTH = 7
     private const val SHOP_HEIGHT = 4
-    // 玩家登录时扫描周围已加载区块的半径（半径 3 = 7x7 = 49 个区块）
-    private const val LOGIN_SCAN_RADIUS = 3
 
-    private val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
+    /** 每区块仅评估一次（无论是否生成），避免重复扫描时反复掷概率 */
+    private val decidedChunks = ConcurrentHashMap.newKeySet<Long>()
 
     // 延迟初始化：RegistryObject.get() 必须在注册表完成注册后调用，
     // 类静态初始化时（CONSTRUCT 阶段）调用会抛出 NPE。
@@ -76,77 +70,26 @@ object AbandonedShopGenerator {
         )
     }
 
-    @SubscribeEvent
-    fun onChunkLoad(event: ChunkEvent.Load) {
-        val levelAccessor = event.level
-        if (levelAccessor.isClientSide) return
-
-        val level = levelAccessor as? net.minecraft.world.level.Level ?: return
-        val chunk = event.chunk as? net.minecraft.world.level.chunk.LevelChunk ?: return
-        tryGenerate(level, chunk)
-    }
-
-    @SubscribeEvent
-    fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {
-        val player = event.entity ?: return
-        val level = player.level()
-        if (level.isClientSide) return
-        val serverLevel = level as? net.minecraft.server.level.ServerLevel ?: return
-
-        QLMZombieMod.LOGGER.info(
-            "[废弃商店] 玩家 {} 登录, 延迟2秒后扫描周围区块补生成",
-            player.name.string
-        )
-        // 延迟 40 tick (2秒) 扫描，确保玩家周围区块已加载完成
-        val server = serverLevel.server
-        server.tell(net.minecraft.server.TickTask(server.tickCount + 40, Runnable {
-            try {
-                scanAndGenerate(serverLevel, player)
-            } catch (e: Exception) {
-                QLMZombieMod.LOGGER.error("[废弃商店] 延迟扫描异常: {}", e.message)
-            }
-        }))
-    }
-
-    private fun scanAndGenerate(
-        serverLevel: net.minecraft.server.level.ServerLevel,
-        player: net.minecraft.world.entity.player.Player
-    ) {
-        val centerChunkX = player.blockPosition().x shr 4
-        val centerChunkZ = player.blockPosition().z shr 4
-        var scanned = 0
-        var generated = 0
-        for (dx in -LOGIN_SCAN_RADIUS..LOGIN_SCAN_RADIUS) {
-            for (dz in -LOGIN_SCAN_RADIUS..LOGIN_SCAN_RADIUS) {
-                val chunk = serverLevel.chunkSource.getChunkNow(centerChunkX + dx, centerChunkZ + dz)
-                if (chunk != null) {
-                    scanned++
-                    if (tryGenerate(serverLevel, chunk)) generated++
-                }
-            }
-        }
-        QLMZombieMod.LOGGER.info(
-            "[废弃商店] 玩家 {} 延迟扫描完成: 扫描{}区块, 新生成{}商店",
-            player.name.string, scanned, generated
-        )
-    }
-
-    private fun tryGenerate(
+    override fun tryGenerate(
         level: net.minecraft.world.level.Level,
         chunk: net.minecraft.world.level.chunk.LevelChunk
     ): Boolean {
         val chunkX = chunk.pos.x
         val chunkZ = chunk.pos.z
 
-        val chunkKey = chunkKey(chunkX, chunkZ)
-        if (generatedChunks.contains(chunkKey)) return false
-
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
-
-        if (!isFarEnoughFromOtherStructures(chunkX, chunkZ)) return false
+        val chunkKey = StructureGenSupport.chunkKey(chunkX, chunkZ)
+        // 该区块已有其他废弃建筑，跳过防止重叠
+        if (StructureGenSupport.generatedChunks.contains(chunkKey)) return false
 
         val surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, 8, 8)
         if (surfaceY <= 0) return false
+
+        // 区块就绪后，每区块仅评估一次（无论是否生成），保持概率语义
+        if (!decidedChunks.add(chunkKey)) return false
+
+        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
+
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8 - SHOP_WIDTH / 2,
@@ -156,18 +99,23 @@ object AbandonedShopGenerator {
 
         // 跨会话防重复：若建筑标志（箱子）已存在，记入缓存并跳过
         if (hasExistingStructure(level, origin)) {
-            generatedChunks.add(chunkKey)
+            StructureGenSupport.generatedChunks.add(chunkKey)
             return false
         }
 
         return try {
             generateShop(level, chunk, origin)
-            generatedChunks.add(chunkKey)
+            StructureGenSupport.generatedChunks.add(chunkKey)
+            StructureGenSupport.registerBuilding(
+                chunkKey,
+                net.minecraft.core.BlockPos(origin.x + SHOP_WIDTH / 2, origin.y, origin.z + SHOP_DEPTH / 2)
+            )
             QLMZombieMod.LOGGER.info(
                 "[废弃商店] 在区块 ({}, {}) 生成废弃商店", chunkX, chunkZ
             )
             true
         } catch (e: Exception) {
+            decidedChunks.remove(chunkKey) // 生成异常时取消"已评估"，允许周期扫描重试
             QLMZombieMod.LOGGER.error("[废弃商店] 生成失败: {}", e.message)
             false
         }
@@ -186,18 +134,6 @@ object AbandonedShopGenerator {
         val chestPos = BlockPos(origin.x + 1, origin.y + 1, origin.z + 1)
         return level.getBlockState(chestPos).block ==
             net.minecraft.world.level.block.Blocks.CHEST
-    }
-
-    private fun isFarEnoughFromOtherStructures(chunkX: Int, chunkZ: Int): Boolean {
-        for (dx in -MIN_SPACING..MIN_SPACING) {
-            for (dz in -MIN_SPACING..MIN_SPACING) {
-                if (dx == 0 && dz == 0) continue
-                if (generatedChunks.contains(chunkKey(chunkX + dx, chunkZ + dz))) {
-                    return false
-                }
-            }
-        }
-        return true
     }
 
     private fun generateShop(
@@ -295,9 +231,5 @@ object AbandonedShopGenerator {
             val pillarPos = BlockPos.MutableBlockPos(x0 + dx, groundY + SHOP_HEIGHT + 1, z0)
             level.setBlock(pillarPos, Blocks.DARK_OAK_FENCE.defaultBlockState(), 3)
         }
-    }
-
-    private fun chunkKey(x: Int, z: Int): Long {
-        return (x.toLong() shl 32) or (z.toLong() and 0xFFFFFFFFL)
     }
 }

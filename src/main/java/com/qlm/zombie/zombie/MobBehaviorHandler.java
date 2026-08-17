@@ -42,9 +42,26 @@ public class MobBehaviorHandler {
     private static final Map<Integer, Long> attackedTime = new HashMap<>();
     private static final long ATTACKED_DURATION = 200; // 10秒
 
+    /**
+     * 白天清目标冷却（tick）：修复"僵尸双手持物抖动"。
+     * 与索敌 goal 争夺目标导致 isAggressive() 高频闪烁、双手举起持物姿势抖动。
+     * 只在超过该冷却后才再次清除目标。
+     */
+    private static final long DAY_CLEAR_COOLDOWN = 100;
+    private static final Map<Integer, Long> lastDayClear = new HashMap<>();
+
+    // tick 节流计数：每 10 tick（0.5 秒）执行一次全服扫描，避免每个 tick 扫描全部僵尸/骷髅
+    // 并做属性操作拖垮服务器线程（此前每 tick 全量扫描，叠加低内存 GC 压力时触发
+    // ServerHangWatchdog "single server tick took 60.00 seconds"，崩溃堆栈指向本方法）
+    private static final int TICK_INTERVAL = 10;
+    private static int tickCounter;
+
     @SubscribeEvent
     public static void onMobTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+
+        // 节流：仅每 TICK_INTERVAL tick 扫描一次（速度修饰/目标刷新 0.5 秒一次足够）
+        if (++tickCounter % TICK_INTERVAL != 0) return;
 
         var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
@@ -116,9 +133,14 @@ public class MobBehaviorHandler {
 
         if (isDay) {
             if (!wasAttacked) {
-                // 白天不主动攻击，清除目标
+                // 白天不主动攻击，按冷却清除目标（避免与索敌 goal 争夺导致持物姿势抖动）
                 if (mob.getTarget() != null) {
-                    mob.setTarget(null);
+                    long now = level.getGameTime();
+                    Long last = lastDayClear.get(entityId);
+                    if (last == null || now - last >= DAY_CLEAR_COOLDOWN) {
+                        mob.setTarget(null);
+                        lastDayClear.put(entityId, now);
+                    }
                 }
                 // 骷髅白天停止行动
                 if (mob instanceof Skeleton) {

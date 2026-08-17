@@ -18,7 +18,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,7 +69,7 @@ public class CommandInit {
                                         IThirst thirstData =  player.getCapability(ModCapabilities.PLAYER_THIRST).orElse(null);
                                         if (thirstData == null) continue;
                                         thirstData.setShouldTickThirst(shouldTick);
-                                        ThirstModPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
+                                        ThirstModPacketHandler.sendPlayerSync(player,
                                                 new PlayerThirstSyncMessage(shouldTick));
                                         playersName.add(player.getName());
                                     }

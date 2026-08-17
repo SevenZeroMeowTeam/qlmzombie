@@ -1,0 +1,52 @@
+{
+  "id": "qlmzombie:tacz_03_smg",
+  "title": {
+    "zh_cn": "冲锋枪手",
+    "en_us": "SMG Operator"
+  },
+  "description": {
+    "zh_cn": "冲锋枪在近中距离火力凶猛。消灭一批僵尸，证明你有资格掌握更强大的武器。\n\n奖励：冲锋枪 + 弹药 + 垂直握把",
+    "en_us": "SMGs excel at close to medium range. Eliminate a wave of zombies to prove you are worthy of a more powerful weapon.\n\nReward: SMG + Ammo + Vertical Grip"
+  },
+  "icon": {
+    "item": "tacz:ump45"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies",
+      "title": {
+        "zh_cn": "消灭僵尸",
+        "en_us": "Kill Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 15
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "tacz:ump45",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "tacz:45acp",
+      "count": 96
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:grip_vertical_military",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:tacz_02_ammo",
+    "children": [
+      "qlmzombie:tacz_04_rifle"
+    ]
+  }
+}

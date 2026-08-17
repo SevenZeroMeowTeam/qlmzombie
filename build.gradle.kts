@@ -7,6 +7,7 @@ plugins {
 }
 
 import java.time.Instant
+import java.util.zip.ZipFile
 
 // MixinGradle：为 Thirst 模块 mixin 生成 refmap，保证正式（SRG）环境下 mixin 正确映射不闪退。
 // 原模组 dev.ghen.thirst 同款方案。
@@ -115,6 +116,87 @@ dependencies {
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
 }
 
+// ======================================================================
+// JarInJar 内嵌 KotlinForForge（修复 "requires kotlinforforge 4.12 or above / not installed"）
+// ======================================================================
+// 背景：mods.toml 将 kotlinforforge 声明为 mandatory 依赖，但 Forge 的依赖检查发生在
+//       ModDependencyHandler 把内嵌 libs/ 释放到 mods/ 目录【之前】，因此首次启动
+//       （mods/ 中还没有 kotlinforforge）必然失败，ModDependencyHandler 根本来不及运行。
+// 解决：把 KotlinForForge 的运行时子模块通过 Forge 官方 JarInJar 机制内嵌到
+//       META-INF/jarjar/。Forge 的 JarInJarDependencyLocator 在 mod 扫描 / 依赖检查
+//       阶段（早于任何 mod 代码）就会自动加载它们：
+//         - kfflang (LANGPROVIDER) : kotlinforforge 语言加载器
+//         - kfflib  (GAMELIBRARY)  : Kotlin 运行时库（kotlin-stdlib 等）
+//         - kffmod  (MOD)          : mod 本体，modId = "kotlinforforge" -> 满足依赖检查
+//       若 mods/ 中已有外部 kotlinforforge（或 kotlinforforge-all），JarSelector 会
+//       优先使用已加载版本并跳过内嵌副本（自动去重，无重复模块冲突）。
+// 来源：src/main/libs/kotlinforforge-<v>-all.jar 内 META-INF/jarjar/*.jar
+val kotlinForForgeVersion = "4.12.0"
+val kotlinForForgeBundleJar = "kotlinforforge-$kotlinForForgeVersion-all.jar"
+val kotlinForForgeJarJarModules = listOf(
+    "kfflang-$kotlinForForgeVersion.jar",
+    "kfflib-$kotlinForForgeVersion.jar",
+    "kffmod-$kotlinForForgeVersion.jar",
+)
+val jarJarStagingDir = layout.buildDirectory.dir("generated/jarjar")
+
+// 从 kotlinforforge-all 提取运行时子模块到 build/generated/jarjar/
+val extractKotlinForForge by tasks.registering {
+    description = "从 kotlinforforge-all 提取 JarInJar 运行时子模块（kfflang/kfflib/kffmod）"
+    val bundleFile = file("src/main/libs/$kotlinForForgeBundleJar")
+    inputs.file(bundleFile)
+    outputs.dir(jarJarStagingDir)
+    doLast {
+        val outDir = jarJarStagingDir.get().asFile
+        outDir.mkdirs()
+        ZipFile(bundleFile).use { zip ->
+            for (module in kotlinForForgeJarJarModules) {
+                val entry = zip.getEntry("META-INF/jarjar/$module")
+                    ?: throw GradleException("$kotlinForForgeBundleJar 中缺少 META-INF/jarjar/$module")
+                val out = File(outDir, module)
+                zip.getInputStream(entry).use { input ->
+                    out.outputStream().use { output -> input.copyTo(output) }
+                }
+            }
+        }
+        logger.lifecycle("[build.gradle.kts] 已提取 ${kotlinForForgeJarJarModules.size} 个 KotlinForForge JarInJar 子模块 -> $outDir")
+    }
+}
+
+// 生成 META-INF/jarjar/metadata.json（Forge JarInJar 依赖声明，格式与 jarjar 库一致）
+val generateKotlinForForgeMetadata by tasks.registering {
+    description = "生成 META-INF/jarjar/metadata.json（KotlinForForge 运行时依赖声明）"
+    inputs.property("kffVersion", kotlinForForgeVersion)
+    inputs.property("modules", kotlinForForgeJarJarModules)
+    val metadataFile = jarJarStagingDir.map { it.file("metadata.json") }
+    outputs.file(metadataFile)
+    doLast {
+        val sb = StringBuilder()
+        sb.appendLine("{")
+        sb.appendLine("  \"jars\": [")
+        for ((idx, module) in kotlinForForgeJarJarModules.withIndex()) {
+            val artifact = module.substringBefore("-") // kfflang / kfflib / kffmod
+            val comma = if (idx < kotlinForForgeJarJarModules.size - 1) "," else ""
+            sb.appendLine("    {")
+            sb.appendLine("      \"identifier\": {")
+            sb.appendLine("        \"group\": \"thedarkcolour\",")
+            sb.appendLine("        \"artifact\": \"$artifact\"")
+            sb.appendLine("      },")
+            sb.appendLine("      \"version\": {")
+            sb.appendLine("        \"range\": \"[$kotlinForForgeVersion,)\",")
+            sb.appendLine("        \"artifactVersion\": \"$kotlinForForgeVersion\"")
+            sb.appendLine("      },")
+            sb.appendLine("      \"path\": \"META-INF/jarjar/$module\",")
+            sb.appendLine("      \"isObfuscated\": false")
+            sb.appendLine("    }$comma")
+        }
+        sb.appendLine("  ]")
+        sb.appendLine("}")
+        metadataFile.get().asFile.writeText(sb.toString(), Charsets.UTF_8)
+        logger.lifecycle("[build.gradle.kts] 已生成 META-INF/jarjar/metadata.json（${kotlinForForgeJarJarModules.size} 个模块）")
+    }
+}
+
 // MixinGradle 负责：注入 Mixin 注解处理器 + 生成/重混淆 refmap
 // （mixin json 中已手动声明 "refmap": "qlmzombie-thirst.refmap.json"）
 configure<org.spongepowered.asm.gradle.plugins.MixinExtension> {
@@ -197,6 +279,9 @@ val generateLibsManifest by tasks.registering {
         }?.map { it.name }?.filter { name ->
             // 先检查原始名称，再检查剥离前缀后的名称
             val stripped = stripBracketPrefix(name)
+            // JarInJar 内嵌的 KotlinForForge 不再通过 libs/ 释放到 mods/，
+            // 避免与 META-INF/jarjar/ 中的内嵌副本重复加载（由 JarInJar 机制直接提供）。
+            if (stripped.startsWith("kotlinforforge")) return@filter false
             excludes.none { it.containsMatchIn(name) || it.containsMatchIn(stripped) }
         } ?: emptyList()
 
@@ -217,8 +302,8 @@ val generateLibsManifest by tasks.registering {
 }
 
 tasks.named<Jar>("jar") {
-    // 依赖 manifest 生成任务
-    dependsOn(generateLibsManifest)
+    // 依赖 manifest 生成任务 + JarInJar 提取/元数据生成任务
+    dependsOn(generateLibsManifest, extractKotlinForForge, generateKotlinForForgeMetadata)
 
     manifest {
         attributes(mapOf(
@@ -233,13 +318,21 @@ tasks.named<Jar>("jar") {
         ))
     }
 
-    // Embed dependency JARs inside our jar. Forge's JarInJarDependencyLocator
-    // will discover them during mod scanning (before dependency checks), so
-    // kotlinforforge/kubejs/cloth-config are available from the very first launch.
+    // JarInJar 内嵌 KotlinForForge 运行时（kfflang/kfflib/kffmod + metadata.json）。
+    // Forge 的 JarInJarDependencyLocator 会在 mod 扫描 / 依赖检查阶段（早于任何 mod 代码）
+    // 加载它们，使 mods.toml 中 mandatory 的 kotlinforforge 依赖在首次启动即可满足，
+    // 不再依赖"先释放到 mods/ 再重启"的兜底流程。
+    from(jarJarStagingDir) {
+        into("META-INF/jarjar")
+    }
+
+    // Embed dependency JARs inside our jar. ModDependencyHandler releases them to
+    // mods/ at runtime for OPTIONAL deps (kubejs/cloth-config/etc). kotlinforforge
+    // is NOT packaged here anymore - it is provided via META-INF/jarjar (above) so
+    // it is available before the dependency check on the very first launch.
     // IMPORTANT: We do NOT extract kotlin class files into the jar root, because
     // that would cause a ResolutionException when kotlinforforge is also loaded
     // (both modules would export the same kotlinx.coroutines.* packages).
-    // Instead, kotlinforforge is kept as a full nested JAR and provides kotlin-stdlib.
     from("src/main/libs") {
         into("libs")
         include("*.jar")
@@ -253,6 +346,8 @@ tasks.named<Jar>("jar") {
         exclude("*graal*")
         exclude("*polyglot*")
         exclude("*[Python]*")
+        // kotlinforforge 由 META-INF/jarjar/ 提供，不再放入 libs/（避免重复释放/加载）
+        exclude("kotlinforforge-*.jar")
         // 同样排除带 [中文名] 前缀的变体
         exclude("*] qlmzombie*")
         exclude("*] serveradmin*")

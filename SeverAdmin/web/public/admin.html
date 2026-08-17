@@ -264,7 +264,8 @@ async function loadDashboard() {
       html = d.docker.map(c => {
         const mem = c.mem ? `${c.mem.usedMB}MB/${c.mem.limitMB}MB (${c.mem.pct}%)` : '-';
         const cpu = c.cpu != null ? c.cpu + '%' : '-';
-        return `<b>${c.name}</b>  [${c.state}]  CPU: ${cpu}  内存: ${mem}  ${c.ports.join(', ')}\n`;
+        const ports = (c.ports || []).filter(Boolean).join(', ') || '-';
+        return `<b>${c.name}</b>  [${c.state}] ${c.status || ''}\n     CPU: ${cpu}  内存: ${mem}\n     端口: ${ports}\n\n`;
       }).join('') || '（未发现容器）';
     } else if (d.docker && d.docker.error) {
       html = 'Docker 不可用: ' + d.docker.error;

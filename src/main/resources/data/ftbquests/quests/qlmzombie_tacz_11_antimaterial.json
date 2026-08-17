@@ -1,0 +1,62 @@
+{
+  "id": "qlmzombie:tacz_11_antimaterial",
+  "title": {
+    "zh_cn": "反器材武器",
+    "en_us": "Anti-Materiel"
+  },
+  "description": {
+    "zh_cn": "大口径反器材步枪能撕碎任何目标。用 M107 终结一切威胁，任何僵尸都无法抵挡。\n\n奖励：M107 反器材步枪 + 弹药 + 大型制退器",
+    "en_us": "A large-caliber anti-materiel rifle tears through any target. End every threat with the M107 - no zombie can withstand it.\n\nReward: M107 Rifle + Ammo + Large Muzzle Brake"
+  },
+  "icon": {
+    "item": "tacz:m107"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies11",
+      "title": {
+        "zh_cn": "消灭僵尸",
+        "en_us": "Kill Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 40
+    },
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_skeletons11",
+      "title": {
+        "zh_cn": "消灭骷髅",
+        "en_us": "Kill Skeletons"
+      },
+      "entity": "#minecraft:skeleton",
+      "count": 20
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "tacz:m107",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "tacz:50bmg",
+      "count": 32
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:muzzle_brake_trex",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:tacz_10_sniper",
+    "children": [
+      "qlmzombie:tacz_12_master"
+    ]
+  }
+}

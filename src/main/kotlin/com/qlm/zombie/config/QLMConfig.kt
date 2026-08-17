@@ -122,6 +122,10 @@ object QLMConfig {
         .comment("召唤师僵尸的召唤间隔（单位: tick）", "  默认: 200 (10 秒)", "  范围: 1 ~ 10000")
         .defineInRange("summonerZombieSpawnInterval", 200, 1, 10000)
 
+    @JvmField val ZOMBIE_MAX_POPULATION = builder
+        .comment("主世界僵尸数量上限（人口控制）", "  超过上限会按离玩家由远到近自动移除超限僵尸", "  太高（如 500+）会导致服务器 tick 卡顿（Can't keep up），", "  太低会失去末日氛围", "  默认: 400", "  范围: 50 ~ 5000")
+        .defineInRange("zombieMaxPopulation", 400, 50, 5000)
+
     // ---------------- 骷髅 ----------------
     @JvmField val SKELETON_PERFECT_SHOT_CHANCE = builder
         .comment("骷髅完美射击概率", "  完美射击具有更高命中率", "  默认: 0.1 (10%)", "  范围: 0.0 ~ 1.0")
@@ -325,6 +329,31 @@ object QLMConfig {
     @JvmField val AI_PLAYER_SPAWN_RADIUS = builder
         .comment("AI 玩家生成半径（单位: 格）", "  默认: 48", "  范围: 8 ~ 256")
         .defineInRange("spawnRadius", 48, 8, 256)
+
+    init { builder.pop() }
+
+    // ==================== 掉落物控制 ====================
+    init { builder.push("drops") }
+
+    @JvmField val HOSTILE_DROP_CHANCE = builder
+        .comment("敌对生物掉落物保留概率", "  击杀敌对生物时，每个掉落物按该概率保留（减少地面物品堆积导致的卡顿）", "  1.0 = 全部保留（原版）", "  默认: 0.6 (60%)", "  范围: 0.0 ~ 1.0")
+        .defineInRange("hostileDropChance", 0.6, 0.0, 1.0)
+
+    @JvmField val DROP_CLEANUP_ENABLED = builder
+        .comment("是否启用掉落物定期清理", "  true  - 每隔一段时间自动清理地面上的部分陈旧掉落物", "  默认: true")
+        .define("dropCleanupEnabled", true)
+
+    @JvmField val DROP_CLEANUP_INTERVAL = builder
+        .comment("掉落物清理间隔（单位: tick，20 tick = 1 秒）", "  默认: 1200 (1 分钟)", "  范围: 20 ~ 72000")
+        .defineInRange("dropCleanupInterval", 1200, 20, 72000)
+
+    @JvmField val DROP_CLEANUP_MIN_AGE = builder
+        .comment("掉落物最小存在时间（单位: tick，小于该时间的掉落物不会被清理）", "  默认: 600 (30 秒)", "  范围: 0 ~ 72000")
+        .defineInRange("dropCleanupMinAge", 600, 0, 72000)
+
+    @JvmField val DROP_CLEANUP_CHANCE = builder
+        .comment("每次清理时单个陈旧掉落物被清理的概率", "  默认: 0.5 (50%)", "  范围: 0.0 ~ 1.0")
+        .defineInRange("dropCleanupChance", 0.5, 0.0, 1.0)
 
     init { builder.pop() }
 

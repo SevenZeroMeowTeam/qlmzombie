@@ -72,6 +72,71 @@ function checkTcpOpen(host, port, timeoutMs = 3000) {
   });
 }
 
+// 实测 MC 延迟：完整走一遍状态握手（TCP 连接 + Status Request/Response），
+// 返回往返耗时（ms）；服务器不可达时返回 null。
+function measureMcLatency(timeoutMs = 4000) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const sock = net.connect({ host: MC_HOST, port: MC_PORT, timeout: timeoutMs });
+    const timer = setTimeout(() => { sock.destroy(); resolve(null); }, timeoutMs);
+    let done = false;
+    const finish = (v) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      sock.destroy();
+      resolve(v);
+    };
+    sock.once('connect', () => {
+      try {
+        const hostLen = Buffer.byteLength(MC_HOST, 'utf8');
+        const handshake = Buffer.alloc(1 + 2 + 1 + hostLen + 2 + 1);
+        handshake[0] = 0x00; // packet id
+        handshake.writeUInt16BE(754, 1);   // protocol version
+        handshake.writeUInt8(hostLen, 3);  // host 长度
+        handshake.write(MC_HOST, 4, 'utf8');
+        handshake.writeUInt16BE(MC_PORT, 4 + hostLen);
+        handshake.writeUInt8(2, 6 + hostLen); // next state: status
+        sock.write(handshake);
+        sock.write(Buffer.from([0x01, 0x00])); // status request
+      } catch { finish(null); }
+    });
+    sock.once('data', () => finish(Date.now() - start));
+    sock.once('error', () => finish(null));
+    sock.once('timeout', () => finish(null));
+  });
+}
+
+// ---------- 性能监控（TPS/MSPT/内存/人数 来自模组 qlm-metrics.json，延迟实测） ----------
+const METRICS_HISTORY = [];
+const METRICS_MAX_POINTS = 120; // 2 秒一个点，约 4 分钟窗口
+const METRICS_FILE = path.join(DATA_DIR, 'qlm-metrics.json');
+
+function readModMetricsFile() {
+  try {
+    if (!fs.existsSync(METRICS_FILE)) return null;
+    return JSON.parse(fs.readFileSync(METRICS_FILE, 'utf-8'));
+  } catch { return null; }
+}
+
+async function sampleMetrics() {
+  const mod = readModMetricsFile();
+  const points = mod && Array.isArray(mod.points) ? mod.points : [];
+  const latest = points.length ? points[points.length - 1] : null;
+  const latency = await measureMcLatency();
+  METRICS_HISTORY.push({
+    t: Date.now(),
+    tps: latest && latest.tps != null ? latest.tps : null,
+    mspt: latest && latest.mspt != null ? latest.mspt : null,
+    players: latest && latest.players != null ? latest.players : null,
+    memUsedMB: latest && latest.memUsedMB != null ? latest.memUsedMB : null,
+    memMaxMB: latest && latest.memMaxMB != null ? latest.memMaxMB : null,
+    latency,
+  });
+  if (METRICS_HISTORY.length > METRICS_MAX_POINTS) METRICS_HISTORY.shift();
+}
+setInterval(() => { sampleMetrics().catch(() => {}); }, 2000);
+
 // ---------- RCON 客户端（MC 控制协议） ----------
 class RconClient {
   constructor(host, port, password, timeoutMs = 5000) {
@@ -176,12 +241,15 @@ function dockerRequest(method, urlPath) {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(DOCKER_SOCKET)) return reject(new Error('docker.sock 不可用'));
     const sock = net.connect(DOCKER_SOCKET);
+    // 超时保护：stats 等接口可能长时间不响应，避免 /api/admin/monitor 挂起
+    const timer = setTimeout(() => { sock.destroy(); reject(new Error('docker API 超时')); }, 8000);
     const req = `${method} ${urlPath} HTTP/1.1\r\nHost: docker\r\nConnection: close\r\n\r\n`;
     let data = Buffer.alloc(0);
     sock.on('connect', () => sock.write(req));
     sock.on('data', (c) => { data = Buffer.concat([data, c]); });
-    sock.on('error', reject);
+    sock.on('error', (e) => { clearTimeout(timer); reject(e); });
     sock.on('close', () => {
+      clearTimeout(timer);
       const hdrEnd = data.indexOf('\r\n\r\n');
       if (hdrEnd < 0) return reject(new Error('docker 响应无效'));
       const headers = data.subarray(0, hdrEnd).toString('utf8');
@@ -193,11 +261,28 @@ function dockerRequest(method, urlPath) {
   });
 }
 
+// 判断是否为本项目容器：兼容显式名（qlm-minecraft）与 compose 项目前缀名（minecraftsc-minecraft-1）
+function isQlmContainer(c) {
+  const raw = (c.Names?.[0] || '').replace(/^\//, '');
+  const image = (c.Image || '').toLowerCase();
+  const name = raw.replace(/^minecraftsc-/, '').replace(/-\d+$/, '');
+  const bare = name.replace(/^qlm-/, '');
+  if (['minecraft', 'web', 'nginx'].includes(bare)
+      && (name.includes('qlm') || name.includes('minecraftsc') || raw === name)) {
+    return true;
+  }
+  return image.includes('itzg/minecraft-server')
+    || image.includes('minecraftsc-web')
+    || image.includes('minecraftsc-nginx');
+}
+
 async function dockerStats() {
-  const containers = await dockerRequest('GET', '/containers/json');
+  // ?all=1：同时列出运行/重启/停止中的容器，崩溃循环时也能看到 MC 容器
+  const containers = await dockerRequest('GET', '/containers/json?all=1');
+  if (!Array.isArray(containers)) throw new Error('docker 返回格式异常: ' + typeof containers);
   const results = [];
   for (const c of containers) {
-    if (!['qlm-minecraft', 'qlm-web', 'qlm-nginx'].includes(c.Names?.[0]?.replace(/^\//, ''))) continue;
+    if (!isQlmContainer(c)) continue;
     const info = await dockerRequest('GET', `/containers/${c.Id}/stats?stream=false`).catch(() => null);
     let cpu = null, mem = null;
     if (info) {
@@ -278,45 +363,62 @@ app.get('/api/info', (req, res) => {
 });
 
 app.get('/api/status', async (req, res) => {
-  const tcp = await checkTcpOpen(MC_HOST, MC_PORT, 3000);
-  const rcon = await checkTcpOpen(RCON_HOST, RCON_PORT, 2000);
-  let players = null, motd = null, version = null;
-  if (tcp) {
-    try {
-      const info = await new Promise((resolve, reject) => {
-        const sock = net.connect({ host: MC_HOST, port: MC_PORT, timeout: 4000 });
-        const timer = setTimeout(() => { sock.destroy(); reject(new Error('timeout')); }, 4000);
-        sock.on('connect', () => {
-          const handshake = Buffer.alloc(1 + 2 + 1 + 2 + 1);
-          handshake[0] = 0x00; // packet id
-          handshake.writeUInt16BE(754, 1);
-          handshake.writeUInt8(MC_HOST.length, 3);
-          handshake.write(MC_HOST, 4, 'utf8');
-          handshake.writeUInt16BE(MC_PORT, 4 + MC_HOST.length);
-          handshake.writeUInt8(2, 6 + MC_HOST.length);
-          sock.write(handshake);
-          sock.write(Buffer.from([0x01, 0x00])); // status request
+  try {
+    const tcp = await checkTcpOpen(MC_HOST, MC_PORT, 3000);
+    const rcon = await checkTcpOpen(RCON_HOST, RCON_PORT, 2000);
+    let players = null, motd = null, version = null;
+    if (tcp) {
+      try {
+        const info = await new Promise((resolve, reject) => {
+          const sock = net.connect({ host: MC_HOST, port: MC_PORT, timeout: 4000 });
+          const timer = setTimeout(() => { sock.destroy(); reject(new Error('timeout')); }, 4000);
+          sock.on('connect', () => {
+            // 修复：握手缓冲区需按 MC_HOST 字节长度动态分配，否则 offset 越界抛 RangeError
+            // （该异常发生在 socket 事件回调，外层 try/catch 捕不到 → /api/status 永久挂起）
+            const hostLen = Buffer.byteLength(MC_HOST, 'utf8');
+            const handshake = Buffer.alloc(1 + 2 + 1 + hostLen + 2 + 1);
+            handshake[0] = 0x00; // packet id
+            handshake.writeUInt16BE(754, 1);   // protocol version
+            handshake.writeUInt8(hostLen, 3);  // host 长度
+            handshake.write(MC_HOST, 4, 'utf8');
+            handshake.writeUInt16BE(MC_PORT, 4 + hostLen);
+            handshake.writeUInt8(2, 6 + hostLen); // next state: status
+            sock.write(handshake);
+            sock.write(Buffer.from([0x01, 0x00])); // status request
+          });
+          sock.on('data', (d) => { clearTimeout(timer); sock.destroy(); resolve(d.toString('utf8')); });
+          sock.on('error', reject);
         });
-        sock.on('data', (d) => { clearTimeout(timer); sock.destroy(); resolve(d.toString('utf8')); });
-        sock.on('error', reject);
-      });
-      const jsonStart = info.indexOf('{');
-      if (jsonStart >= 0) {
-        const parsed = JSON.parse(info.slice(jsonStart, info.lastIndexOf('}') + 1));
-        players = parsed.players;
-        motd = parsed.description?.text || JSON.stringify(parsed.description);
-        version = parsed.version?.name;
-      }
-    } catch { /* 忽略 */ }
+        const jsonStart = info.indexOf('{');
+        if (jsonStart >= 0) {
+          const parsed = JSON.parse(info.slice(jsonStart, info.lastIndexOf('}') + 1));
+          players = parsed.players;
+          motd = parsed.description?.text || JSON.stringify(parsed.description);
+          version = parsed.version?.name;
+        }
+      } catch { /* 忽略 */ }
+    }
+    res.json({
+      online: tcp,
+      address: MC_PORT === 25565 ? SERVER_ADDRESS : `${SERVER_ADDRESS}:${MC_PORT}`,
+      tcp25565: tcp,
+      rcon25575: rcon,
+      players,
+      motd,
+      version,
+    });
+  } catch (e) {
+    // 兜底：接口异常也返回 JSON，前端不显示"无法连接"
+    res.json({ online: false, address: MC_PORT === 25565 ? SERVER_ADDRESS : `${SERVER_ADDRESS}:${MC_PORT}`, tcp25565: false, rcon25575: false, players: null, motd: null, version: null, error: e.message });
   }
+});
+
+// ---- 性能监控数据（TPS/延迟 曲线） ----
+app.get('/api/metrics', (req, res) => {
   res.json({
-    online: tcp,
-    address: `${SERVER_ADDRESS}:${MC_PORT}`,
-    tcp25565: tcp,
-    rcon25575: rcon,
-    players,
-    motd,
-    version,
+    history: METRICS_HISTORY,
+    latest: METRICS_HISTORY[METRICS_HISTORY.length - 1] || null,
+    maxPoints: METRICS_MAX_POINTS,
   });
 });
 

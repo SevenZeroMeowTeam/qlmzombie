@@ -1,0 +1,65 @@
+{
+  "id": "qlmzombie:tacz_12_master",
+  "title": {
+    "zh_cn": "枪械大师",
+    "en_us": "Gunsmith Master"
+  },
+  "description": {
+    "zh_cn": "你已经征服了整条枪械之路。作为最终试炼，收集大量 7.62 弹药并消灭海量敌人，证明你当之无愧的枪械大师之名！\n\n奖励：加特林机枪 + 弹药 + 战术枪托 + 大型制退器",
+    "en_us": "You have conquered the entire path of guns. As a final trial, gather a massive stock of 7.62 ammo and eliminate a horde of enemies to prove you are worthy of the title Gunsmith Master!\n\nReward: Minigun + Ammo + Tactical Stock + Muzzle Brake"
+  },
+  "icon": {
+    "item": "tacz:minigun"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_762",
+      "title": {
+        "zh_cn": "收集 7.62 弹药",
+        "en_us": "Collect 7.62 Ammo"
+      },
+      "item": "tacz:762x39",
+      "count": 128
+    },
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies12",
+      "title": {
+        "zh_cn": "消灭僵尸",
+        "en_us": "Kill Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 60
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "tacz:minigun",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "tacz:308",
+      "count": 128
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:stock_moe",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_4",
+      "item": "tacz:muzzle_brake_cthulhu",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:tacz_11_antimaterial"
+  }
+}

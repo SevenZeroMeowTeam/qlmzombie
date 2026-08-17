@@ -121,9 +121,15 @@ def patch_jar(jar_path):
     ds_utf8_indices = [k for k, v in cp_strings.items() if v == 'disableSaving']
     print(f"[Patch] 'disableSaving' at Utf8 indices: {ds_utf8_indices}")
     
-    # 如果找不到 disableSaving，搜索所有包含 "disable" 的字符串
+    # 如果找不到 disableSaving，先在整个 jar 中搜索：
+    # crafting-dead-core >= 1.9.4.8 已在上游移除 RegistryBuilder.disableSaving() 调用，
+    # 整个 jar 都不含该字符串 —— 此时补丁不再需要，良性跳过（避免日志误报"补丁失败"）。
     if not ds_utf8_indices:
-        print("[Patch] ⚠️  未找到 'disableSaving' 字符串")
+        jar_has_disable = any(b'disableSaving' in v for v in entries.values())
+        if not jar_has_disable:
+            print("[Patch] 整个 jar 中均无 'disableSaving'：当前版本（>=1.9.4.8）上游已移除 disableSaving 调用，本补丁不再需要，跳过")
+            return True
+        print("[Patch] ⚠️  GunConfigurations 中未找到 'disableSaving'，但 jar 其他位置存在，可能类结构已变化")
         print("[Patch] 搜索所有包含 'disable' 或 'saving' 的字符串...")
         for k, v in sorted(cp_strings.items()):
             if 'disable' in v.lower() or 'saving' in v.lower():

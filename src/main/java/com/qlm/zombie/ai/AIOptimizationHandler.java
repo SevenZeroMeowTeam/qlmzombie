@@ -1396,7 +1396,11 @@ public class AIOptimizationHandler {
         @Override
         public void tick() {
             LivingEntity target = this.mob.getTarget();
-            if (target == null) return;
+            if (target == null) {
+                // 无目标时收弓（结束双手持弓姿势）
+                if (this.mob.isUsingItem()) this.mob.stopUsingItem();
+                return;
+            }
 
             double distSq = this.mob.distanceToSqr(target.getX(), target.getY(), target.getZ());
             boolean canSee = this.mob.getSensing().hasLineOfSight(target);
@@ -1405,6 +1409,19 @@ public class AIOptimizationHandler {
             if (canSee != sawBefore) this.seeTime = 0;
             if (canSee) this.seeTime++;
             else this.seeTime--;
+
+            // 修复"骷髅单手持弓"：原实现从不调用 startUsingItem，
+            // 骷髅永远不会进入 BOW_AND_ARROW 双手拉弓姿势。
+            // 现在瞄准射程内且能看到目标时拉弓（双手持弓），否则收弓。
+            boolean aiming = canSee && distSq <= (double) this.attackRadiusSqr && this.seeTime >= 5;
+            if (aiming) {
+                if (!this.mob.isUsingItem()
+                        && this.mob.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND).is(Items.BOW)) {
+                    this.mob.startUsingItem(net.minecraft.world.InteractionHand.MAIN_HAND);
+                }
+            } else if (this.mob.isUsingItem()) {
+                this.mob.stopUsingItem();
+            }
 
             if (distSq > (double) (this.attackRadiusSqr * 0.9D) || this.seeTime < 10) {
                 this.mob.getNavigation().moveTo(target, this.speedModifier);
@@ -1425,6 +1442,8 @@ public class AIOptimizationHandler {
                     float distFactor = Math.min(1.5F, (float) Math.sqrt(distSq) / this.attackRadius);
                     this.mob.performRangedAttack(target, distFactor);
                     this.attackTime = this.attackIntervalMin + (int) (distFactor * (this.attackIntervalMax - this.attackIntervalMin));
+                    // 射完收弓，等待下一次拉弓
+                    if (this.mob.isUsingItem()) this.mob.stopUsingItem();
                 }
             } else if (this.attackTime < 0) {
                 this.attackTime = this.attackIntervalMin;

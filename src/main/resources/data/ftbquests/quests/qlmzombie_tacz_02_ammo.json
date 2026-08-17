@@ -1,0 +1,62 @@
+{
+  "id": "qlmzombie:tacz_02_ammo",
+  "title": {
+    "zh_cn": "弹药储备",
+    "en_us": "Ammo Stockpile"
+  },
+  "description": {
+    "zh_cn": "枪没有子弹就是烧火棍。大量储备弹药，才能在这场末日中活下去。利用弹药盒可以快速装填子弹。\n\n奖励：大量弹药 + 弹药盒 + 全被甲弹改装",
+    "en_us": "A gun without bullets is just a club. Stockpile ammo to survive the apocalypse. Use ammo boxes to quickly refill your bullets.\n\nReward: Lots of Ammo + Ammo Box + FMJ Ammo Mod"
+  },
+  "icon": {
+    "item": "tacz:ammo_box.iron"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_iron2",
+      "title": {
+        "zh_cn": "收集铁锭",
+        "en_us": "Collect Iron Ingots"
+      },
+      "item": "minecraft:iron_ingot",
+      "count": 32
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_gunpowder2",
+      "title": {
+        "zh_cn": "收集火药",
+        "en_us": "Collect Gunpowder"
+      },
+      "item": "minecraft:gunpowder",
+      "count": 8
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "tacz:9mm",
+      "count": 128
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "tacz:ammo_box.iron",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:ammo_mod_fmj",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:tacz_01_handgun",
+    "children": [
+      "qlmzombie:tacz_03_smg"
+    ]
+  }
+}

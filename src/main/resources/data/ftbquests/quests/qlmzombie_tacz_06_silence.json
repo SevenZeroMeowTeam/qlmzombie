@@ -1,0 +1,52 @@
+{
+  "id": "qlmzombie:tacz_06_silence",
+  "title": {
+    "zh_cn": "无声行动",
+    "en_us": "Silent Operation"
+  },
+  "description": {
+    "zh_cn": "消音器能让你在黑暗中悄无声息地行动，不被远处的僵尸发现。掌握寂静的杀戮艺术。\n\n奖励：消音器 + 斜握把 + 弹药",
+    "en_us": "A silencer lets you move silently through the dark without alerting distant zombies. Master the art of silent killing.\n\nReward: Silencer + Angled Grip + Ammo"
+  },
+  "icon": {
+    "item": "tacz:muzzle_silencer_wraith"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies6",
+      "title": {
+        "zh_cn": "消灭僵尸",
+        "en_us": "Kill Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 20
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "tacz:muzzle_silencer_wraith",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "tacz:grip_rk0",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:9mm",
+      "count": 96
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:tacz_05_precision",
+    "children": [
+      "qlmzombie:tacz_07_advanced_rifle"
+    ]
+  }
+}

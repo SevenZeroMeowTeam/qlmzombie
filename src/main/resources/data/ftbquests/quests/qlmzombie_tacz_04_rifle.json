@@ -1,0 +1,62 @@
+{
+  "id": "qlmzombie:tacz_04_rifle",
+  "title": {
+    "zh_cn": "突击步枪",
+    "en_us": "Assault Rifle"
+  },
+  "description": {
+    "zh_cn": "突击步枪是末日战场的中坚力量。收集大量钢铁与火药，换取一把传奇般的 AK-47。\n\n奖励：AK-47 + 弹药 + 简易反射瞄具",
+    "en_us": "The assault rifle is the backbone of the apocalypse battlefield. Gather plenty of iron and gunpowder to get your hands on a legendary AK-47.\n\nReward: AK-47 + Ammo + Coyote Sight"
+  },
+  "icon": {
+    "item": "tacz:ak47"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_iron3",
+      "title": {
+        "zh_cn": "收集铁锭",
+        "en_us": "Collect Iron Ingots"
+      },
+      "item": "minecraft:iron_ingot",
+      "count": 64
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "collect_gunpowder3",
+      "title": {
+        "zh_cn": "收集火药",
+        "en_us": "Collect Gunpowder"
+      },
+      "item": "minecraft:gunpowder",
+      "count": 16
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "tacz:ak47",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "tacz:762x39",
+      "count": 128
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:sight_coyote",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:tacz_03_smg",
+    "children": [
+      "qlmzombie:tacz_05_precision"
+    ]
+  }
+}

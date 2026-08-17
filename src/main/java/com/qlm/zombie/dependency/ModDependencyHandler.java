@@ -1,12 +1,5 @@
 package com.qlm.zombie.dependency;
 
-import com.mojang.logging.LogUtils;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.loading.FMLPaths;
-import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,9 +9,26 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import org.slf4j.Logger;
+
+import com.mojang.logging.LogUtils;
+
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 /**
  * 模组依赖自动释放处理器（重写版）。
@@ -29,8 +39,11 @@ import java.util.zip.ZipInputStream;
  *       {@code build.gradle.kts} 从 {@code src/main/libs/} 打包而来），可选
  *       {@code libs/manifest.txt} 作为权威清单。白名单中的 JAR 永远不会被本处理器删除或禁用。</li>
  *   <li><b>禁用策略</b>：保守模式。只禁用 {@link #DEFAULT_DISABLED_PREFIXES}
- *       精确前缀匹配的"已知问题模组"（如 ToughAsNails/ThirstWasTaken，与项目"口渴"系统冲突），
+ *       精确前缀匹配的"已知问题模组"（如 ToughAsNails，与项目"口渴"系统冲突），
  *       不再用模糊关键字扫描 mods 目录，避免误伤 create/refinedstorage/crafting-dead 等依赖。</li>
+ *   <li><b>ThirstWasTaken 白名单</b>：ThirstWasTaken（modId=thirst，通道 thirst:main）不再禁用——
+ *       客户端可能仍装有外置 ThirstWasTaken JAR，服务器端保留它以匹配客户端网络 channel，
+ *       避免 "mismatched mod channel list" 拒连（服务器缺少 Thirst）。</li>
  *   <li><b>恢复策略</b>：如果 mods 目录中存在 {@code .disabled} 文件，且文件名在白名单中、
  *       不在 DEFAULT_DISABLED 列表中，则自动恢复（取消禁用）。这样即便外部脚本误禁用
  *       kotlinforforge/kubejs/cloth-config，下次启动也会自动恢复。</li>
@@ -53,9 +66,16 @@ public class ModDependencyHandler {
      * 已知问题模组前缀（精确前缀匹配，非模糊关键字）。
      * 覆盖"口渴/生命管理"系列冲突模组，所有常见分隔符变体（连字符/下划线/无分隔/空格）均列出，
      * 避免 {@code [中文名] Tough As Nails-...} 等不规范命名绕过匹配。
-     * 用户可手动启用（手动启用后会被加入 tracker，不再被自动禁用）。
+     * 注意：已知冲突模组即使被加入 tracker（曾自动禁用），只要文件仍为 active 就会被重新禁用
+     * （自愈，防止 ToughAsNails 兼容配方 NPE 踢玩家）；要真正启用需从 tracker 文件中删除对应行。
      *
      * <p><b>双端通用</b>：无论 CLIENT 还是 DEDICATED_SERVER 都会匹配。
+     *
+     * <p><b>注意</b>：ThirstWasTaken 系列不在此列表 —— 它是白名单模组（见上方类注释）。
+     * 客户端可能装有外置 ThirstWasTaken JAR（modId=thirst，通道 thirst:main），
+     * 服务器端必须保留它匹配客户端网络 channel，否则玩家连接报
+     * "Connection closed - mismatched mod channel list"（服务器缺少 Thirst）。
+     * 仅保留 ToughAsNails 与 ThirstMod/ThirstCanteen（不同作者/不同 modId）的禁用。
      */
     private static final List<String> DEFAULT_DISABLED_PREFIXES = Collections.unmodifiableList(Arrays.asList(
             // ToughAsNails 常见变体（含连字符、下划线、空格、缩写）
@@ -64,12 +84,7 @@ public class ModDependencyHandler {
             "tough_as_nails",
             "tough as nails",
             "tough-as",
-            // ThirstWasTaken 常见变体
-            "thirstwastaken",
-            "thirst-was-taken",
-            "thirst_was_taken",
-            "thirst was taken",
-            // ThirstMod / ThirstCanteen 系列（全部变体）
+            // ThirstMod / ThirstCanteen 系列（全部变体；ThirstWasTaken 不在内，见上）
             "thirstmod",
             "thirst-mod",
             "thirst_mod",
@@ -97,7 +112,21 @@ public class ModDependencyHandler {
             "crafting dead",
             "[crafting-dead]",
             "[craftingdead]",
-            "craftingdead"
+            "craftingdead",
+            // 纯客户端渲染/UI 模组：专用服务端无作用，且 ETF 的 ResourceLocation mixin
+            // 会在服务端触发客户端类加载（Screen）导致 ExceptionInInitializerError 崩溃。
+            // 注意：kleiders_custom_renderer 不在此列表 —— 它注册了网络 channel（客户端皮肤/模型
+            // 同步），服务器端缺失会导致玩家连接报 "mismatched mod channel list"；且其 mixin 配置为空、
+            // 主类无客户端类引用，服务端加载安全（日志已证实 130 mods 含 Kleiders 正常启动），
+            // 因此服务端必须保留它以匹配客户端 channel。
+            "entity_texture_features",
+            "entity_model_features",
+            "3d-armor",
+            "skinlayers3d",
+            "imblocker",
+            "sodiumdynamiclights",
+            "sodiumoptionsapi",
+            "ysm"
     ));
 
     /** @return 当前运行环境是否为独立专用服务端。 */
@@ -329,6 +358,9 @@ public class ModDependencyHandler {
         if (stripped.startsWith("serveradmin")) return true;
         if (stripped.startsWith("player2-")) return true;
         if (stripped.startsWith("vanilla_server")) return true;
+        // KotlinForForge 由 META-INF/jarjar/ 内嵌提供（Forge 依赖检查前加载），
+        // 绝不允许释放到 mods/ 造成与 JarInJar 副本重复加载。
+        if (stripped.startsWith("kotlinforforge")) return true;
         if (lower.contains("jython")) return true;
         if (lower.contains("graal")) return true;
         if (lower.contains("polyglot")) return true;
@@ -466,10 +498,29 @@ public class ModDependencyHandler {
             for (Path modFile : stream) {
                 String fileName = modFile.getFileName().toString();
                 if (!isUnifiedDisabled(fileName)) continue;
-                if (trackedDisabled.contains(fileName)) continue;
 
                 Path disabledPath = modFile.resolveSibling(fileName + DISABLED_MARKER);
-                if (Files.exists(disabledPath)) continue;
+                if (Files.exists(disabledPath)) {
+                    // .disabled 已存在但 active jar 也在（entrypoint 3a/3c 或部署同步可能
+                    // 重复复制 active jar）：这是不一致状态——必须删除 active jar，否则
+                    // Forge 仍会加载它（典型：ToughAsNails 曾预禁用为 .disabled，后续又被
+                    // 复制回 active，登录配方 NPE 踢掉所有玩家）。
+                    try {
+                        Files.delete(modFile);
+                        LOGGER.warn("[QLM Zombie] 已知冲突模组同时存在 active 与 .disabled，删除 active 保留禁用: {}", fileName);
+                    } catch (IOException ex) {
+                        LOGGER.warn("[QLM Zombie] 删除并存的 active jar 失败: {}", fileName, ex);
+                    }
+                    continue;
+                }
+
+                // 已追踪禁用但文件当前为 active（.disabled 不存在）：说明禁用被撤销/重新激活
+                // （部署同步、entrypoint 提取或误操作）。对已知冲突模组一律重新禁用——
+                // 否则 ToughAsNails 等会因兼容配方 NPE 在玩家登录时被踢出。
+                // 真正想手动启用的用户，请从 tracker 文件（qlmzombie_disabled_tracker.txt）删除该行。
+                if (trackedDisabled.contains(fileName)) {
+                    LOGGER.warn("[QLM Zombie] 已追踪禁用但文件为 active，重新禁用已知冲突模组: {}", fileName);
+                }
 
                 String reason = isServerDisabled(fileName) ? "SERVER_DISABLED" : "DEFAULT_DISABLED";
                 disableMod(modFile, reason);
@@ -603,7 +654,8 @@ public class ModDependencyHandler {
             lines.add("# Policy = DEFAULT_DISABLED_PREFIXES ∪ (SERVER_DISABLED_PREFIXES when dist=DEDICATED_SERVER)");
             lines.add("#   - DEFAULT_DISABLED: e.g. ToughAsNails/ThirstWasTaken/thirstmod (口渴冲突模组，双端都禁用)");
             lines.add("#   - SERVER_DISABLED: e.g. crafting-dead-core/decoration/survival/worldguard (仅专用服务端禁用)");
-            lines.add("# If you manually enable a mod listed here, it will NOT be re-disabled.");
+            lines.add("# NOTE: 已知冲突模组（命中统一禁用策略）即使在此列表中，只要文件为 active 仍会被重新禁用；");
+            lines.add("#       要真正启用请从本文件删除对应行。非冲突模组（白名单被误禁用）不受此限制。");
             lines.add("# Whitelist mods (embedded in mod JAR) are auto-restored even if .disabled exists,");
             lines.add("# unless they hit the unified disabled policy above.");
             lines.addAll(trackedDisabled);
@@ -901,9 +953,21 @@ public class ModDependencyHandler {
                 for (Path modFile : stream) {
                     String fileName = modFile.getFileName().toString();
                     if (!isUnifiedDisabled(fileName)) continue;
-                    if (trackedDisabled.contains(fileName)) continue;
                     Path disabledPath = modFile.resolveSibling(fileName + DISABLED_MARKER);
-                    if (Files.exists(disabledPath)) continue;
+                    if (Files.exists(disabledPath)) {
+                        // 并存不一致状态：删除 active 保留 .disabled（否则 Forge 加载 active → ToughAsNails 配方 NPE）
+                        try {
+                            Files.delete(modFile);
+                            LOGGER.warn("[QLM Zombie] 已知冲突模组同时存在 active 与 .disabled，删除 active 保留禁用: {}", fileName);
+                        } catch (IOException ex) {
+                            LOGGER.warn("[QLM Zombie] 删除并存的 active jar 失败: {}", fileName, ex);
+                        }
+                        continue;
+                    }
+                    // 已追踪但文件为 active → 重新禁用已知冲突模组（自愈，防止 ToughAsNails 配方 NPE 踢玩家）
+                    if (trackedDisabled.contains(fileName)) {
+                        LOGGER.warn("[QLM Zombie] 已追踪禁用但文件为 active，重新禁用已知冲突模组: {}", fileName);
+                    }
                     String reason = isServerDisabled(fileName) ? "SERVER_DISABLED" : "DEFAULT_DISABLED";
                     disableMod(modFile, reason);
                     trackedDisabled.add(fileName);

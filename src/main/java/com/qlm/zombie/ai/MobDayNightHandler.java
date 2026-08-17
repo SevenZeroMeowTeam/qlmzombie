@@ -33,9 +33,29 @@ public class MobDayNightHandler {
     private static final String NBT_SKELETON_ALERT_CD = "qlm_skeleton_alert_cd";
     private static final String NBT_GOLEM_BOOSTED = "qlm_golem_boosted";
 
+    /**
+     * 白天清目标的冷却（tick）：修复"僵尸双手持物抖动"。
+     * 原逻辑每个 tick 都把玩家目标 setTarget(null)，但原版索敌 goal 又会立刻重新
+     * 锁定玩家 → isAggressive() 每 tick 在 true/false 间闪烁 → 双手举起的持物姿势
+     * 剧烈抖动。改为每 100 tick（5 秒）才清一次，避免高频闪烁。
+     */
+    private static final long DAY_CLEAR_COOLDOWN = 100;
+    private static final Map<Integer, Long> lastDayClear = new HashMap<>();
+
     private static boolean isDay(Level level) {
         long time = level.getDayTime() % 24000L;
         return time < 13000L; // 0-13000 视为白天（13000 起进入夜晚）
+    }
+
+    /** 白天按冷却频率清除玩家目标（防止与索敌 goal 争夺导致抖动） */
+    private static boolean tryClearDayTarget(Mob mob, Level level) {
+        if (mob.getTarget() == null) return false;
+        long now = level.getGameTime();
+        Long last = lastDayClear.get(mob.getId());
+        if (last != null && now - last < DAY_CLEAR_COOLDOWN) return false;
+        mob.setTarget(null);
+        lastDayClear.put(mob.getId(), now);
+        return true;
     }
 
     // ==================== 通用：昼夜行为 + 夜晚锁定追击 ====================
@@ -53,9 +73,9 @@ public class MobDayNightHandler {
             if (day) {
                 // 白天不燃烧
                 if (zombie.isOnFire()) zombie.setRemainingFireTicks(0);
-                // 白天不主动攻击玩家（被攻击过仍可反击）
+                // 白天不主动攻击玩家（被攻击过仍可反击）——按冷却频率清除，避免抖动
                 if (zombie.getTarget() instanceof Player p && zombie.getLastHurtByMob() != p) {
-                    zombie.setTarget(null);
+                    tryClearDayTarget(zombie, level);
                 }
             } else {
                 // 夜晚：64格内锁定玩家追击
@@ -68,8 +88,9 @@ public class MobDayNightHandler {
             if (day) {
                 if (skeleton.isOnFire()) skeleton.setRemainingFireTicks(0);
                 if (skeleton.getTarget() instanceof Player p && skeleton.getLastHurtByMob() != p) {
-                    skeleton.setTarget(null);
-                    skeleton.getNavigation().stop();
+                    if (tryClearDayTarget(skeleton, level)) {
+                        skeleton.getNavigation().stop();
+                    }
                 }
             } else {
                 lockTargetAtNight(skeleton, level);

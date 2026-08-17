@@ -1,0 +1,6 @@
+# This directory is the certbot webroot (`/var/www/certbot` inside the nginx
+# container). HTTP-01 ACME challenge files are written here by the certbot
+# service (`.well-known/acme-challenge/`) and served by nginx.
+#
+# Keep this placeholder file so the directory is tracked by git and always
+# present in the Docker build context (`COPY www/ /var/www/certbot/`).

@@ -8,7 +8,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -65,8 +64,12 @@ public class PlayerHealthHandler {
         );
         attr.addPermanentModifier(modifier);
 
-        // 满血
-        player.setHealth((float) MAX_HEALTH);
+        // 仅在生命低于目标上限时补满，绝不强制扣减高于上限的生命
+        // （旧代码每 tick 强制 setHealth(200)，会把击杀奖励堆起来的
+        //   更高生命上限直接扣到 200 —— 这就是"生命上限还在扣血"）
+        if (player.getHealth() < MAX_HEALTH) {
+            player.setHealth((float) MAX_HEALTH);
+        }
 
         QLMZombieMod.LOGGER.debug("[QLM Zombie] Player {} max health set to {}", player.getName().getString(), MAX_HEALTH);
     }
@@ -77,9 +80,12 @@ public class PlayerHealthHandler {
             return;
         }
 
-        // 确保血量上限
+        // 确保血量上限：仅在加成缺失时重新应用
+        // （旧代码用 attr.getBaseValue() < MAX_HEALTH 判断 —— 基础值恒为 20 < 200，
+        //   导致每 tick 移除+重加 modifier 并强制回血，造成血量上限闪烁/扣血；
+        //   现在改为检测 modifier 是否仍存在，缺失才重新注入）
         AttributeInstance attr = player.getAttribute(Attributes.MAX_HEALTH);
-        if (attr != null && attr.getBaseValue() < MAX_HEALTH) {
+        if (attr != null && attr.getModifier(HEALTH_BOOST_UUID) == null) {
             setMaxHealth(player);
         }
 

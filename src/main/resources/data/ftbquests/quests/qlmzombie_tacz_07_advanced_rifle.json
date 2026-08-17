@@ -1,0 +1,62 @@
+{
+  "id": "qlmzombie:tacz_07_advanced_rifle",
+  "title": {
+    "zh_cn": "步枪升级",
+    "en_us": "Advanced Rifle"
+  },
+  "description": {
+    "zh_cn": "是时候升级你的火力了。收集 5.56 弹药，并消灭足够多的僵尸，换取一把现代步枪 HK416。\n\n奖励：HK416D + 弹药 + 扩容弹匣",
+    "en_us": "Time to upgrade your firepower. Gather 5.56 ammo and eliminate enough zombies to earn a modern HK416 rifle.\n\nReward: HK416D + Ammo + Extended Mag"
+  },
+  "icon": {
+    "item": "tacz:hk416d"
+  },
+  "tasks": [
+    {
+      "type": "ftbquests:item",
+      "id": "collect_556",
+      "title": {
+        "zh_cn": "收集 5.56 弹药",
+        "en_us": "Collect 5.56 Ammo"
+      },
+      "item": "tacz:556x45",
+      "count": 64
+    },
+    {
+      "type": "ftbquests:entity",
+      "id": "kill_zombies7",
+      "title": {
+        "zh_cn": "消灭僵尸",
+        "en_us": "Kill Zombies"
+      },
+      "entity": "#minecraft:zombie",
+      "count": 25
+    }
+  ],
+  "rewards": [
+    {
+      "type": "ftbquests:item",
+      "id": "reward_1",
+      "item": "tacz:hk416d",
+      "count": 1
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_2",
+      "item": "tacz:556x45",
+      "count": 128
+    },
+    {
+      "type": "ftbquests:item",
+      "id": "reward_3",
+      "item": "tacz:extended_mag_2",
+      "count": 1
+    }
+  ],
+  "relations": {
+    "parent": "qlmzombie:tacz_06_silence",
+    "children": [
+      "qlmzombie:tacz_08_shotgun"
+    ]
+  }
+}

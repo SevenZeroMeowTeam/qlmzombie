@@ -76,8 +76,9 @@ public class AIImprovementsFeature {
     /** 对一个 Goal 的 throttle 包装：每 N tick 才真正调用一次 canUse/canContinue/tick。*/
     public static class ThrottledGoal extends Goal {
         final Goal delegate;
-        final int period;     // 每 period tick 才真正 tick 一次
-        int counter;
+        final int period;     // 每 period 次评估/执行才真正调用一次
+        int counter;          // 评估节流计数（canUse/canContinue 共用）
+        int tickCounter;      // 执行节流计数（tick 专用）
         // 缓存上一次 canUse / canContinue 结果，用于中间 tick 的快速返回
         boolean cachedCanUse;
         boolean cachedCanContinue;
@@ -88,6 +89,9 @@ public class AIImprovementsFeature {
         public ThrottledGoal(Goal delegate, int period) {
             this.delegate = delegate;
             this.period = Math.max(1, period);
+            // 初始化为 period-1：首次调用立即评估，避免首轮返回缓存 false 造成 1 tick 延迟
+            this.counter = this.period - 1;
+            this.tickCounter = 0;
             this.setFlags(delegate.getFlags());
         }
 
@@ -98,7 +102,11 @@ public class AIImprovementsFeature {
         public boolean canUse() {
             if (stopped) return false;
             if (delegate.requiresUpdateEveryTick()) return delegate.canUse();
-            if (counter % period == 0) cachedCanUse = delegate.canUse();
+            // 修复：非运行中的 goal 其 tick() 不会被调用，原实现 counter 恒为 0，
+            // 导致 "0 % period == 0" 恒真 → canUse() 每个 tick 都真实调用
+            // （如 enhancedai SearchMountGoal 每 tick 全区域实体扫描，触发 watchdog 60s 崩溃）。
+            // 现在 counter 在 canUse/canContinue 中递增，真正按 period 节流评估。
+            if (++counter % period == 0) cachedCanUse = delegate.canUse();
             return cachedCanUse;
         }
 
@@ -106,7 +114,7 @@ public class AIImprovementsFeature {
         public boolean canContinueToUse() {
             if (stopped) return false;
             if (delegate.requiresUpdateEveryTick()) return delegate.canContinueToUse();
-            if (counter % period == 0) cachedCanContinue = delegate.canContinueToUse();
+            if (++counter % period == 0) cachedCanContinue = delegate.canContinueToUse();
             return cachedCanContinue;
         }
 
@@ -119,9 +127,8 @@ public class AIImprovementsFeature {
         @Override
         public void tick() {
             if (stopped) return;
-            counter++;
             try {
-                if (delegate.requiresUpdateEveryTick() || counter % period == 0) {
+                if (delegate.requiresUpdateEveryTick() || ++tickCounter % period == 0) {
                     delegate.tick();
                 }
             } catch (Exception ignored) {

@@ -92,7 +92,7 @@ Zombie Island 1.20.1 0.1.3.5.jar
 [崩溃助手] CrashAssistant-forge-1.19-1.20.1-1.11.10.jar
 [崩溃漏洞修复] crashexploitfixer-forge-1.1.0+1.20.1.jar
 [应用能源2] appliedenergistics2-forge-15.4.10.jar
-[意志坚定] ToughAsNails-forge-1.20.1-9.2.0.171.jar
+[口渴] ThirstWasTaken-1.20.1-1.4.0.jar
 [拆解台] uncrafting_table-1.20.1-forge-1.1.0.jar
 [拔刀剑：重锋] SlashBladeResharped-1.20.1-1.9.65.jar
 [斯巴达之盾] SpartanShields-1.20.1-forge-3.1.1.jar

@@ -182,6 +182,9 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7神话级武器攻击力/耐久无限；神话盔甲套装缺一不可，全套无视虚空伤害、可破坏基岩"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7镐子能力：3×3~11×11范围挖掘，可破坏黑曜石/哭泣黑曜石/基岩"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7击杀敌对生物（除玩家/村民/铁傀儡）获得永久随机生命上限和攻击力上限"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§lFTB 任务系统：§r§7完成「僵尸猎手」解锁 §b枪械大师 §7任务链（12个任务），每步奖励 §cTaCZ 枪械+对应弹药+配件§7（G键打开任务书）"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7枪械大师最终奖励：§e加特林机枪+7.62弹药+战术枪托+大型制退器"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l废弃建筑：§r§7已修复生成时序问题，主世界探索即可遇到随机小屋/商店/加油站/学校/军事基地/9层高楼"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备：铁质全套+5附魔+弓满附魔+64附魔金苹果+64面包"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7初始装备全部无限耐久：铁剑/斧/镐/锹/锄+弓+全套铁盔甲（Unbreakable）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7铁剑§c999§7/铁斧§c55§7/铁镐§c44§7/常规合成即可获得品质属性"))
@@ -246,7 +249,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build40"
+        const val MOD_VERSION = "3.0.0.beta.build41"
 
         @JvmField
         @Volatile

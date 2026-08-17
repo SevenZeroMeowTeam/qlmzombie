@@ -46,6 +46,8 @@ cp .env.example .env        # 修改密码
 ./deploy.sh java            # 需要 root/sudo
 ```
 
+> **部署自检**：`deploy.sh` 部署后会自动检查关键模组是否在位——`kleiders_custom_renderer`（注册网络 channel，服务器缺失会导致玩家报 `mismatched mod channel list`，部署时已从纯客户端过滤中放行并清理历史 `.disabled` 残留）与 `qlmzombie` 主模组。缺失时会打印 ⚠ 警告。
+
 ## 🖥️ 后台功能
 
 | 功能 | 说明 |
@@ -86,7 +88,31 @@ cp .env.example .env        # 修改密码
 | `ADMIN_TOKEN` | 备用 API Token | - |
 | `MAX_UPLOAD_MB` | 下载中心单文件上限 | 500 |
 | `NGINX_MC_PORT` | MC 入口端口 | 25565 |
+| `MC_EXTRA_PORTS` | 多重转发额外入口（见下方章节） | 空 |
+| `MC_RELAY_PORT1..3` | 额外入口宿主发布端口 | 25566/25567/25568 |
 | `MC_MAX_MEMORY` | 内存上限 | 2G |
+
+## 🌐 多重转发（多入口降低延迟）
+
+除主入口（`NGINX_MC_PORT=25565`）外，可配置多个**额外 MC 转发入口**，每个入口
+可指向不同后端/中转节点，玩家按地区选择最近入口，配合 `tcp_nodelay`（禁用 Nagle）、
+`proxy_socket_keepalive`、`keepalive` 连接池复用等调优降低延迟。
+
+**配置方式**：编辑 `.env`，设置 `MC_EXTRA_PORTS`，然后重新运行 `./deploy.sh docker`。
+
+```bash
+# 格式: MC_EXTRA_PORTS="端口:后端地址,端口:后端地址"
+# 例 1: 本机多入口分流（三个入口都到本机 MC）
+MC_EXTRA_PORTS="25566:qlm-minecraft:25565,25567:qlm-minecraft:25565"
+# 例 2: 指向外置中转节点（不同地区玩家连最近节点）
+MC_EXTRA_PORTS="25566:203.0.113.10:25565,25567:198.51.100.20:25565"
+```
+
+- 入口端口为容器内监听端口，宿主默认同号（可用 `MC_RELAY_PORT1..3` 覆盖宿主端口）。
+- `deploy.sh` 会根据 `MC_EXTRA_PORTS` 自动生成 `nginx/stream-extra.conf` 并写入
+  `upstream`/`server` 块（含低延迟参数），随后 `docker compose up` 生效。
+- 未配置时仅使用主入口，额外端口（25566-25568）虽有发布但无监听，连接会被拒绝。
+- 需要外置中转节点时，请自行准备（如 FRP / UDP2RAW / 云主机转发），本项目提供转发端。
 
 ## 🔧 常用命令
 

@@ -9,14 +9,9 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.levelgen.Heightmap
-import net.minecraftforge.event.entity.player.PlayerEvent
-import net.minecraftforge.event.level.ChunkEvent
-import net.minecraftforge.eventbus.api.SubscribeEvent
-import net.minecraftforge.fml.common.Mod
 import java.util.concurrent.ConcurrentHashMap
 
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-object HighriseBuildingGenerator {
+object HighriseBuildingGenerator : BuildingGenerator {
 
     private const val SPAWN_CHANCE = 0.15
     private const val MIN_SPACING = 4
@@ -26,8 +21,9 @@ object HighriseBuildingGenerator {
     private const val FLOOR_HEIGHT = 4
     private const val STAIRCASE_SIZE = 3
     private const val MOD_ITEM_CHANCE = 0.5
-    // 玩家登录时扫描周围已加载区块的半径（半径 3 = 7x7 = 49 个区块）
-    private const val LOGIN_SCAN_RADIUS = 3
+
+    /** 每区块仅评估一次（无论是否生成），避免重复扫描时反复掷概率 */
+    private val decidedChunks = ConcurrentHashMap.newKeySet<Long>()
 
     /** 高楼样式（每栋高楼样式不同）：外墙材质 + 内部房间材质 */
     private data class BuildingStyle(val wall: net.minecraft.world.level.block.Block, val room: net.minecraft.world.level.block.Block)
@@ -38,8 +34,6 @@ object HighriseBuildingGenerator {
         BuildingStyle(Blocks.LIGHT_GRAY_CONCRETE, Blocks.SMOOTH_STONE), // 现代混凝土楼
         BuildingStyle(Blocks.PRISMARINE, Blocks.DARK_OAK_PLANKS),       // 海晶石复古楼
     )
-
-    private val generatedChunks = ConcurrentHashMap.newKeySet<Long>()
 
     // 延迟初始化：RegistryObject.get() 必须在注册表完成注册后调用，
     // 类静态初始化时（CONSTRUCT 阶段）调用会抛出 NPE。
@@ -79,80 +73,29 @@ object HighriseBuildingGenerator {
         Items.BUCKET,
     )
 
-    @SubscribeEvent
-    fun onChunkLoad(event: ChunkEvent.Load) {
-        val levelAccessor = event.level
-        if (levelAccessor.isClientSide) return
-
-        val level = levelAccessor as? net.minecraft.world.level.Level ?: return
-        val chunk = event.chunk as? net.minecraft.world.level.chunk.LevelChunk ?: return
-        tryGenerate(level, chunk)
-    }
-
-    @SubscribeEvent
-    fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {
-        val player = event.entity ?: return
-        val level = player.level()
-        if (level.isClientSide) return
-        val serverLevel = level as? net.minecraft.server.level.ServerLevel ?: return
-
-        QLMZombieMod.LOGGER.info(
-            "[高层建筑] 玩家 {} 登录, 延迟2秒后扫描周围区块补生成",
-            player.name.string
-        )
-        // 延迟 40 tick (2秒) 扫描，确保玩家周围区块已加载完成
-        val server = serverLevel.server
-        server.tell(net.minecraft.server.TickTask(server.tickCount + 40, Runnable {
-            try {
-                scanAndGenerate(serverLevel, player)
-            } catch (e: Exception) {
-                QLMZombieMod.LOGGER.error("[高层建筑] 延迟扫描异常: {}", e.message)
-            }
-        }))
-    }
-
-    private fun scanAndGenerate(
-        serverLevel: net.minecraft.server.level.ServerLevel,
-        player: net.minecraft.world.entity.player.Player
-    ) {
-        val centerChunkX = player.blockPosition().x shr 4
-        val centerChunkZ = player.blockPosition().z shr 4
-        var scanned = 0
-        var generated = 0
-        for (dx in -LOGIN_SCAN_RADIUS..LOGIN_SCAN_RADIUS) {
-            for (dz in -LOGIN_SCAN_RADIUS..LOGIN_SCAN_RADIUS) {
-                val chunk = serverLevel.chunkSource.getChunkNow(centerChunkX + dx, centerChunkZ + dz)
-                if (chunk != null) {
-                    scanned++
-                    if (tryGenerate(serverLevel, chunk)) generated++
-                }
-            }
-        }
-        QLMZombieMod.LOGGER.info(
-            "[高层建筑] 玩家 {} 延迟扫描完成: 扫描{}区块, 新生成{}高楼",
-            player.name.string, scanned, generated
-        )
-    }
-
-    private fun tryGenerate(
+    override fun tryGenerate(
         level: net.minecraft.world.level.Level,
         chunk: net.minecraft.world.level.chunk.LevelChunk
     ): Boolean {
         val chunkX = chunk.pos.x
         val chunkZ = chunk.pos.z
 
-        val chunkKey = chunkKey(chunkX, chunkZ)
-        if (generatedChunks.contains(chunkKey)) return false
+        val chunkKey = StructureGenSupport.chunkKey(chunkX, chunkZ)
+        // 该区块已有其他废弃建筑，跳过防止重叠
+        if (StructureGenSupport.generatedChunks.contains(chunkKey)) return false
 
         val surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, 8, 8)
         if (surfaceY < 40) return false
+
+        // 区块就绪后，每区块仅评估一次（无论是否生成），保持概率语义
+        if (!decidedChunks.add(chunkKey)) return false
 
         val biome = level.getBiome(
             BlockPos.MutableBlockPos(chunkX * 16 + 8, surfaceY, chunkZ * 16 + 8)
         )
         if (biome.`is`(BiomeTags.IS_OCEAN)) return false
 
-        if (!isFarEnoughFromOtherStructures(chunkX, chunkZ)) return false
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8 - BUILDING_WIDTH / 2,
@@ -162,7 +105,7 @@ object HighriseBuildingGenerator {
 
         // 跨会话防重复：若建筑标志（双层 STONE 地板）已存在，记入缓存并跳过
         if (hasExistingStructure(level, origin)) {
-            generatedChunks.add(chunkKey)
+            StructureGenSupport.generatedChunks.add(chunkKey)
             return false
         }
 
@@ -170,13 +113,14 @@ object HighriseBuildingGenerator {
 
         return try {
             generateHighrise(level, chunk, origin)
-            generatedChunks.add(chunkKey)
+            StructureGenSupport.generatedChunks.add(chunkKey)
             StructureGenSupport.registerBuilding(chunkKey, net.minecraft.core.BlockPos(origin.x + BUILDING_WIDTH / 2, origin.y, origin.z + BUILDING_DEPTH / 2))
             QLMZombieMod.LOGGER.info(
                 "[高层建筑] 在区块 ({}, {}) 生成9层高楼", chunkX, chunkZ
             )
             true
         } catch (e: Exception) {
+            decidedChunks.remove(chunkKey) // 生成异常时取消"已评估"，允许周期扫描重试
             QLMZombieMod.LOGGER.error("[高层建筑] 生成失败: {}", e.message)
             false
         }
@@ -198,18 +142,6 @@ object HighriseBuildingGenerator {
         val floor2 = level.getBlockState(BlockPos(centerX, origin.y + FLOOR_HEIGHT, centerZ)).block
         return floor1 == net.minecraft.world.level.block.Blocks.STONE &&
             floor2 == net.minecraft.world.level.block.Blocks.STONE
-    }
-
-    private fun isFarEnoughFromOtherStructures(chunkX: Int, chunkZ: Int): Boolean {
-        for (dx in -MIN_SPACING..MIN_SPACING) {
-            for (dz in -MIN_SPACING..MIN_SPACING) {
-                if (dx == 0 && dz == 0) continue
-                if (generatedChunks.contains(chunkKey(chunkX + dx, chunkZ + dz))) {
-                    return false
-                }
-            }
-        }
-        return true
     }
 
     private fun generateHighrise(
@@ -501,9 +433,5 @@ object HighriseBuildingGenerator {
         // 主题战利品（本模组 + 原版）+ 自动扫描的其他模组物品
         val combinedThemed = modLoot + vanillaLoot
         StructureGenSupport.fillChest(level, pos, random, combinedThemed, MOD_ITEM_CHANCE, 2, 5)
-    }
-
-    private fun chunkKey(x: Int, z: Int): Long {
-        return (x.toLong() shl 32) or (z.toLong() and 0xFFFFFFFFL)
     }
 }

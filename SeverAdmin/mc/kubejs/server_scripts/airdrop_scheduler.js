@@ -549,8 +549,8 @@ function generateAirdropLoot() {
     const loot = []
     const itemCount = Math.floor(Math.random() * 8) + 5
     for (let i = 0; i < itemCount; i++) {
-        const item = getRandomItem()
-        const count = Math.floor(Math.random() * 64) + 1
+        var item = getRandomItem()
+        var count = Math.floor(Math.random() * 64) + 1
         item.setCount(count)
         loot.push(item)
     }
@@ -615,10 +615,10 @@ LevelEvents.tick('minecraft:overworld', event => {
     let spawnedCount = 0
 
     for (let i = 0; i < airdropCount; i++) {
-        const x = Math.floor(Math.random() * 2000) - 1000
-        const z = Math.floor(Math.random() * 2000) - 1000
+        var x = Math.floor(Math.random() * 2000) - 1000
+        var z = Math.floor(Math.random() * 2000) - 1000
         
-        const surfaceY = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, new BlockPos(x, 0, z)).getY()
+        var surfaceY = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE_WG, new BlockPos(x, 0, z)).getY()
         if (surfaceY > 60) {
             if (spawnAirdrop(level, x, z)) {
                 spawnedCount++

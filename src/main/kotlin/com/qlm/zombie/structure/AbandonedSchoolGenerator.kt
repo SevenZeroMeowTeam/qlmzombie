@@ -7,10 +7,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.levelgen.Heightmap
-import net.minecraftforge.event.entity.player.PlayerEvent
-import net.minecraftforge.event.level.ChunkEvent
-import net.minecraftforge.eventbus.api.SubscribeEvent
-import net.minecraftforge.fml.common.Mod
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 废弃学校生成器：
@@ -18,15 +15,16 @@ import net.minecraftforge.fml.common.Mod
  *  - 5 间教室：每间含床 + 蜘蛛网 + 箱子（箱子含本模组与其他模组物品，各箱物品不同）
  *  - 破窗户、坍塌屋顶、散落书本（书/书架）
  */
-@Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-object AbandonedSchoolGenerator {
+object AbandonedSchoolGenerator : BuildingGenerator {
 
     private const val SPAWN_CHANCE = 0.12
     private const val MIN_SPACING = 5
     private const val SCHOOL_WIDTH = 16
     private const val SCHOOL_DEPTH = 12
     private const val SCHOOL_HEIGHT = 5
-    private const val LOGIN_SCAN_RADIUS = 3
+
+    /** 每区块仅评估一次（无论是否生成），避免重复扫描时反复掷概率 */
+    private val decidedChunks = ConcurrentHashMap.newKeySet<Long>()
 
     // 各房间不同战利品主题（5 间房，每个箱子物品不同）
     private val roomLoot by lazy {
@@ -64,52 +62,26 @@ object AbandonedSchoolGenerator {
         )
     }
 
-    @SubscribeEvent
-    fun onChunkLoad(event: ChunkEvent.Load) {
-        if (event.level.isClientSide) return
-        val level = event.level as? net.minecraft.world.level.Level ?: return
-        val chunk = event.chunk as? net.minecraft.world.level.chunk.LevelChunk ?: return
-        tryGenerate(level, chunk)
-    }
-
-    @SubscribeEvent
-    fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {
-        val player = event.entity ?: return
-        val level = player.level()
-        if (level.isClientSide) return
-        val serverLevel = level as? net.minecraft.server.level.ServerLevel ?: return
-        val server = serverLevel.server
-        server.tell(net.minecraft.server.TickTask(server.tickCount + 40, Runnable {
-            try {
-                val cx = player.blockPosition().x shr 4
-                val cz = player.blockPosition().z shr 4
-                for (dx in -LOGIN_SCAN_RADIUS..LOGIN_SCAN_RADIUS) {
-                    for (dz in -LOGIN_SCAN_RADIUS..LOGIN_SCAN_RADIUS) {
-                        val chunk = serverLevel.chunkSource.getChunkNow(cx + dx, cz + dz)
-                        if (chunk != null) tryGenerate(serverLevel, chunk)
-                    }
-                }
-            } catch (e: Exception) {
-                QLMZombieMod.LOGGER.error("[学校] 延迟扫描异常: {}", e.message)
-            }
-        }))
-    }
-
-    private fun tryGenerate(
+    override fun tryGenerate(
         level: net.minecraft.world.level.Level,
         chunk: net.minecraft.world.level.chunk.LevelChunk
     ): Boolean {
         val chunkX = chunk.pos.x
         val chunkZ = chunk.pos.z
         val key = StructureGenSupport.chunkKey(chunkX, chunkZ)
+        // 该区块已有其他废弃建筑，跳过防止重叠
         if (StructureGenSupport.generatedChunks.contains(key)) return false
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
-        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
 
+        // 先确认区块地形已就绪（heightmap 有效），再标记"已评估"，避免过早标记导致永久跳过
         val surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, 8, 8)
         if (surfaceY <= 2) return false
         val biome = level.getBiome(BlockPos.MutableBlockPos(chunkX * 16 + 8, surfaceY, chunkZ * 16 + 8))
         if (biome.`is`(net.minecraft.tags.BiomeTags.IS_OCEAN)) return false
+
+        // 区块就绪后，每区块仅评估一次（无论是否生成），保持概率语义
+        if (!decidedChunks.add(key)) return false
+        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8 - SCHOOL_WIDTH / 2,
@@ -131,6 +103,7 @@ object AbandonedSchoolGenerator {
             QLMZombieMod.LOGGER.info("[学校] 在区块 ({}, {}) 生成废弃学校", chunkX, chunkZ)
             true
         } catch (e: Exception) {
+            decidedChunks.remove(key) // 生成异常时取消"已评估"，允许周期扫描重试
             QLMZombieMod.LOGGER.error("[学校] 生成失败: {}", e.message)
             false
         }

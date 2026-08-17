@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build40-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build41-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD40%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD41%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,14 +19,37 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build40` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build40.jar` / `qlmzombie-3.0.0.beta.build40-server.jar` |
+| **当前版本** | `3.0.0.beta.build41` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build41.jar` / `qlmzombie-3.0.0.beta.build41-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
 | **Group ID** | `com.qlm.zombie` |
 | **作者** | SevenZeroMeow Team |
 | **许可证** | MIT |
+
+---
+
+## 🆕 更新日志
+
+### v3.0.0.beta.build41（2026-08-17）
+
+**🎯 FTB Quests 任务系统扩展（TaCZ 枪械大师链）**
+- 新增 12 个「枪械大师」任务链（共 30 个任务），从「僵尸猎手」进入
+- 每个任务完成后必得 **TaCZ 枪械 + 对应弹药 + 配件**（瞄具/枪口/握把/枪托/弹匣）
+- 任务链：初识枪械 → 弹药储备 → 冲锋枪手 → 突击步枪 → 精准射手 → 无声行动 → 步枪升级 → 近战压制 → 重火力支援 → 致命狙杀 → 反器材武器 → 枪械大师（加特林）
+
+**🏗️ 修复主世界废弃建筑不生成**
+- 修复所有 8 个建筑生成器 `decidedChunks` 过早标记缺陷：区块在就绪前被标记"已评估"会被永久跳过
+- 生成异常时取消标记，由周期扫描自动重试，确保建筑最终生成
+
+**📊 SeverAdmin 性能监控**
+- 网站首页新增 TPS / 延迟 / 在线人数 / MSPT 实时曲线监控（模组采集 + Web 实测）
+
+**🩹 其他修复**
+- 修复玩家生命上限每 tick 强制回血导致扣血/闪烁
+- 修复骷髅单手持弓、僵尸双手持物抖动
+- 掉落物概率控制 + 每 1 分钟自动清理陈旧掉落物（`drops` 配置段）
 
 ---
 
@@ -41,6 +64,8 @@ QLM Zombie 是一个深度整合的 Minecraft 末日生存模组，基于 **Kotl
 - 🤖 **AI 玩家伴侣系统**：召唤可驯服的 AI 同伴，支持建造、挖矿、跟随等任务
 - 🏗️ **随机建筑生成**：废弃商店、9 层高楼、海底遗迹、随机小屋自然生成
 - 🔫 **Crafting Dead 装备体系**：武器、弹药、护甲、医疗用品完整复刻
+- 📖 **FTB Quests 任务系统**：30 个任务（含 12 个「枪械大师」TaCZ 枪械链），完成奖励枪械 + 对应弹药 + 配件
+- 🎯 **TaCZ 永恒枪械工坊**：55 种枪械 / 24 种弹药 / 100+ 配件完整联动，任务奖励内置枪械套装
 - 📦 **战利品注入**：全球战利品修改器 + KubeJS 脚本双重注入机制
 - 🔧 **自动依赖释放**：JAR 内嵌 100+ 开源模组自动释放到 mods 目录，采用精确白名单+自动恢复误禁用机制，零误伤
 
@@ -252,6 +277,9 @@ D:\mcmod\
   - 名称含 drink/soup/fruit 关键词的食物自动恢复口渴（可配置）
 - **命令**：`/thirst query|set|enable`（权限 2）
 - **配置**：`config/thirst/common.toml`（衰减速度/水质效果/净化参数/口渴条偏移等）
+- **网络兼容**：服务器端额外注册原版 `thirst:main` 通道（`ThirstModPacketHandler.THIRST_CHANNEL`，仅 DEDICATED_SERVER，协议 0.1.2 与消息结构与原版 Thirst-Mod 完全一致）。
+  仍装有**外置 ThirstWasTaken JAR**（未禁用）的客户端上报 `thirst:main`，服务器注册后即可通过握手，不再报 `Connection closed - mismatched mod channel list` / “服务器缺少 Thirst?main”，且口渴同步/喝水请求功能正常。
+  两通道（`qlmzombie:main` 与 `thirst:main`）的 `serverAcceptedVersions` 均用 `acceptMissingOr`：只注册其中一个通道的客户端都能正常连接；服务器发送口渴同步时按玩家连接实际注册的通道自动选择。
 
 ### 4. 感染系统 (Infection)
 
@@ -386,7 +414,7 @@ D:\mcmod\
 | 前缀 | 模组 | 原因 |
 |------|------|------|
 | `toughasnails` | Tough As Nails (意志坚定) | 与口渴系统冲突，会导致双重扣水 + 创造模式翻页崩溃 |
-| `thirstwastaken` | Thirst Was Taken (外置 JAR) | 已整合为源码模块 `com.qlm.zombie.thirst`，外置 JAR 自动禁用 |
+| `thirstwastaken` | Thirst Was Taken (外置 JAR) | 已整合为源码模块 `com.qlm.zombie.thirst`，外置 JAR 自动禁用；若客户端仍启用外置 JAR，服务器端 `thirst:main` 兼容通道会保证其正常连接 |
 | `thirstmod` / `thirstcanteen` | 其它口渴模组 | 避免重复口渴系统 |
 
 ### 释放输出 JAR 统计
@@ -1207,7 +1235,7 @@ private static boolean isDedicatedServerEnv() {
 | 前缀表 | 生效范围 | 内容 |
 |:------|:---------|:-----|
 | `DEFAULT_DISABLED_PREFIXES` | 双端通用 | 17 条口渴冲突模组（ToughAsNails / ThirstWasTaken / thirstmod 等 4 家族 × 分隔符变体） |
-| `SERVER_DISABLED_PREFIXES`（**新增**） | 仅 DEDICATED_SERVER | 6 条 crafting-dead 变体（`crafting-dead` / `crafting_dead` / `crafting dead` / `[crafting-dead]` / `[craftingdead]` / `craftingdead`） |
+| `SERVER_DISABLED_PREFIXES`（**新增**） | 仅 DEDICATED_SERVER | 6 条 crafting-dead 变体（`crafting-dead` / `crafting_dead` / `crafting dead` / `[crafting-dead]` / `[craftingdead]` / `craftingdead`）+ 纯客户端渲染/UI 模组（`entity_texture_features` / `entity_model_features` / `3d-armor` / `skinlayers3d` / `imblocker` / `sodiumdynamiclights` / `sodiumoptionsapi` / `ysm`）。**不含 `kleiders_custom_renderer`**：它注册网络 channel（客户端皮肤/模型同步），服务器缺失会导致玩家连接报 `mismatched mod channel list`；其 mixin 配置为空、主类无客户端类引用，服务端加载安全（日志已证实含 Kleiders 正常启动），故服务端保留以匹配客户端 channel。 |
 
 新增聚合判断：
 

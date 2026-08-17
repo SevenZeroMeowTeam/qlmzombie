@@ -15,7 +15,6 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.PacketDistributor;
 import vectorwing.farmersdelight.common.registry.ModEffects;
 
 public class PlayerThirst implements IThirst
@@ -202,7 +201,7 @@ public class PlayerThirst implements IThirst
 
     public void updateThirstData(Player player)
     {
-        ThirstModPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player),
+        ThirstModPacketHandler.sendPlayerSync((ServerPlayer) player,
                 new PlayerThirstSyncMessage(thirst, quenched, exhaustion,shouldTickThirst));
     }
 
