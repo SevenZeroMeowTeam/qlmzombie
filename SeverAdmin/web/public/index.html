@@ -124,8 +124,6 @@
   .chart-card:nth-child(3) { animation-delay: .19s; }
   .chart-card:nth-child(4) { animation-delay: .26s; }
   .chart-card:hover { transform: translateY(-4px); border-color: var(--accent2); box-shadow: 0 10px 26px rgba(88,166,255,.14); }
-  .chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-  .chart-head h3 { color: var(--accent2); font-size: 15px; margin: 0; }
   .chart-val { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; transition: color .3s; }
   .chart-val .unit { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 2px; }
   .chart-val.good { color: var(--green); }
@@ -133,6 +131,17 @@
   .chart-val.bad { color: var(--accent); }
   .chart-val.na { color: var(--muted); }
   .chart-card canvas { width: 100%; display: block; }
+  /* ===== 合并监控（单一综合图表） ===== */
+  .chart-main canvas { height: 230px; }
+  .metric-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .m-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.04); border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 999px; font-size: 12px; color: var(--muted);
+  }
+  .m-badge .dot, .chart-legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .m-badge .chart-val { font-size: 16px; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 11px; color: var(--muted); }
   /* ===== 内容卡片网格（独立卡片） ===== */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 20px 0 60px; }
   .card {
@@ -233,23 +242,22 @@
 
 <div class="container">
   <div class="section-title">📊 服务器性能监控</div>
-  <div class="section-sub">每 2 秒刷新 · TPS / 延迟 / 在线人数 / MSPT 实时曲线</div>
+  <div class="section-sub">每 2 秒刷新 · TPS / MSPT / 延迟 / 在线人数 合并实时曲线</div>
   <div class="monitor-grid">
-    <div class="chart-card">
-      <div class="chart-head"><h3>⚡ TPS</h3><span class="chart-val na" id="valTps">--</span></div>
-      <canvas id="chartTps" height="140"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head"><h3>⏱️ 延迟</h3><span class="chart-val na" id="valLatency">--</span></div>
-      <canvas id="chartLatency" height="140"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head"><h3>👥 在线人数</h3><span class="chart-val na" id="valPlayers">--</span></div>
-      <canvas id="chartPlayers" height="140"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-head"><h3>⏲️ MSPT</h3><span class="chart-val na" id="valMspt">--</span></div>
-      <canvas id="chartMspt" height="140"></canvas>
+    <div class="chart-card chart-main">
+      <div class="metric-badges">
+        <span class="m-badge"><i class="dot" style="background:#3fb950"></i>TPS <b class="chart-val na" id="valTps">--</b></span>
+        <span class="m-badge"><i class="dot" style="background:#f85149"></i>MSPT <b class="chart-val na" id="valMspt">--</b></span>
+        <span class="m-badge"><i class="dot" style="background:#58a6ff"></i>延迟 <b class="chart-val na" id="valLatency">--</b></span>
+        <span class="m-badge"><i class="dot" style="background:#d29922"></i>在线 <b class="chart-val na" id="valPlayers">--</b></span>
+      </div>
+      <canvas id="chartMain" height="230"></canvas>
+      <div class="chart-legend">
+        <span><i class="dot" style="background:#3fb950"></i>TPS（满值 20）</span>
+        <span><i class="dot" style="background:#f85149"></i>MSPT（阈值 50ms）</span>
+        <span><i class="dot" style="background:#58a6ff"></i>延迟（ms）</span>
+        <span><i class="dot" style="background:#d29922"></i>在线人数</span>
+      </div>
     </div>
   </div>
 </div>
@@ -448,12 +456,13 @@ spawnParticles();
 
 // ==================== 服务器性能监控（TPS/延迟 曲线） ====================
 // 轻量 Canvas 折线图（无外部依赖）
-function drawLineChart(canvasId, data, opts) {
+// 合并多指标综合曲线：每条指标独立归一化（各自 min/max → 绘图区）后叠加在同一张图上
+function drawMultiChart(canvasId, series) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const dpr = window.devicePixelRatio || 1;
   const w = Math.max(200, canvas.parentElement ? canvas.parentElement.clientWidth - 8 : 300);
-  const h = canvas.height || 140;
+  const h = canvas.height || 230;
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
   canvas.style.height = h + 'px';
@@ -461,98 +470,87 @@ function drawLineChart(canvasId, data, opts) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
-  const padL = 36, padR = 10, padT = 10, padB = 22;
+  const padL = 8, padR = 8, padT = 10, padB = 8;
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
+  const n = series.reduce((m, s) => Math.max(m, s.data.length), 1);
 
-  const drawEmpty = () => {
+  const any = series.some(s => s.data.some(v => v != null));
+  if (!any) {
     ctx.fillStyle = 'rgba(139,148,158,.55)';
     ctx.font = '12px "Microsoft YaHei", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('等待数据...', w / 2, h / 2);
     ctx.textAlign = 'left';
-  };
+    return;
+  }
 
-  // 数据范围
-  let lo = opts.min, hi = opts.max;
-  const vals = data.filter(v => v != null);
-  if (!vals.length) { drawEmpty(); return; }
-  if (lo == null) lo = Math.min(...vals);
-  if (hi == null) hi = Math.max(...vals);
-  if (hi - lo < 1e-6) { hi = lo + 1; lo = lo - 1; }
-  const span = hi - lo;
-  if (opts.min == null) lo -= span * 0.12;
-  if (opts.max == null) hi += span * 0.12;
+  // 每条曲线的独立取值范围
+  const doms = series.map(s => {
+    const vals = s.data.filter(v => v != null);
+    if (!vals.length) return [0, 1];
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi - lo < 1e-6) { hi = lo + 1; lo -= 1; }
+    const sp = hi - lo;
+    lo -= sp * 0.15; hi += sp * 0.15;
+    return [lo, hi];
+  });
 
-  const xFor = (i) => padL + plotW * (data.length <= 1 ? 0.5 : i / (data.length - 1));
-  const yFor = (v) => padT + plotH * (1 - (Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo));
+  const xFor = (i) => padL + plotW * (n <= 1 ? 0.5 : i / (n - 1));
+  const yFor = (v, d) => padT + plotH * (1 - (Math.min(d[1], Math.max(d[0], v)) - d[0]) / (d[1] - d[0]));
 
-  // 网格 + Y 轴刻度
-  ctx.font = '10px "Microsoft YaHei", sans-serif';
+  // 横向网格
   ctx.strokeStyle = 'rgba(255,255,255,.07)';
-  ctx.fillStyle = 'rgba(139,148,158,.85)';
   ctx.lineWidth = 1;
-  const steps = 4;
-  for (let i = 0; i <= steps; i++) {
-    const y = padT + plotH * (i / steps);
+  for (let i = 0; i <= 3; i++) {
+    const y = padT + plotH * (i / 3);
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
-    const v = hi - (hi - lo) * (i / steps);
-    ctx.fillText(v.toFixed(v >= 100 ? 0 : (opts.decimals || 1)), 2, y + 3);
   }
 
-  // 目标参考线（如 TPS=20）
-  if (opts.target != null && opts.target >= lo && opts.target <= hi) {
-    const ty = yFor(opts.target);
-    ctx.strokeStyle = 'rgba(210,153,34,.55)';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(padL, ty); ctx.lineTo(w - padR, ty); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  // 渐变填充
-  const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
-  grad.addColorStop(0, opts.fill + '55');
-  grad.addColorStop(1, opts.fill + '00');
-  ctx.beginPath();
-  let started = false;
-  for (let i = 0; i < data.length; i++) {
-    const v = data[i];
-    if (v == null) { started = false; continue; }
-    const x = xFor(i), y = yFor(v);
-    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
-  }
-  ctx.lineTo(xFor(data.length - 1), padT + plotH);
-  ctx.lineTo(xFor(0), padT + plotH);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  // 折线
-  ctx.beginPath();
-  started = false;
-  for (let i = 0; i < data.length; i++) {
-    const v = data[i];
-    if (v == null) { started = false; continue; }
-    const x = xFor(i), y = yFor(v);
-    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
-  }
-  ctx.strokeStyle = opts.color;
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-  ctx.stroke();
-
-  // 最新点高亮
-  let lastIdx = -1;
-  for (let i = data.length - 1; i >= 0; i--) {
-    if (data[i] != null) { lastIdx = i; break; }
-  }
-  if (lastIdx >= 0) {
-    const x = xFor(lastIdx), y = yFor(data[lastIdx]);
-    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = opts.color; ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-  }
+  series.forEach((s, si) => {
+    // 渐变填充
+    const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+    grad.addColorStop(0, s.color + '3c');
+    grad.addColorStop(1, s.color + '00');
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < s.data.length; i++) {
+      const v = s.data[i];
+      if (v == null) { started = false; continue; }
+      const x = xFor(i), y = yFor(v, doms[si]);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+    if (started) {
+      ctx.lineTo(xFor(n - 1), padT + plotH);
+      ctx.lineTo(xFor(0), padT + plotH);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+    // 折线
+    ctx.beginPath();
+    started = false;
+    for (let i = 0; i < s.data.length; i++) {
+      const v = s.data[i];
+      if (v == null) { started = false; continue; }
+      const x = xFor(i), y = yFor(v, doms[si]);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    // 最新点高亮
+    let li = -1;
+    for (let i = s.data.length - 1; i >= 0; i--) { if (s.data[i] != null) { li = i; break; } }
+    if (li >= 0) {
+      const x = xFor(li), y = yFor(s.data[li], doms[si]);
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = s.color; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  });
 }
 
 function setChartVal(id, text, cls, unit) {
@@ -585,10 +583,13 @@ async function loadMetrics() {
     setChartVal('valPlayers', last.players != null ? last.players + '' : '--', pCls(last.players), '人');
     setChartVal('valMspt', last.mspt != null ? last.mspt.toFixed(1) : '--', msptCls(last.mspt), 'ms/tick');
 
-    drawLineChart('chartTps', metricSeries.tps, { min: 0, max: 20, color: '#3fb950', fill: '#3fb950', target: 20, decimals: 1 });
-    drawLineChart('chartLatency', metricSeries.latency, { min: 0, max: null, color: '#58a6ff', fill: '#58a6ff', decimals: 0 });
-    drawLineChart('chartPlayers', metricSeries.players, { min: 0, max: null, color: '#d29922', fill: '#d29922', decimals: 0 });
-    drawLineChart('chartMspt', metricSeries.mspt, { min: 0, max: 50, color: '#f85149', fill: '#f85149', target: 50, decimals: 1 });
+    // 合并为一张综合曲线（各指标独立归一化叠加）
+    drawMultiChart('chartMain', [
+      { color: '#3fb950', data: metricSeries.tps },
+      { color: '#f85149', data: metricSeries.mspt },
+      { color: '#58a6ff', data: metricSeries.latency },
+      { color: '#d29922', data: metricSeries.players },
+    ]);
   } catch (e) { /* 接口不可用时保持"等待数据" */ }
 }
 loadMetrics();
