@@ -7,8 +7,12 @@ import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
+import net.minecraft.world.level.block.BedBlock
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.DoorBlock
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity
+import net.minecraft.world.level.block.state.properties.BedPart
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf
 import net.minecraft.world.level.levelgen.Heightmap
 import java.util.concurrent.ConcurrentHashMap
@@ -16,6 +20,15 @@ import java.util.concurrent.ConcurrentHashMap
 object RandomBuildingGenerator : BuildingGenerator {
 
     private const val HUT_SIZE = 5
+
+    /** 小屋床的随机配色（末日主题下每座小屋床色不同） */
+    private val BED_COLORS = listOf(
+        Blocks.WHITE_BED, Blocks.LIGHT_GRAY_BED, Blocks.GRAY_BED,
+        Blocks.BROWN_BED, Blocks.RED_BED, Blocks.ORANGE_BED,
+        Blocks.YELLOW_BED, Blocks.LIME_BED, Blocks.GREEN_BED,
+        Blocks.CYAN_BED, Blocks.LIGHT_BLUE_BED, Blocks.BLUE_BED,
+        Blocks.PURPLE_BED, Blocks.MAGENTA_BED, Blocks.PINK_BED
+    )
 
     /** 每区块仅评估一次（无论是否生成），避免重复扫描时反复掷概率 */
     private val decidedChunks = ConcurrentHashMap.newKeySet<Long>()
@@ -79,7 +92,7 @@ object RandomBuildingGenerator : BuildingGenerator {
         if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, QLMConfig.RANDOM_HUT_SPACING.get())) return false
 
         return try {
-            generateHut(level, chunk, origin)
+            generateHut(level, origin)
             StructureGenSupport.generatedChunks.add(chunkKey)
             StructureGenSupport.registerBuilding(
                 chunkKey,
@@ -117,7 +130,6 @@ object RandomBuildingGenerator : BuildingGenerator {
 
     private fun generateHut(
         level: net.minecraft.world.level.Level,
-        chunk: net.minecraft.world.level.chunk.LevelChunk,
         origin: BlockPos.MutableBlockPos
     ) {
         val x0 = origin.x - HUT_SIZE / 2
@@ -151,11 +163,41 @@ object RandomBuildingGenerator : BuildingGenerator {
                     }
                 }
 
-                if (dx == 1 && dz == 1) {
-                    val chestPos = BlockPos.MutableBlockPos(bx, groundY, bz)
-                    level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
-                    fillChest(level, chestPos)
-                    StructureGenSupport.maybeInjectTaczWeapon(level, chestPos, level.random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
+                // 小屋家具：内部 3×3 布局
+                //   (1,1) 箱子    (2,1) 熔炉    (3,1) 工作台
+                //   (1,2)         (2,2)         (3,2) 床(头)
+                //   (1,3)         (2,3) 门      (3,3) 床(尾)
+                when {
+                    // 箱子：左上角（同时作为跨会话防重复的标志，勿移动）
+                    dx == 1 && dz == 1 -> {
+                        val chestPos = BlockPos.MutableBlockPos(bx, groundY, bz)
+                        level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
+                        fillChest(level, chestPos)
+                        StructureGenSupport.maybeInjectTaczWeapon(level, chestPos, level.random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
+                    }
+                    // 熔炉：北墙正中，预填燃料 + 可烧炼物
+                    dx == 2 && dz == 1 -> {
+                        val furnacePos = BlockPos.MutableBlockPos(bx, groundY, bz)
+                        level.setBlock(furnacePos, Blocks.FURNACE.defaultBlockState(), 3)
+                        fillFurnace(level, furnacePos)
+                    }
+                    // 工作台：东北角
+                    dx == 3 && dz == 1 -> {
+                        level.setBlock(
+                            BlockPos.MutableBlockPos(bx, groundY, bz),
+                            Blocks.CRAFTING_TABLE.defaultBlockState(),
+                            3
+                        )
+                    }
+                    // 床：东墙南北向（FACING=EAST），dz=2 床头 / dz=3 床尾
+                    dx == 3 && dz in 2..3 -> {
+                        val bedPos = BlockPos.MutableBlockPos(bx, groundY, bz)
+                        val bedBlock = BED_COLORS[level.random.nextInt(BED_COLORS.size)]
+                        val bedState = bedBlock.defaultBlockState()
+                            .setValue(BedBlock.FACING, Direction.EAST)
+                            .setValue(BedBlock.PART, if (dz == 2) BedPart.HEAD else BedPart.FOOT)
+                        level.setBlock(bedPos, bedState, 3)
+                    }
                 }
             }
         }
@@ -180,5 +222,22 @@ object RandomBuildingGenerator : BuildingGenerator {
             chest.setItem(i % chest.containerSize, stack)
         }
         chest.setChanged()
+    }
+
+    /**
+     * 预填熔炉：输入槽（槽0）放 1~2 个可烧炼物，燃料槽（槽1）放 1~3 个煤炭，
+     * 让玩家找到小屋即可直接生火使用。
+     */
+    private fun fillFurnace(level: net.minecraft.world.level.Level, pos: BlockPos) {
+        val furnace = level.getBlockEntity(pos) as? FurnaceBlockEntity
+            ?: return
+        val smeltables = listOf(
+            Items.PORKCHOP, Items.BEEF, Items.CHICKEN,
+            Items.POTATO, Items.IRON_INGOT, Items.GOLD_INGOT,
+            Items.COD, Items.SALMON
+        )
+        furnace.setItem(0, ItemStack(smeltables.random(), 1 + level.random.nextInt(2)))
+        furnace.setItem(1, ItemStack(Items.COAL, 1 + level.random.nextInt(3)))
+        furnace.setChanged()
     }
 }

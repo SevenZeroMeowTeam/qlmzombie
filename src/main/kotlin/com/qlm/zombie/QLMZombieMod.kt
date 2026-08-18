@@ -221,6 +221,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：仅保留自定义绿色血量条+护甲/饱食度数值，原版心形隐藏"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l创造物品栏精简：§r§7战斗装备栏仅保留撬棍/战术刀/猎刀，战术装备栏仅保留3种僵尸刷怪蛋，移除枪械/弹药/配件/医疗等冗余物品"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l废弃建筑系统 v6：§r§7平面地形才生成（解决满地建筑问题），军事基地升级128×128（CD军火/弹药/医疗箱+物资丰富），9层高楼修复楼梯和1格宽铁门，新增破败办公楼/商业街/商业广场，所有建筑箱子5%保底TACZ武器，全部门1格宽方便其他模组防御物品留通道进出"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l废弃建筑系统 v7：§r§7全部建筑门可正常通行；随机小屋含宝箱+熔炉+工作台+床（初始生存基地，熔炉预填煤炭）；9层高楼楼梯修复可上下通行+每层楼梯旁 CD 补给箱（Crafting Dead 物资）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l口渴系统 v5：§r§7整合 Thirst-Mod（MIT）——水质净化（脏→纯净）、陶碗喝水、熔炉/营火净化、脱水伤害"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7输入 §a/qlm help§r 查看命令列表，§b/qlm mods§r 查看内嵌模组状态，§b/qlm download§r 强制重新释放"))
     }
@@ -253,7 +254,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build53"
+        const val MOD_VERSION = "3.0.0.beta.build54"
 
         @JvmField
         @Volatile

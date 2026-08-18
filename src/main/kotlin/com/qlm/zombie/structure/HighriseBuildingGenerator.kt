@@ -2,6 +2,7 @@ package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
 import com.qlm.zombie.config.QLMConfig
+import com.qlm.zombie.craftingdead.block.CDBlocks
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
@@ -172,10 +173,29 @@ object HighriseBuildingGenerator : BuildingGenerator {
 
             // 地板：全部铺满（包括楼梯井区域，作为每层地面和上一层landing）
             // 修复：原代码 if (isStaircaseArea) continue 导致楼梯井无地板，玩家踩空
+            //
+            // 楼梯防卡头：上一层台阶 S2/S3 正上方的楼板格开洞并铺薄地毯。
+            // 玩家站在台阶上时身高（台阶顶+1.8格）会顶到楼板导致无法继续通行，
+            // 必须打通；洞口用 0.5 格以下的薄地毯封住，玩家既不会卡头也不会踩空掉落。
+            val floorHoles = mutableListOf<Pair<Int, Int>>()
+            if (floor > 0) {
+                val prevEvenFlight = ((floor - 1) % 2 == 0)
+                if (prevEvenFlight) {
+                    floorHoles.add(Pair(staircaseMinX + 1, staircaseMinZ + 2)) // S2(6,y+2,5) 正上方
+                    floorHoles.add(Pair(staircaseMinX + 2, staircaseMinZ + 2)) // S3(7,y+3,5) 正上方
+                } else {
+                    floorHoles.add(Pair(staircaseMinX + 1, staircaseMinZ))     // S2(6,y+2,3) 正上方
+                    floorHoles.add(Pair(staircaseMinX, staircaseMinZ))         // S3(5,y+3,3) 正上方
+                }
+            }
             for (dx in 0 until BUILDING_WIDTH) {
                 for (dz in 0 until BUILDING_DEPTH) {
                     val floorPos = BlockPos.MutableBlockPos(x0 + dx, floorY, z0 + dz)
-                    level.setBlock(floorPos, Blocks.STONE.defaultBlockState(), 3)
+                    if (Pair(dx, dz) in floorHoles) {
+                        level.setBlock(floorPos, Blocks.GRAY_CARPET.defaultBlockState(), 3)
+                    } else {
+                        level.setBlock(floorPos, Blocks.STONE.defaultBlockState(), 3)
+                    }
                 }
             }
 
@@ -368,10 +388,18 @@ object HighriseBuildingGenerator : BuildingGenerator {
             Triple(stairMaxX + 2, floorY, stairMaxZ + 2),
         )
 
-        for ((rx, ry, rz) in roomCenters) {
+        for ((index, rc) in roomCenters.withIndex()) {
+            val (rx, ry, rz) = rc
             val chestPos = BlockPos.MutableBlockPos(x0 + rx, ry, z0 + rz)
-            level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
-            fillChestWithLoot(level, chestPos, random)
+            if (index == roomCenters.size - 1) {
+                // 楼梯旁房间：CD 补给箱（Crafting Dead 模组物资）
+                level.setBlock(chestPos, CDBlocks.SUPPLY_CRATE.get().defaultBlockState(), 3)
+                StructureGenSupport.fillCDCrate(level, chestPos.immutable(), random, modLoot, 0.3, 4, 8)
+                StructureGenSupport.maybeInjectTaczWeapon(level, chestPos.immutable(), random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
+            } else {
+                level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
+                fillChestWithLoot(level, chestPos, random)
+            }
         }
     }
 
@@ -424,10 +452,18 @@ object HighriseBuildingGenerator : BuildingGenerator {
             Triple(stairMaxX + 2, floorY, stairMaxZ + 2),
         )
 
-        for ((rx, ry, rz) in roomCenters) {
+        for ((index, rc) in roomCenters.withIndex()) {
+            val (rx, ry, rz) = rc
             val chestPos = BlockPos.MutableBlockPos(x0 + rx, ry, z0 + rz)
-            level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
-            fillChestWithLoot(level, chestPos, random)
+            if (index == roomCenters.size - 1) {
+                // 楼梯旁房间：CD 补给箱（Crafting Dead 模组物资）
+                level.setBlock(chestPos, CDBlocks.SUPPLY_CRATE.get().defaultBlockState(), 3)
+                StructureGenSupport.fillCDCrate(level, chestPos.immutable(), random, modLoot, 0.3, 4, 8)
+                StructureGenSupport.maybeInjectTaczWeapon(level, chestPos.immutable(), random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
+            } else {
+                level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
+                fillChestWithLoot(level, chestPos, random)
+            }
         }
 
         if (floor == FLOORS - 1) {

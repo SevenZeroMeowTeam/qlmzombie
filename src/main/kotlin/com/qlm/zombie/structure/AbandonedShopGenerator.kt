@@ -5,9 +5,11 @@ import com.qlm.zombie.config.QLMConfig
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.DoorBlock
 import net.minecraft.world.level.levelgen.Heightmap
 import java.util.concurrent.ConcurrentHashMap
 
@@ -155,12 +157,11 @@ object AbandonedShopGenerator : BuildingGenerator {
                     for (dy in 0 until SHOP_HEIGHT) {
                         val wallPos = BlockPos.MutableBlockPos(x0 + dx, groundY + dy, z0 + dz)
                         val isBroken = dy == 1 && random.nextDouble() < 0.25
+                        // 正门门洞：dy=1,2 由 placeDoor1x2 放两格门，dy=3 留门楣（dy=0 为门口地面）
+                        val isDoorColumn = dx == SHOP_WIDTH / 2 && dz == SHOP_DEPTH - 1
+                        if (isDoorColumn && dy in 1 until SHOP_HEIGHT) continue
                         when {
                             isBroken -> { }
-                            dy == SHOP_HEIGHT - 1 ->
-                                level.setBlock(wallPos, Blocks.DARK_OAK_PLANKS.defaultBlockState(), 3)
-                            dx == SHOP_WIDTH / 2 && dz == SHOP_DEPTH - 1 && dy == 0 ->
-                                level.setBlock(wallPos, Blocks.DARK_OAK_DOOR.defaultBlockState(), 3)
                             else ->
                                 level.setBlock(wallPos, Blocks.DARK_OAK_PLANKS.defaultBlockState(), 3)
                         }
@@ -168,6 +169,17 @@ object AbandonedShopGenerator : BuildingGenerator {
                 }
             }
         }
+
+        // 正门：1 格宽 × 2 格高深色橡木门（朝南外开）+ 门楣，保证玩家可正常进出
+        StructureGenSupport.placeDoor1x2(
+            level,
+            x0 + SHOP_WIDTH / 2,
+            groundY + 1,
+            z0 + SHOP_DEPTH - 1,
+            Direction.SOUTH,
+            Blocks.DARK_OAK_DOOR as DoorBlock,
+            Blocks.DARK_OAK_PLANKS.defaultBlockState()
+        )
 
         for (dx in 1 until SHOP_WIDTH - 1) {
             for (dz in 1 until SHOP_DEPTH - 1) {
