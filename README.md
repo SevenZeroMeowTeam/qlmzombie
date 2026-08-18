@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build45-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build50-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD45%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD50%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build45` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build45.jar` / `qlmzombie-3.0.0.beta.build45-server.jar` |
+| **当前版本** | `3.0.0.beta.build50` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build50.jar` / `qlmzombie-3.0.0.beta.build50-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,135 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build50（2026-08-18）
+
+**🗑️ 创造物品栏精简（移除非保留物品）**
+- **变更内容**：根据需求移除创造模式物品栏中的冗余物品配置，仅保留 6 个核心物品
+- **战斗装备栏（CD_COMBAT）**：仅保留 3 把近战武器
+  - `crowbar`（撬棍）
+  - `combat_knife`（战术刀）
+  - `bowie_knife`（猎刀）
+- **战术装备栏（CD_EQUIPMENT）**：仅保留 3 种僵尸刷怪蛋
+  - `soldier_zombie_spawn_egg`（士兵僵尸刷怪蛋）
+  - `scientist_zombie_spawn_egg`（科学家僵尸刷怪蛋）
+  - `civilian_zombie_spawn_egg`（平民僵尸刷怪蛋）
+- **移除内容**：枪械（AK47/M4A1/MP5 等）、弹药、配件（瞄准镜/握把/枪管）、医疗用品（绷带/急救包等）、医疗用品标签页（CD_MEDICAL）及其他非保留物品的 `output.accept()` 调用
+- **修改文件**：`CDCreativeTabs.kt` —— 删除 CD_MEDICAL 标签页，CD_COMBAT/CD_EQUIPMENT 仅保留 6 个物品
+
+**🖼️ 模型加载根因修复（CD 物品模型子目录问题）**
+- **根因诊断**：`models/item/cd/` 子目录下的 46 个 CD 物品模型文件（ak47/suppressor/first_aid_kit 等），Forge 默认模型加载机制**仅扫描 `models/item/` 根目录**，不递归子目录 → 子目录内模型从未被加载，导致物品显示 Missing Texture
+- **修复动作**：将 `models/item/cd/*.json` 全部 46 个模型文件移动到 `models/item/` 根目录，删除 `cd/` 子目录
+- **纹理同步**：将 `textures/item/cd/*.png` 全部纹理文件移动到 `textures/item/` 根目录，删除 `cd/` 子目录
+- **清理**：移除 `atlases/block.json` 和 `atlases/item.json`（不再需要 atlas 扩展配置，因为纹理已移至根目录，默认扫描即可加载）
+
+**✅ 保留物品纹理-模型验证**
+- 6 个保留物品的纹理全部有效（16×16 ARGB32，含非透明像素）：
+  - `crowbar.png`（63 非透明像素）
+  - `combat_knife.png`（61 非透明像素）
+  - `bowie_knife.png`（55 非透明像素）
+  - `soldier_zombie_spawn_egg.png`（151 非透明像素）
+  - `scientist_zombie_spawn_egg.png`（151 非透明像素）
+  - `civilian_zombie_spawn_egg.png`（151 非透明像素）
+- 6 个保留物品的模型 JSON 全部正确引用纹理路径（`qlmzombie:item/xxx`），无 `cd/` 残留引用
+- 刷怪蛋模型继承 `minecraft:item/template_spawn_egg`，近战武器模型继承 `minecraft:item/handheld`
+
+**📝 游戏公告更新**
+- 依赖释放版本号 v4.4 → v4.5（反映模型加载修复）
+- 新增"创造物品栏精简"公告条目
+- 更新物品材质公告，反映保留物品范围
+
+**✅ 最终验证**
+- JAR 包内 6 个保留物品纹理+模型全部 FOUND
+- `cd/` 子目录残留：0 个
+- `CDCreativeTabs.class` 正确编译打包
+- 构建产物：`qlmzombie-3.0.0.beta.build50.jar`（409 MB）/ `-server.jar`（40.6 MB）
+
+---
+
+### v3.0.0.beta.build49（2026-08-18）
+
+**🖼️ 中间构建版本（模型子目录修复 + 标签页精简）**
+- 将 `models/item/cd/*.json` 移至 `models/item/` 根目录
+- 修改 `CDCreativeTabs.kt`，战斗装备栏仅保留撬棍/战术刀/猎刀，战术装备栏仅保留 3 种僵尸刷怪蛋
+- 版本号升级至 build49，解决 build47 JAR 文件锁定冲突
+- 此版本为 build50 的前置迭代，最终稳定版为 build50
+
+---
+
+### v3.0.0.beta.build48（2026-08-18）
+
+**🖼️ 修复碗类物品 Missing Texture（命名空间错误）**
+- **根因诊断**：4 个碗类物品模型引用了 `thirst:item/xxx` 命名空间，但 Thirst 模块已作为源码整合进 `qlmzombie`（`Thirst.ID = QLMZombieMod.MOD_ID`），`thirst` 命名空间在资源包中**根本不存在** → 纹理加载失败，碗类物品显示紫黑棋盘格
+- **影响物品**：
+  - `clay_bowl`（黏土碗）
+  - `terracotta_bowl`（陶碗）
+  - `terracotta_water_bowl`（装水的陶碗）
+  - `wooden_water_bowl`（装水的木碗）
+- **修复**：将 4 个模型 JSON 的纹理路径从 `thirst:item/xxx` 改为 `qlmzombie:item/xxx`
+
+**🪓 修复 Plank Axe / Plank Collector 未使用自定义纹理**
+- **问题**：`plank_axe.json` 引用原版 `minecraft:item/iron_axe`，`plank_collector.json` 引用原版 `minecraft:item/golden_axe`，导致 build46 程序化生成的自定义纹理 PNG 从未被使用
+- **修复**：改为引用自定义纹理 `qlmzombie:item/plank_axe` / `qlmzombie:item/plank_collector`
+
+**📝 语言文件修复**
+- 修复 `zh_cn.json` 第 335-336 行 JSON 格式错误（逗号位置异常，虽能解析但不规范）
+- 为 `en_us.json` 补充缺失的 3 个方块语言条目：`block.qlmzombie.supply_crate` / `block.qlmzombie.ammo_crate` / `block.qlmzombie.medical_supply_crate`（此前英文版方块名称显示为原始键名）
+
+**✅ 最终验证**
+- 76 个 PNG 纹理全部有效（签名/尺寸/IDAT 数据完整）
+- 71 个物品模型纹理路径全部正确，无 `thirst:` / `cd/` 残留引用
+- `zh_cn.json` 语法有效（337 条目），`en_us.json` 语法有效
+- 构建产物：`qlmzombie-3.0.0.beta.build48.jar`（409 MB）/ `-server.jar`（409 MB）
+
+---
+
+### v3.0.0.beta.build47（2026-08-18）
+
+**🖼️ 修复 Missing Texture 根因：atlas 未扫描 cd/ 子目录**
+- **根因诊断**（build46 后仍 Missing Texture）：Minecraft 1.20.1 默认 item atlas 只扫描 `textures/item/*.png`（0 层深度），`textures/item/cd/*.png` 下的 48 张 CD 物品纹理**从未被加载到 atlas**；`atlases/` 目录完全不存在 → 扩展配置缺失
+- 这是此前所有修复（尺寸/格式/缺失文件）都正确但仍失效的**真正根因**
+
+**🛠️ 修复动作**
+1. 新增 `assets/qlmzombie/atlases/item.json`：`sources → directory: textures/item + textures/item/cd`，扩展默认 item atlas 扫描 cd/ 子目录的 48 张物品纹理
+2. 新增 `assets/qlmzombie/atlases/block.json`：`sources → directory: textures/block`，确保方块纹理正确加载
+3. **完整审计**：71 个注册 ID（CDItems 46 + QLMItems 18 + Thirst 3 + BlockItems 4）全部验证 `model.json` + `texture.png(16×16 RGBA32)` + `blockstate.json` 存在 → **0 FAIL, 71 OK**
+
+- 游戏内登录公告更新至 v4.4
+
+---
+
+### v3.0.0.beta.build46（2026-08-18）
+
+**🖼️ 彻底修复全部物品 Missing Texture（紫黑棋盘格）**
+- **根因诊断**（4 张 Missing Texture 截图）：所有物品组（战术装备/战斗装备/医疗用品/方块）图标全部显示为紫黑棋盘格
+- **纹理尺寸审计**：68 张 PNG 中 **62 张尺寸错误**：
+  - 48 张 CD 物品（ak47/m4a1/急救包/长枪管/瞄准镜…）全部 32×32 → 应为 16×16
+  - 10 张 QLM 物品（ai_caller/antidote 等）32×32
+  - 2 张（zombie_core/infection_essence）128×128
+  - 6 张纹理**纯缺失**（soldier/scientist/civilian 僵尸蛋、fake_player 蛋、plank_axe、plank_collector）
+
+**🧱 方块纹理崩溃修复（最严重）**
+- `supply_crate.png` = 512×512 **Format24bppRgb（无 Alpha 通道）** → Forge 加载崩溃、整组方块渲染异常（方块栏只剩 2 个空位）
+- `ammo_crate.png` / `medical_supply_crate.png` = 256×256 RGBA
+- 全部 3 个 crate 方块纹理重采样为 **16×16 RGBA32**，彻底修复崩溃
+
+**🛠️ 修复动作**
+1. 所有 `textures/item/*.png` 与 `textures/item/cd/*.png` 统一重采样到 **16×16 ARGB32**（HighQualityBicubic）：52 张 32×32/128×128 → 16×16，12 张已正确跳过
+2. block 纹理：`supply_crate` 512×512 RGB24 → 16×16 RGBA32；`ammo_crate`/`medical_supply_crate` 256×256 → 16×16 RGBA；`sleeping_bag` 已正确跳过
+3. **程序化生成 6 张缺失贴图**：
+   - 3 个僵尸蛋：soldier 深红 / scientist 绿 / civilian 灰（使用 CDItems 注册时设定的 egg 色系）
+   - `fake_player_spawn_egg`（蓝白 Facebook 色系）
+   - `plank_axe.png`（铁斧头 + 蓝色木板高亮 + 右侧木板柄）
+   - `plank_collector.png`（金色斧头 + 绿色收集袋标）
+4. **代码修复**：`CDCreativeTabs.kt` 的 `CD_BLOCKS.displayItems` 漏加 `SUPPLY_CRATE_ITEM` → 补上（此前方块栏永远只有 1 个格子）
+
+**✅ 最终验证**
+- 每张嵌入 PNG 16×16 Format32bppArgb：ALL OK
+- JAR 内嵌：66 item textures + 4 block textures + 62 model JSON（全部在资源包）
+- 游戏内登录公告更新至 v4.3
+
+---
 
 ### v3.0.0.beta.build45（2026-08-18）
 
@@ -516,7 +645,7 @@ D:\mcmod\
 
 ### 释放输出 JAR 统计
 
-成功构建后，`qlmzombie-3.0.0.beta.build37.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build37-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
+成功构建后，`qlmzombie-3.0.0.beta.build48.jar`（客户端通用）内部嵌入 `src/main/libs/` 全部 100+ JAR，并附带 `libs/manifest.txt` 清单。另外产出服务端专用发行包 `qlmzombie-3.0.0.beta.build48-server.jar`（运行时会自动禁用 crafting-dead 4 个客户端向模组）。
 
 ---
 
@@ -728,9 +857,9 @@ cd D:\mcmod
 
 ```
 D:\mcmod\build\libs\
-├── qlmzombie-3.0.0.beta.build37.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
-├── qlmzombie-3.0.0.beta.build37-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
-└── qlmzombie-3.0.0.beta.build37-sources.jar  # 源码包 (可选，用于调试)
+├── qlmzombie-3.0.0.beta.build48.jar          # 主发行版 (客户端/LAN主机通用, 全模组)
+├── qlmzombie-3.0.0.beta.build48-server.jar   # 服务端发行版 (MANIFEST标记+server.release.txt, DEDICATED_SERVER禁用crafting-dead*)
+└── qlmzombie-3.0.0.beta.build48-sources.jar  # 源码包 (可选，用于调试)
 ```
 
 ---
@@ -741,8 +870,8 @@ D:\mcmod\build\libs\
 
 1. 下载并安装 **Minecraft Forge 47.4.22** (MC 1.20.1)
 2. 选择对应发行包放入 `.minecraft/mods/` 目录：
-   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build37.jar`（完整包含 crafting-dead 4 个模组）
-   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build37-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
+   - **客户端 / 单人 / LAN 主机**：使用 `qlmzombie-3.0.0.beta.build48.jar`（完整包含 crafting-dead 4 个模组）
+   - **独立专用服务端 (DEDICATED_SERVER)**：使用 `qlmzombie-3.0.0.beta.build48-server.jar`（内含标记，启动时自动禁用 crafting-dead*）
 3. **启动游戏一次，然后关闭**
    - QLM Zombie 会在第一次启动时自动释放 100+ 内部模组到 `mods/` 目录
    - 若检测到有依赖被外部脚本误禁用为 `.disabled`，会自动恢复，并提示重启
@@ -813,7 +942,7 @@ A5：替换 `mods/` 中的旧版 JAR 即可。若要强制重新释放所有内�
 
 请在 [GitHub Issues](https://github.com/SevenZeroMeowTeam/qlmzombie/issues) 提交 Bug，并附带：
 
-1. **版本号**：`3.0.0.beta.build37` (精确到 build)
+1. **版本号**：`3.0.0.beta.build48` (精确到 build)
 2. **崩溃日志**：`crash-reports/` 下最新文件
 3. **最新日志**：`logs/latest.log`
 4. **mods 列表截图**或 `mods/` 目录文件列表
@@ -2845,4 +2974,4 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 >
 > — SevenZeroMeow Team · 七零喵僵尸末日生存 Mod
 >
-> 版本：`3.0.0.beta.build37` · 构建日期：2026-08-16 · Minecraft 1.20.1
+> 版本：`3.0.0.beta.build48` · 构建日期：2026-08-18 · Minecraft 1.20.1

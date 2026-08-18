@@ -215,11 +215,12 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7下界合金锭：击杀敌对生物概率掉落（抢夺附魔提高概率，下界已封禁仅此来源）"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7废弃建筑：废墟/商店/加油站/9层高楼(每层箱子+楼梯可通行)/学校(5间房含床蜘蛛网箱子)/军事基地/海底遗迹"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7建筑箱子自动包含其他模组物品，无需手动注册"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7物品材质已补全：全部七零喵物品已生成专属图标（枪械/医疗/弹药/护甲等），不再显示紫黑方块"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7物品材质已补全：保留物品（撬棍/战术刀/猎刀/3种僵尸刷怪蛋）均已生成专属图标，不再显示紫黑方块"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7医疗用品新增使用动画：绷带/急救包/肾上腺素/止痛药/止血带/夹板/生理盐水/手术剪/解毒剂 使用时有饮用动画"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7睡袋系统：3羊毛合成，夜晚可入睡不重置出生点，白天自动收起可拾取"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：仅保留自定义绿色血量条+护甲/饱食度数值，原版心形隐藏"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖释放 v4.4：§r§7修复根因-atlas未扫描cd/子目录！新增item.json+block.json，71注册ID全部model+texture+blockstate验证通过"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l创造物品栏精简：§r§7战斗装备栏仅保留撬棍/战术刀/猎刀，战术装备栏仅保留3种僵尸刷怪蛋，移除枪械/弹药/配件/医疗等冗余物品"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l模型加载修复 v4.5：§r§7CD物品模型从cd/子目录移至根目录，Forge默认加载机制可正确识别，6个保留物品纹理+模型全部验证通过"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l口渴系统 v5：§r§7整合 Thirst-Mod（MIT）——水质净化（脏→纯净）、陶碗喝水、熔炉/营火净化、脱水伤害"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7输入 §a/qlm help§r 查看命令列表，§b/qlm mods§r 查看内嵌模组状态，§b/qlm download§r 强制重新释放"))
     }
@@ -252,7 +253,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build47"
+        const val MOD_VERSION = "3.0.0.beta.build50"
 
         @JvmField
         @Volatile

@@ -332,5 +332,8 @@
   "itemGroup.qlmzombie.cd_blocks": "方块",
   "item.qlmzombie.medical_supply_crate": "医疗补给箱",
   "item.qlmzombie.ammo_crate": "弹药箱",
-  "item.qlmzombie.supply_crate": "补给箱"
+  "item.qlmzombie.supply_crate": "补给箱",
+  "block.qlmzombie.supply_crate": "补给箱",
+  "block.qlmzombie.ammo_crate": "弹药箱",
+  "block.qlmzombie.medical_supply_crate": "医疗补给箱"
 }

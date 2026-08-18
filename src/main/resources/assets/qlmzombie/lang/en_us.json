@@ -153,5 +153,8 @@
   "itemGroup.qlmzombie.cd_blocks": "Blocks",
   "item.qlmzombie.medical_supply_crate": "Medical Supply Crate",
   "item.qlmzombie.ammo_crate": "Ammo Crate",
-  "item.qlmzombie.supply_crate": "Supply Crate"
+  "item.qlmzombie.supply_crate": "Supply Crate",
+  "block.qlmzombie.supply_crate": "Supply Crate",
+  "block.qlmzombie.ammo_crate": "Ammo Crate",
+  "block.qlmzombie.medical_supply_crate": "Medical Supply Crate"
 }

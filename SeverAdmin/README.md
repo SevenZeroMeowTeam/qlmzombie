@@ -1,8 +1,8 @@
 # 🧟 七零喵僵尸末日生存 · SeverAdmin 服务器部署平台
 
 > 域名：**mc.sh197.dpdns.org**（Minecraft 25565 / 网站 80,443）
-> 版本：Minecraft Java 1.20.1 · Forge 47.4.22 · 模组 **qlmzombie-3.0.0.beta.build45**
-> 同步日期：2026-08-17
+> 版本：Minecraft Java 1.20.1 · Forge 47.4.22 · 模组 **qlmzombie-3.0.0.beta.build47**
+> 同步日期：2026-08-18
 
 服务器专用的一体化部署与管理平台，支持 **Docker** 或 **Java(systemd)** 两种部署方式，包含网站（服务器介绍、下载中心、后台管理）与 Minecraft 服务器的一键部署与监控。
 
@@ -125,16 +125,16 @@ MC_EXTRA_PORTS="25566:203.0.113.10:25565,25567:198.51.100.20:25565"
 
 > 依赖源：`../src/main/libs`（mcmod 项目）→ 构建产物 `../build/libs/qlmzombie-*.jar`
 
-## 🔄 与模组同步状态（build45）
+## 🔄 与模组同步状态（build47）
 
 | 项 | 状态 |
 |:---|:-----|
-| 模组 JAR | `qlmzombie-3.0.0.beta.build45.jar` ✅ |
+| 模组 JAR | `qlmzombie-3.0.0.beta.build47.jar` / `-server.jar` ✅ |
 | 依赖白名单 | `libs-list.txt` 119 条目 = `src/main/libs` 119 JAR ✅ |
 | KubeJS 脚本 | 已同步 6 个核心脚本（空投/血月/幸运月/丰收月/合成/战利品）+ 部署特制 craft_registry_fix ✅ |
 | FTB 任务 | 30 个任务（含 12 个「枪械大师」TaCZ 任务链 + 医疗物品奖励），奖励枪械+弹药+配件+医疗 ✅ |
 | 僵尸攻击力 | 随天数增强（第25天后 +1.5%/天，无上限）✅ |
-| 物品材质 | 35 个 CD 物品用开源原始贴图 + 20 个程序化增强，全部不再紫黑 ✅ |
+| 物品材质 | atlas 扩展扫描 cd/ 子目录（atlases/item.json + block.json），71 个注册 ID 全验证 OK，Missing Texture 根因修复（build47）✅ |
 | 使用动画 | 9 个医疗物品 DRINK 使用动画 ✅ |
 | 火药掉落 | 击杀敌对生物概率掉落（苦力怕封禁后的火药来源，默认 12%+抢夺加成，封顶 50%）✅ |
 | 掉落物控制 | 敌对生物 60% 掉落概率过滤 + 每分钟清理陈旧掉落物 ✅ |

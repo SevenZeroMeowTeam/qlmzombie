@@ -1,7 +1,30 @@
-# 远程服务器部署说明（2026-08-18 build45 更新）
+# 远程服务器部署说明（2026-08-18 build47 更新）
 
 > 目标：`154.222.28.103`（`mc.sh197.dpdns.org`）
 > 远程路径：mcmod `/www/wwwroot`，SeverAdmin `/www/wwwroot/minecraftsc`
+
+## 🆕 2026-08-18 build47：修复 Missing Texture 根因（atlas 未扫描 cd/ 子目录）
+
+- **根因诊断**（build46 后仍 Missing Texture）：Minecraft 1.20.1 默认 item atlas 只扫描 `textures/item/*.png`（0 层深度），`textures/item/cd/*.png` 下 48 张 CD 物品纹理**从未被加载到 atlas**；atlases/ 目录完全不存在 → 扩展配置缺失。此前的尺寸/格式/缺失文件修复都正确但未生效的真正原因。
+- **修复动作**：
+  1. 新增 `assets/qlmzombie/atlases/item.json`：sources → directory `textures/item` + `textures/item/cd`（扩展默认 item atlas 扫描 cd/ 子目录 48 张物品纹理）
+  2. 新增 `assets/qlmzombie/atlases/block.json`：sources → directory `textures/block`（确保方块纹理正确加载）
+  3. 完整审计 71 个注册 ID（CDItems 46 + QLMItems 18 + Thirst 3 + BlockItems 4）：全部验证 model.json + texture.png(16×16 RGBA32) + blockstate.json 存在，**0 FAIL, 71 OK**
+- 版本号 `3.0.0.beta.build47`，登录公告 v4.4
+- **必须上传**：`build/libs/qlmzombie-3.0.0.beta.build47.jar`（→ `/www/wwwroot/build/libs/`）
+- **部署**：上传 jar + SeverAdmin 脚本 + ftbquests 配置 → 远程 `./deploy.sh docker` → **⚠️ 必须手动 `docker restart qlm-minecraft`**（compose up 镜像未变不会重启容器）
+- **部署后验证**：日志 `v3.0.0.beta.build47 已加载`、无当日新 crash、FTB 4 chapters 30 quests、KubeJS 7/7 0 errors、`/api/status` online
+
+## 🆕 2026-08-18 build46：彻底修复全部物品 Missing Texture
+
+- **68 张 PNG 中 62 张尺寸错误**统一重采样为 16×16 ARGB32（48 张 CD 物品 + 10 张 QLM 物品 + 2 张 128×128）
+- **supply_crate 崩溃修复**：512×512 RGB24（无 Alpha）→ 16×16 RGBA32；ammo/medical crate 同步 16×16
+- **程序化生成 6 张缺失贴图**（3 僵尸蛋 / fake_player 蛋 / plank_axe / plank_collector）
+- **CDCreativeTabs 修复**：CD_BLOCKS 补上 SUPPLY_CRATE_ITEM（方块栏恢复）
+- 版本号 `3.0.0.beta.build46`，登录公告 v4.3
+- **必须上传**：`build/libs/qlmzombie-3.0.0.beta.build46.jar`（→ `/www/wwwroot/build/libs/`）
+- **部署**：上传 jar + SeverAdmin 脚本 + ftbquests 配置 → 远程 `./deploy.sh docker` → **⚠️ 必须手动 `docker restart qlm-minecraft`**（compose up 镜像未变不会重启容器）
+- **部署后验证**：日志 `v3.0.0.beta.build46 已加载`、无当日新 crash、FTB 4 chapters 30 quests、KubeJS 7/7 0 errors
 
 ## 🆕 2026-08-18 build45：医疗物品使用动画 + 贴图增强
 
