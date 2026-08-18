@@ -94,6 +94,7 @@ object CDCreativeTabs {
             .displayItems { _, output ->
                 output.accept(CDBlocks.MEDICAL_SUPPLY_CRATE_ITEM.get())
                 output.accept(CDBlocks.AMMO_CRATE_ITEM.get())
+                output.accept(CDBlocks.SUPPLY_CRATE_ITEM.get())
             }
             .build()
     }

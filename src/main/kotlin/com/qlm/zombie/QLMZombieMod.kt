@@ -219,7 +219,7 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7医疗用品新增使用动画：绷带/急救包/肾上腺素/止痛药/止血带/夹板/生理盐水/手术剪/解毒剂 使用时有饮用动画"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7睡袋系统：3羊毛合成，夜晚可入睡不重置出生点，白天自动收起可拾取"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：仅保留自定义绿色血量条+护甲/饱食度数值，原版心形隐藏"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖释放 v4.2：§r§7crafting-dead 4模组升级（core 1.9.4.8 / decoration 1.0.6.8 / survival 1.2.5.8 / worldguard 0.0.6.8），119模组零重复"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖释放 v4.3：§r§7修复全部物品MissingTexture（74张纹理统一16x16RGBA），supply_crate方块RGB24崩溃修复，方块页CD_BLOCKS补齐SUPPLY_CRATE"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l口渴系统 v5：§r§7整合 Thirst-Mod（MIT）——水质净化（脏→纯净）、陶碗喝水、熔炉/营火净化、脱水伤害"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7输入 §a/qlm help§r 查看命令列表，§b/qlm mods§r 查看内嵌模组状态，§b/qlm download§r 强制重新释放"))
     }
@@ -252,7 +252,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build45"
+        const val MOD_VERSION = "3.0.0.beta.build46"
 
         @JvmField
         @Volatile
