@@ -220,7 +220,8 @@ class QLMZombieMod {
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7睡袋系统：3羊毛合成，夜晚可入睡不重置出生点，白天自动收起可拾取"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7血量UI：仅保留自定义绿色血量条+护甲/饱食度数值，原版心形隐藏"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l创造物品栏精简：§r§7战斗装备栏仅保留撬棍/战术刀/猎刀，战术装备栏仅保留3种僵尸刷怪蛋，移除枪械/弹药/配件/医疗等冗余物品"))
-        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l模型加载修复 v4.5：§r§7CD物品模型从cd/子目录移至根目录，Forge默认加载机制可正确识别，6个保留物品纹理+模型全部验证通过"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l模型加载修复 v4.6：§r§7CD物品模型从cd/子目录移至根目录，Forge默认加载机制可正确识别，6个保留物品纹理+模型全部验证通过"))
+        entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l依赖模组更新 v4.6：§r§7Crafting Dead系列更新至1.9.4.10/1.0.6.10/1.2.5.10/0.0.6.10，libs重新打包确保游戏启动时自动释放最新版本依赖"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7§l口渴系统 v5：§r§7整合 Thirst-Mod（MIT）——水质净化（脏→纯净）、陶碗喝水、熔炉/营火净化、脱水伤害"))
         entity.sendSystemMessage(Component.literal("§6[公告] §r§7输入 §a/qlm help§r 查看命令列表，§b/qlm mods§r 查看内嵌模组状态，§b/qlm download§r 强制重新释放"))
     }
@@ -253,7 +254,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build50"
+        const val MOD_VERSION = "3.0.0.beta.build51"
 
         @JvmField
         @Volatile

@@ -23,6 +23,8 @@ gradle-app.setting
 # src/main/libs/*.jar 现已提交到仓库，clone 后可直接编译
 # 仅排除 .disabled 文件（被禁用的冲突模组）
 src/main/libs/*.disabled
+# 排除自身旧版本 jar（构建时已由 build.gradle.kts exclude，不应入库）
+src/main/libs/qlmzombie*.jar
 
 # ==================== IDE 文件 ====================
 .idea/

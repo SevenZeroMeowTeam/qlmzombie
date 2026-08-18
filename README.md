@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build50-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build51-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD50%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD51%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build50` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build50.jar` / `qlmzombie-3.0.0.beta.build50-server.jar` |
+| **当前版本** | `3.0.0.beta.build51` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build51.jar` / `qlmzombie-3.0.0.beta.build51-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,31 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build51（2026-08-18）
+
+**📦 依赖模组自动释放更新（libs 重新打包）**
+- **根因诊断**：build50 构建后 `src/main/libs` 目录下的 Crafting Dead 系列模组已从 `.8` 版本更新至 `.10` 版本，但 build50 JAR 内仍打包旧版本 `.8`，导致游戏启动时自动释放的是旧版本依赖
+- **影响文件**（4 个 Crafting Dead 子模组版本升级）：
+  - `crafting-dead-core`：1.9.4.8 → **1.9.4.10**
+  - `crafting-dead-decoration`：1.0.6.8 → **1.0.6.10**
+  - `crafting-dead-survival`：1.2.5.8 → **1.2.5.10**
+  - `crafting-dead-worldguard`：0.0.6.8 → **0.0.6.10**
+- **修复动作**：清理 Gradle 构建缓存，重新执行 `build buildServerJar`，确保 JAR 内 `libs/` 目录包含最新的 `.10` 版本文件
+- **ModDependencyHandler 验证**：`SERVER_DISABLED_PREFIXES` 已正确覆盖全部 4 个 crafting-dead 子模组前缀，无需更新配置
+- **manifest 白名单**：构建自动生成 `libs/manifest.txt`，117 个依赖 JAR 全部列入白名单，游戏启动时由 `ModDependencyHandler.initializeFromLibs()` 释放到 `mods/` 目录
+
+**📝 游戏公告更新**
+- 依赖模组更新公告 v4.5 → **v4.6**
+- 新增"依赖模组更新 v4.6"公告条目，说明 Crafting Dead 系列版本升级和 libs 重新打包
+- 模型加载修复公告版本号同步 v4.5 → v4.6
+
+**✅ 最终验证**
+- JAR 内 `libs/` 目录 117 个 jar + manifest.txt，与 `src/main/libs` 完全一致
+- Crafting Dead 4 个子模组版本号全部为 `.10`
+- 构建产物：`qlmzombie-3.0.0.beta.build51.jar` / `-server.jar`
+
+---
 
 ### v3.0.0.beta.build50（2026-08-18）
 
