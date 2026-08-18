@@ -1,7 +1,19 @@
-# 远程服务器部署说明（2026-08-18 build47 更新）
+# 远程服务器部署说明（2026-08-18 build54 更新）
 
 > 目标：`154.222.28.103`（`mc.sh197.dpdns.org`）
 > 远程路径：mcmod `/www/wwwroot`，SeverAdmin `/www/wwwroot/minecraftsc`
+
+## 🆕 2026-08-18 build54：废弃建筑系统 v7（门可通行 + 小屋家具 + 高楼楼梯 + CD 补给箱）
+
+- **全建筑门可通行**：修复废弃商店只放 1 格门（缺上半、无状态）→ 统一 `placeDoor1x2` 完整两格门；全部封闭建筑均有可通行门
+- **随机小屋家具**：箱子 + 熔炉（预填煤炭/可烧炼物）+ 工作台 + 床（15 色随机），成为初始生存基地
+- **9 层高楼楼梯卡头修复**：台阶正上方楼板开洞 + 灰色地毯封口（原玩家站中间台阶头顶顶楼板无法通行）
+- **高楼每层 CD 补给箱**：楼梯旁房间 `CDBlocks.SUPPLY_CRATE` + `fillCDCrate`（Crafting Dead 物资为主 + 5% TACZ 保底）
+- 版本号 `3.0.0.beta.build54`，登录公告新增「废弃建筑系统 v7」
+- **必须上传**：`build/libs/qlmzombie-3.0.0.beta.build54.jar`（→ `/www/wwwroot/build/libs/`）
+- **部署**：`deploy-build54.ps1`（Posh-SSH 上传 jar + SeverAdmin 脚本 + ftbquests）→ 远程 `./deploy.sh docker` → **⚠️ 必须手动 `docker restart qlm-minecraft`**（compose up 镜像未变不会重启容器）
+- **部署后验证（✅ 已通过）**：日志 `v3.0.0.beta.build54 已加载`（21:45:10）、建筑生成正常（小屋/商店/废墟持续生成）、容器 healthy、玩家 SevenZeroMeow 正常登录
+- **已知良性警告**：cloth-config "缺少可选依赖"（ModDependencyHandler 检查时机早于加载，jar 实际在位）；REI 客户端插件 dist 检查；KubeJS 释放提示（实际已加载）；Curios 插槽提示
 
 ## 🆕 2026-08-18 build47：修复 Missing Texture 根因（atlas 未扫描 cd/ 子目录）
 
