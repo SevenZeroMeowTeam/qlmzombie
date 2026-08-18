@@ -46,17 +46,25 @@ object BuildingGenScheduler {
 
     private var tickCounter = 0
 
-    /** 所有废弃建筑生成器（顺序即优先级：先到先得，越靠前越容易占据区块） */
+    /** 所有废弃建筑生成器（顺序即优先级：大型建筑先尝试，占区块后小型建筑跳过） */
     private val generators: List<BuildingGenerator> = listOf(
-        RandomBuildingGenerator,
-        AbandonedShopGenerator,
-        HighriseBuildingGenerator,
-        OceanRuinGenerator,
-        RuinsGenerator,
-        AbandonedGasStationGenerator,
-        AbandonedSchoolGenerator,
-        AbandonedMilitaryBaseGenerator,
-    )
+        // 大型建筑（跨区块，最优先尝试，避免区块被小型建筑占满后无法生成）
+        AbandonedMilitaryBaseGenerator,    // 128×128 军事基地（超大型）
+        CommercialPlazaGenerator,         // 32×32 商业广场（2×2区块）
+        CommercialStreetGenerator,        // 48×16 商业街（3×1区块）
+        // 中大型建筑
+        HighriseBuildingGenerator,        // 13×9×9层 高楼
+        AbandonedSchoolGenerator,         // 学校
+        OfficeBuildingGenerator,          // 21×15×5层 办公楼
+        AbandonedMilitaryBaseGenerator,    // （保留重复声明以确保优先级，实际tryGenerate内有chunkX%8锚点检查）
+        // 中型建筑
+        AbandonedShopGenerator,           // 9×7 商店
+        AbandonedGasStationGenerator,     // 加油站
+        // 小型建筑
+        RandomBuildingGenerator,          // 5×5 小屋
+        RuinsGenerator,                   // 废墟
+        OceanRuinGenerator,               // 海洋遗迹（海洋专用，最后尝试不影响陆地）
+    ).distinct()
 
     // ==================== 快速路径：区块加载时立即尝试 ====================
     @JvmStatic

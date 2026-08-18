@@ -1,7 +1,7 @@
 package com.qlm.zombie.thirst.foundation.tab;
 
 import com.qlm.zombie.thirst.content.registry.ItemInit;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +20,7 @@ import java.util.Collection;
 public class ThirstTab
 {
     private static final DeferredRegister<CreativeModeTab> TAB_REGISTER =
-            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Thirst.ID);
+            DeferredRegister.create(ResourceLocation.withDefaultNamespace("creative_mode_tab"), Thirst.ID);
 
 
     public static final RegistryObject<CreativeModeTab> THIRST_TAB = TAB_REGISTER.register("thirst",

@@ -34,6 +34,102 @@ object QLMConfig {
         .comment("Player2 MCP API 服务端口", "  客户端用于 AI 玩家通信的 HTTP 端口", "  默认: 18921", "  范围: 1024 ~ 65535")
         .defineInRange("apiPort", 18921, 1024, 65535)
 
+    // ==================== 废弃建筑生成 ====================
+    init { builder.push("structure") }
+
+    @JvmField val RANDOM_HUT_CHANCE = builder
+        .comment("随机小屋生成概率", "  默认: 0.06 (6%)")
+        .defineInRange("randomHutChance", 0.06, 0.0, 1.0)
+    @JvmField val RANDOM_HUT_SPACING = builder
+        .comment("随机小屋最小间距（区块）", "  默认: 6")
+        .defineInRange("randomHutSpacing", 6, 1, 32)
+
+    @JvmField val SHOP_CHANCE = builder
+        .comment("废弃商店生成概率", "  默认: 0.04 (4%)")
+        .defineInRange("shopChance", 0.04, 0.0, 1.0)
+    @JvmField val SHOP_SPACING = builder
+        .comment("废弃商店最小间距（区块）", "  默认: 8")
+        .defineInRange("shopSpacing", 8, 1, 32)
+
+    @JvmField val HIGHRISE_CHANCE = builder
+        .comment("高层建筑生成概率", "  默认: 0.025 (2.5%)")
+        .defineInRange("highriseChance", 0.025, 0.0, 1.0)
+    @JvmField val HIGHRISE_SPACING = builder
+        .comment("高层建筑最小间距（区块）", "  默认: 12")
+        .defineInRange("highriseSpacing", 12, 1, 64)
+
+    @JvmField val OCEAN_RUIN_CHANCE = builder
+        .comment("海底遗迹生成概率", "  默认: 0.10 (10%)")
+        .defineInRange("oceanRuinChance", 0.10, 0.0, 1.0)
+    @JvmField val OCEAN_RUIN_SPACING = builder
+        .comment("海底遗迹最小间距（区块）", "  默认: 5")
+        .defineInRange("oceanRuinSpacing", 5, 1, 32)
+
+    @JvmField val RUINS_CHANCE = builder
+        .comment("废墟生成概率", "  默认: 0.08 (8%)")
+        .defineInRange("ruinsChance", 0.08, 0.0, 1.0)
+    @JvmField val RUINS_SPACING = builder
+        .comment("废墟最小间距（区块）", "  默认: 5")
+        .defineInRange("ruinsSpacing", 5, 1, 32)
+
+    @JvmField val GAS_STATION_CHANCE = builder
+        .comment("废弃加油站生成概率", "  默认: 0.04 (4%)")
+        .defineInRange("gasStationChance", 0.04, 0.0, 1.0)
+    @JvmField val GAS_STATION_SPACING = builder
+        .comment("废弃加油站最小间距（区块）", "  默认: 8")
+        .defineInRange("gasStationSpacing", 8, 1, 32)
+
+    @JvmField val SCHOOL_CHANCE = builder
+        .comment("废弃学校生成概率", "  默认: 0.03 (3%)")
+        .defineInRange("schoolChance", 0.03, 0.0, 1.0)
+    @JvmField val SCHOOL_SPACING = builder
+        .comment("废弃学校最小间距（区块）", "  默认: 10")
+        .defineInRange("schoolSpacing", 10, 1, 64)
+
+    @JvmField val MILITARY_BASE_CHANCE = builder
+        .comment("军事基地生成概率（仅在8x8网格锚点触发）", "  默认: 0.015 (1.5%)")
+        .defineInRange("militaryBaseChance", 0.015, 0.0, 1.0)
+    @JvmField val MILITARY_BASE_SPACING = builder
+        .comment("军事基地最小间距（区块）", "  默认: 20")
+        .defineInRange("militaryBaseSpacing", 20, 1, 64)
+
+    @JvmField val OFFICE_CHANCE = builder
+        .comment("办公楼生成概率", "  默认: 0.03 (3%)")
+        .defineInRange("officeChance", 0.03, 0.0, 1.0)
+    @JvmField val OFFICE_SPACING = builder
+        .comment("办公楼最小间距（区块）", "  默认: 10")
+        .defineInRange("officeSpacing", 10, 1, 64)
+
+    @JvmField val COMMERCIAL_STREET_CHANCE = builder
+        .comment("商业街生成概率", "  默认: 0.025 (2.5%)")
+        .defineInRange("commercialStreetChance", 0.025, 0.0, 1.0)
+    @JvmField val COMMERCIAL_STREET_SPACING = builder
+        .comment("商业街最小间距（区块）", "  默认: 12")
+        .defineInRange("commercialStreetSpacing", 12, 1, 64)
+
+    @JvmField val COMMERCIAL_PLAZA_CHANCE = builder
+        .comment("商业广场生成概率", "  默认: 0.02 (2%)")
+        .defineInRange("commercialPlazaChance", 0.02, 0.0, 1.0)
+    @JvmField val COMMERCIAL_PLAZA_SPACING = builder
+        .comment("商业广场最小间距（区块）", "  默认: 14")
+        .defineInRange("commercialPlazaSpacing", 14, 1, 64)
+
+    @JvmField val FLAT_TOLERANCE_SMALL = builder
+        .comment("小型建筑平面容差（高度差格数）", "  小屋/废墟用", "  默认: 4")
+        .defineInRange("flatToleranceSmall", 4, 0, 16)
+    @JvmField val FLAT_TOLERANCE_MEDIUM = builder
+        .comment("中型建筑平面容差", "  商店/学校/加油站/高楼/办公楼用", "  默认: 3")
+        .defineInRange("flatToleranceMedium", 3, 0, 16)
+    @JvmField val FLAT_TOLERANCE_LARGE = builder
+        .comment("大型建筑平面容差", "  军事基地/商业广场用", "  默认: 5")
+        .defineInRange("flatToleranceLarge", 5, 0, 32)
+
+    @JvmField val TACZ_GUARANTEE_CHANCE = builder
+        .comment("TACZ 武器保底概率", "  每个箱子有此概率塞入一把 TACZ 武器", "  默认: 0.05 (5%)")
+        .defineInRange("taczGuaranteeChance", 0.05, 0.0, 1.0)
+
+    init { builder.pop() }
+
     // ==================== AI 优化 ====================
     init { builder.push("ai") }
 

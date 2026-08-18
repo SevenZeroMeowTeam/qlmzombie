@@ -1,6 +1,7 @@
 package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.config.QLMConfig
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
@@ -14,8 +15,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 object RandomBuildingGenerator : BuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.35
-    private const val MIN_SPACING = 2
     private const val HUT_SIZE = 5
 
     /** 每区块仅评估一次（无论是否生成），避免重复扫描时反复掷概率 */
@@ -75,8 +74,9 @@ object RandomBuildingGenerator : BuildingGenerator {
             return false
         }
 
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
-        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
+        if (level.random.nextDouble() >= QLMConfig.RANDOM_HUT_CHANCE.get()) return false
+        if (!StructureGenSupport.isFlatTerrain(chunk, QLMConfig.FLAT_TOLERANCE_SMALL.get())) return false
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, QLMConfig.RANDOM_HUT_SPACING.get())) return false
 
         return try {
             generateHut(level, chunk, origin)
@@ -155,6 +155,7 @@ object RandomBuildingGenerator : BuildingGenerator {
                     val chestPos = BlockPos.MutableBlockPos(bx, groundY, bz)
                     level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
                     fillChest(level, chestPos)
+                    StructureGenSupport.maybeInjectTaczWeapon(level, chestPos, level.random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
                 }
             }
         }

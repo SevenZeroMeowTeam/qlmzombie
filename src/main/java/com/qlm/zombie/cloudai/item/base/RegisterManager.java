@@ -1,7 +1,6 @@
 package com.qlm.zombie.cloudai.item.base;
 
 import com.qlm.zombie.QLMZombieMod;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -29,7 +28,7 @@ public final class RegisterManager {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, QLMZombieMod.MOD_ID);
 
     /** CloudAI 模块创意标签的 DeferredRegister（若需独立标签） */
-    public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, QLMZombieMod.MOD_ID);
+    public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(ResourceLocation.withDefaultNamespace("creative_mode_tab"), QLMZombieMod.MOD_ID);
 
     /** 已注册的 CloudAI 物品缓存（name -> RegistryObject） */
     private static final Map<String, RegistryObject<Item>> REGISTERED = new HashMap<>();

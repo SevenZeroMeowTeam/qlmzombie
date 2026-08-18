@@ -1,20 +1,22 @@
 package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.config.QLMConfig
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.tags.BiomeTags
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.DoorBlock
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf
 import net.minecraft.world.level.levelgen.Heightmap
 import java.util.concurrent.ConcurrentHashMap
 
 object HighriseBuildingGenerator : BuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.15
-    private const val MIN_SPACING = 4
     private const val BUILDING_WIDTH = 13
     private const val BUILDING_DEPTH = 9
     private const val FLOORS = 9
@@ -95,7 +97,10 @@ object HighriseBuildingGenerator : BuildingGenerator {
         )
         if (biome.`is`(BiomeTags.IS_OCEAN)) return false
 
-        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
+        // 平面检测：高楼需要平坦地形
+        if (!StructureGenSupport.isFlatTerrain(chunk, QLMConfig.FLAT_TOLERANCE_MEDIUM.get())) return false
+
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, QLMConfig.HIGHRISE_SPACING.get())) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8 - BUILDING_WIDTH / 2,
@@ -109,7 +114,7 @@ object HighriseBuildingGenerator : BuildingGenerator {
             return false
         }
 
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
+        if (level.random.nextDouble() >= QLMConfig.HIGHRISE_CHANCE.get()) return false
 
         return try {
             generateHighrise(level, chunk, origin)
@@ -165,13 +170,11 @@ object HighriseBuildingGenerator : BuildingGenerator {
         for (floor in 0 until FLOORS) {
             val floorY = groundY + floor * FLOOR_HEIGHT
 
-            // 地板：楼梯井区域留空（可通行楼梯通道），其余铺地板
+            // 地板：全部铺满（包括楼梯井区域，作为每层地面和上一层landing）
+            // 修复：原代码 if (isStaircaseArea) continue 导致楼梯井无地板，玩家踩空
             for (dx in 0 until BUILDING_WIDTH) {
                 for (dz in 0 until BUILDING_DEPTH) {
                     val floorPos = BlockPos.MutableBlockPos(x0 + dx, floorY, z0 + dz)
-                    val isStaircaseArea = dx in staircaseMinX..staircaseMaxX &&
-                        dz in staircaseMinZ..staircaseMaxZ
-                    if (isStaircaseArea) continue
                     level.setBlock(floorPos, Blocks.STONE.defaultBlockState(), 3)
                 }
             }
@@ -183,15 +186,17 @@ object HighriseBuildingGenerator : BuildingGenerator {
                         dz == 0 || dz == BUILDING_DEPTH - 1
                     if (!isPerimeter) continue
 
+                    // 门位置：1楼南侧中间，1格宽×2格高
+                    val isDoorColumn = floor == 0 &&
+                        dx == BUILDING_WIDTH / 2 && dz == BUILDING_DEPTH - 1
+
                     for (dy in 1..FLOOR_HEIGHT) {
                         val wallPos = BlockPos.MutableBlockPos(x0 + dx, floorY + dy, z0 + dz)
+                        // 跳过门位置（dy=1,2 由 placeDoor1x2 处理，dy=3 是门楣）
+                        if (isDoorColumn && dy in 1..3) continue
                         val isWindow = dy == 2 && random.nextDouble() < 0.6
-                        val isDoor = floor == 0 && dy == 1 &&
-                            dx == BUILDING_WIDTH / 2 && dz == BUILDING_DEPTH - 1
 
                         when {
-                            isDoor ->
-                                level.setBlock(wallPos, Blocks.IRON_DOOR.defaultBlockState(), 3)
                             isWindow ->
                                 level.setBlock(wallPos, Blocks.GLASS.defaultBlockState(), 3)
                             else ->
@@ -201,8 +206,21 @@ object HighriseBuildingGenerator : BuildingGenerator {
                 }
             }
 
+            // 1格宽×2格高门：方便其他模组防御物品在门口留通道进出
+            if (floor == 0) {
+                StructureGenSupport.placeDoor1x2(
+                    level,
+                    x0 + BUILDING_WIDTH / 2,
+                    floorY + 1,
+                    z0 + BUILDING_DEPTH - 1,
+                    Direction.SOUTH,
+                    Blocks.IRON_DOOR as DoorBlock,
+                    style.wall.defaultBlockState()
+                )
+            }
+
             // 楼梯井：每层建造可通行楼梯（从本层通到上一层）
-            buildStaircase(level, x0, floorY, z0, staircaseMinX, staircaseMinZ, style, random)
+            buildStaircase(level, x0, floorY, z0, staircaseMinX, staircaseMinZ, style, random, floor)
 
             if (floor == 0) {
                 buildFirstFloorRooms(level, x0, floorY, z0, staircaseMinX, staircaseMaxX,
@@ -251,13 +269,14 @@ object HighriseBuildingGenerator : BuildingGenerator {
         stairMinX: Int,
         stairMinZ: Int,
         style: BuildingStyle,
-        random: net.minecraft.util.RandomSource
+        random: net.minecraft.util.RandomSource,
+        floor: Int
     ) {
         // 楼梯井局部坐标 (0..2, 0..2)，两种飞行交替，每飞行 4 级台阶
         // 飞行 A（偶数层）：(0,2)->(1,2)->(2,2)->(2,1)
         // 飞行 B（奇数层）：(2,0)->(1,0)->(0,0)->(0,1)
-        // 因 floorY 可能不是从 0 开始，用 (floorY / FLOOR_HEIGHT) % 2 判断奇偶层
-        val evenFlight = ((floorY / FLOOR_HEIGHT) % 2) == 0
+        // 修复：用楼层号 floor%2 而非绝对Y坐标 (floorY/FLOOR_HEIGHT)%2 判断奇偶
+        val evenFlight = (floor % 2) == 0
 
         // 楼梯井中心立柱（防止跳下楼梯井）
         level.setBlock(
@@ -433,5 +452,7 @@ object HighriseBuildingGenerator : BuildingGenerator {
         // 主题战利品（本模组 + 原版）+ 自动扫描的其他模组物品
         val combinedThemed = modLoot + vanillaLoot
         StructureGenSupport.fillChest(level, pos, random, combinedThemed, MOD_ITEM_CHANCE, 2, 5)
+        // 5% 保底 TACZ 武器
+        StructureGenSupport.maybeInjectTaczWeapon(level, pos, random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
     }
 }

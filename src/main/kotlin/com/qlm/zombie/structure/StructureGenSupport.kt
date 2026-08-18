@@ -2,11 +2,17 @@ package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.DoorBlock
 import net.minecraft.world.level.block.entity.ChestBlockEntity
+import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf
 import net.minecraft.world.level.chunk.LevelChunk
+import net.minecraft.world.level.levelgen.Heightmap
 import net.minecraftforge.registries.ForgeRegistries
 import java.util.concurrent.ConcurrentHashMap
 
@@ -120,5 +126,236 @@ object StructureGenSupport {
             chest.setItem(i % chest.containerSize, stack)
         }
         chest.setChanged()
+    }
+
+    // ================= 平面地形检测 =================
+
+    /**
+     * 单区块平面检测：采样区块内多个点的高度，计算 max-min 高度差。
+     * @param chunk 待检测区块
+     * @param tolerance 容差（如 3 = 高度差不超过 3 格视为平坦）
+     * @param sampleStep 采样步长（如 4 = 每 4 格采样一次，共 4x4=16 个点）
+     * @return true 如果地形平坦
+     */
+    fun isFlatTerrain(
+        chunk: LevelChunk,
+        tolerance: Int = 3,
+        sampleStep: Int = 4
+    ): Boolean {
+        var minY = Int.MAX_VALUE
+        var maxY = Int.MIN_VALUE
+        for (dx in 0 until 16 step sampleStep) {
+            for (dz in 0 until 16 step sampleStep) {
+                val y = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, dx, dz)
+                if (y <= 0) return false
+                if (y < minY) minY = y
+                if (y > maxY) maxY = y
+            }
+        }
+        return (maxY - minY) <= tolerance
+    }
+
+    /**
+     * 跨区块平面检测：在 sizeChunks×sizeChunks 范围内每区块采样中心点。
+     * 用于大型建筑（如128×128军事基地）的预选址。
+     * @return true 如果所有区块已加载且地形平坦
+     */
+    fun isFlatTerrainArea(
+        level: Level,
+        centerChunkX: Int,
+        centerChunkZ: Int,
+        sizeChunks: Int,
+        tolerance: Int = 4
+    ): Boolean {
+        val half = sizeChunks / 2
+        var minY = Int.MAX_VALUE
+        var maxY = Int.MIN_VALUE
+        val serverLevel = level as? ServerLevel ?: return false
+        for (cx in -half until half) {
+            for (cz in -half until half) {
+                val chunk = serverLevel.chunkSource.getChunkNow(centerChunkX + cx, centerChunkZ + cz)
+                    ?: return false // 周边未加载，等下次补足
+                val y = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, 8, 8)
+                if (y <= 0) return false
+                if (y < minY) minY = y
+                if (y > maxY) maxY = y
+            }
+        }
+        return (maxY - minY) <= tolerance
+    }
+
+    /**
+     * 跨区块间距检测：检查 sizeChunks×sizeChunks 范围内是否有已生成建筑。
+     */
+    fun isFarEnoughArea(
+        chunkX: Int,
+        chunkZ: Int,
+        sizeChunks: Int,
+        spacing: Int
+    ): Boolean {
+        val half = sizeChunks / 2
+        for (dx in (-half - spacing) until (half + spacing + 1)) {
+            for (dz in (-half - spacing) until (half + spacing + 1)) {
+                if (generatedChunks.contains(chunkKey(chunkX + dx, chunkZ + dz))) return false
+            }
+        }
+        return true
+    }
+
+    // ================= TACZ 武器保底 =================
+
+    @Volatile
+    private var taczWeapons: List<Item>? = null
+
+    /**
+     * 扫描 TACZ (Timeless and Classics Zero) 模组的武器物品。
+     * TACZ 物品注册命名空间为 "tacz"。
+     */
+    fun findTaczWeapons(): List<Item> {
+        if (taczWeapons == null) {
+            synchronized(this) {
+                if (taczWeapons == null) {
+                    val scanned = ArrayList<Item>()
+                    try {
+                        for (entry in ForgeRegistries.ITEMS.entries) {
+                            val loc = entry.key.location()
+                            if (loc.namespace == "tacz" ||
+                                loc.path.contains("tacz") ||
+                                loc.path.contains("gun")) {
+                                val path = loc.path
+                                // 排除配件/弹药
+                                if (path.contains("ammo") || path.contains("scope") ||
+                                    path.contains("magazine") || path.contains("stock") ||
+                                    path.contains("barrel") || path.contains("grip") ||
+                                    path.contains("muzzle") || path.contains("bayonet")) continue
+                                scanned.add(entry.value)
+                            }
+                        }
+                        QLMZombieMod.LOGGER.info(
+                            "[建筑生成] 扫描到 {} 个 TACZ 武器物品可用于保底", scanned.size
+                        )
+                    } catch (e: Exception) {
+                        QLMZombieMod.LOGGER.warn("[建筑生成] TACZ 武器扫描失败: {}", e.message)
+                    }
+                    taczWeapons = scanned
+                }
+            }
+        }
+        return taczWeapons ?: emptyList()
+    }
+
+    /**
+     * 5% 概率向箱子塞入一把 TACZ 武器作为保底。
+     * 应在 fillChest / fillCDCrate 之后调用。
+     */
+    fun maybeInjectTaczWeapon(
+        level: Level,
+        pos: BlockPos,
+        random: net.minecraft.util.RandomSource,
+        chance: Double = 0.05
+    ) {
+        if (random.nextDouble() >= chance) return
+        val taczList = findTaczWeapons()
+        if (taczList.isEmpty()) return
+        val chest = level.getBlockEntity(pos) as? ChestBlockEntity ?: return
+        for (slot in 0 until chest.containerSize) {
+            if (chest.getItem(slot).isEmpty) {
+                val weapon = taczList[random.nextInt(taczList.size)]
+                chest.setItem(slot, ItemStack(weapon))
+                chest.setChanged()
+                return
+            }
+        }
+        // 无空槽则替换最后一个
+        val weapon = taczList[random.nextInt(taczList.size)]
+        chest.setItem(chest.containerSize - 1, ItemStack(weapon))
+        chest.setChanged()
+    }
+
+    // ================= CD 风格箱子填充 =================
+
+    /**
+     * 填充 CD 风格箱子（SupplyCrateBlockEntity 等）。
+     * 与 fillChest 区别：更多物品数量，主题物品为主，5% 保底 TACZ 武器。
+     * 若 CD 箱子未实现 Container 接口，则 fallback 到 fillChest。
+     */
+    fun fillCDCrate(
+        level: Level,
+        pos: BlockPos,
+        random: net.minecraft.util.RandomSource,
+        themedLoot: List<Item>,
+        modItemChance: Double = 0.3,
+        minItems: Int = 4,
+        maxItems: Int = 8
+    ) {
+        val blockEntity = level.getBlockEntity(pos)
+        if (blockEntity is net.minecraft.world.Container) {
+            val container = blockEntity
+            val modList = getModItems()
+            val itemsToAdd = minItems + random.nextInt(maxItems - minItems + 1)
+            var modAdded = false
+            for (i in 0 until itemsToAdd) {
+                var useMod = modList.isNotEmpty() && random.nextDouble() < modItemChance
+                if (modList.isNotEmpty() && !modAdded && i == itemsToAdd - 1) useMod = true
+                val item = if (useMod) {
+                    modAdded = true
+                    modList[random.nextInt(modList.size)]
+                } else themedLoot[random.nextInt(themedLoot.size)]
+                val stack = ItemStack(item)
+                stack.count = 1 + random.nextInt(3)
+                container.setItem(i % container.containerSize, stack)
+            }
+            if (blockEntity is ChestBlockEntity) blockEntity.setChanged()
+            else blockEntity.setChanged()
+        } else {
+            // CD 箱子未实现 Container，fallback
+            fillChest(level, pos, random, themedLoot, modItemChance, minItems, maxItems)
+        }
+        // 5% 保底 TACZ 武器
+        maybeInjectTaczWeapon(level, pos, random, 0.05)
+    }
+
+    // ================= 统一门放置工具 =================
+
+    /**
+     * 在墙体上放置 1 格宽 × 2 格高的门。
+     * 统一所有建筑生成器的门规格，方便其他模组的防御物品
+     * （如铁丝网、荆棘、爆炸陷阱等）在门口留 1 格通道进出。
+     *
+     * @param level 世界
+     * @param x 门 X 坐标
+     * @param y 门下格 Y 坐标
+     * @param z 门 Z 坐标
+     * @param facing 门朝向（朝外）
+     * @param doorBlock 门方块（Blocks.IRON_DOOR / OAK_DOOR 等）
+     * @param lintelBlock 门楣方块（一般为墙体材质）
+     */
+    fun placeDoor1x2(
+        level: Level,
+        x: Int, y: Int, z: Int,
+        facing: Direction,
+        doorBlock: DoorBlock,
+        lintelBlock: BlockState
+    ) {
+        val lowerPos = BlockPos(x, y, z)
+        val upperPos = BlockPos(x, y + 1, z)
+        val lintelPos = BlockPos(x, y + 2, z)
+
+        level.setBlock(
+            lowerPos,
+            doorBlock.defaultBlockState()
+                .setValue(DoorBlock.FACING, facing)
+                .setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER),
+            3
+        )
+        level.setBlock(
+            upperPos,
+            doorBlock.defaultBlockState()
+                .setValue(DoorBlock.FACING, facing)
+                .setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER),
+            3
+        )
+        // 门楣（防止僵尸从门顶进入）
+        level.setBlock(lintelPos, lintelBlock, 3)
     }
 }

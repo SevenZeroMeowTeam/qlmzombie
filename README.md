@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build51-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build53-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD51%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD53%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build51` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build51.jar` / `qlmzombie-3.0.0.beta.build51-server.jar` |
+| **当前版本** | `3.0.0.beta.build53` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build53.jar` / `qlmzombie-3.0.0.beta.build53-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,88 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build53（2026-08-18）
+
+**🐛 修复游戏加载崩溃：`NoSuchFieldError: CREATIVE_MODE_TAB`**
+
+**问题根因**
+- 游戏启动时模组加载阶段抛出 `java.lang.NoSuchFieldError: CREATIVE_MODE_TAB`
+- 原因：4 个文件使用 `DeferredRegister.create(Registries.CREATIVE_MODE_TAB, modId)` 注册创造模式物品栏标签
+- 但 Forge 47.4.22 运行时的官方映射中，`net.minecraft.core.registries.Registries.CREATIVE_MODE_TAB` 字段不存在（已被重命名/移除），导致字段访问失败 → 整个模组加载失败
+
+**修复方案**
+- 改用 `DeferredRegister.create(ResourceLocation, String)` 重载方法，直接通过注册表名称 `"creative_mode_tab"` 创建 `DeferredRegister`
+- 内部调用 `ResourceKey.create()` 自动构建注册表键，绕开对 `Registries.CREATIVE_MODE_TAB` 静态字段的依赖
+- 修改 4 个文件：
+  - `CDCreativeTabs.kt`：CD_COMBAT / CD_EQUIPMENT / CD_BLOCKS 三个标签页
+  - `QLMTabs.kt`：QLM_ITEMS_TAB 标签页
+  - `ThirstTab.java`：THIRST_TAB 标签页（口渴系统）
+  - `RegisterManager.java`：CLOUDAI_TAB 标签页（CloudAI Follower）
+
+**Kotlin 类型推断修复**
+- Kotlin 编译器对 `DeferredRegister.create(ResourceLocation, String)` 无法自动推断泛型 `B`
+- 显式指定类型参数：`DeferredRegister.create<CreativeModeTab>(...)` 解决编译错误
+
+**✅ 最终验证**
+- `BUILD SUCCESSFUL in 4m 27s`
+- 构建产物：`qlmzombie-3.0.0.beta.build53.jar`（428 MB）/ `qlmzombie-3.0.0.beta.build53-server.jar`（428 MB）
+- JAR 内已验证：`CDCreativeTabs.class` / `QLMTabs.class` / `ThirstTab.class` / `RegisterManager.class` 不再包含 `CREATIVE_MODE_TAB` 字段引用，仅包含正确的字符串字面量 `"creative_mode_tab"`
+
+---
+
+### v3.0.0.beta.build52（2026-08-18）
+
+**🗺️ 废弃建筑系统全面重做 v6**
+
+**修复"满地建筑物"问题：所有陆地建筑新增平面检测**
+- 在 `StructureGenSupport.kt` 新增共享 `isFlatTerrain(chunk, tolerance, sampleStep)` 方法：采样 4×4=16 个高度点，计算高度差
+- 所有 10 个陆地生成器在生成前先通过平面检测：
+  - 小型（小屋/废墟）：tolerance=4（容忍微地形）
+  - 中型（商店/学校/加油站/高楼/办公楼/商业街）：tolerance=3
+  - 大型（军事基地/商业广场）：tolerance=5
+- 生成概率从硬编码 0.08~0.40 大幅下调至 0.015~0.10：叠加最大概率 ≈ 0.465，配合平面检测（约 35% 通过率）→ **实际生成密度约 16%**，远低于原"满地建筑"水平
+- 所有概率/间距/平面容差均从 `QLMConfig.kt` 的 `structure.*` 配置项读取，便于服务器调整
+
+**破败军事基地升级 128×128（8×8 区块）**
+- 触发条件 `chunkX%8==0 && chunkZ%8==0`（仅 1/64 区块为锚点），跨区块平面检测 + 强制加载 64 个区块
+- 分区布局：4 角岗楼（12 格高）+ 弹药库（6 个 AMMO_CRATE，CD 弹药）+ 军火库（4 个 SUPPLY_CRATE，CD 武器+配件）+ 医务所（3 个 MEDICAL_SUPPLY_CRATE，CD 医疗）+ 营房区 A/B（各 2 普通箱）+ 训练场 + 停机坪 + 指挥塔（5 层，顶层 SUPPLY_CRATE）
+- 共 13 个 CD 箱子 + 8 个普通箱子，物资种类多，所有箱子 5% 保底 TACZ 武器
+- 南门 1×2 铁门 + 6 格高混凝土围墙 + 顶部铁丝网
+
+**9 层高楼 Bug 修复**
+- 楼梯 Bug1：`evenFlight = ((floorY / FLOOR_HEIGHT) % 2) == 0` → 修复为 `evenFlight = (floor % 2) == 0`（用楼层号而非绝对 Y 坐标判断奇偶）
+- 楼梯 Bug2：楼梯井区域 `if (isStaircaseArea) continue` 跳过地板 → 修复为全部铺地板（作为每层地面+上一层 landing），消除踩空问题
+- 门 Bug：原只放置 1 格高 IRON_DOOR，上方仍是墙 → 修复为 `placeDoor1x2` 放置 1 格宽 × 2 格高 铁门 + 门楣
+
+**新增 3 类建筑**
+- **破败办公楼 OfficeBuildingGenerator**：21×15×5 层，玻璃幕墙外立面，中央电梯井（不可通行）+ 3×3 楼梯井（L 形旋转楼梯），每层 4 间办公室（BOOKSHELF 文件柜 + STAIRS 椅子），顶层董事长办公室 CD 武器箱
+- **破败商业街 CommercialStreetGenerator**：48×16 跨 3 区块，街两侧 6 家小店（餐厅/服装/电子/书店/药房/便利店），街中央 GRAVEL 铺路 + 路灯，街两端遗留 AMMO_CRATE
+- **破败商业广场 CommercialPlazaGenerator**：32×32 跨 4 区块，中央喷泉 + 四角 4 栋 2 层小楼（服装/餐饮/电子/百货），喷泉中心地下 CD 武器箱隐藏宝藏
+
+**CD 箱子可存储物品修复**
+- `SupplyCrateBlockEntity.java`：原只继承 `BlockEntity`，无法存储物品 → 改为继承 `RandomizableContainerBlockEntity`，实现 `Container` 接口（27 格容量，支持 `setItem`/`getItem`/NBT 保存加载）
+- `CDBlocks.kt`：`SupplyCrateBlock` 从普通 `Block` 改为继承 `BaseEntityBlock`，实现 `newBlockEntity` 返回 SupplyCrateBlockEntity
+- 新增 `StructureGenSupport.fillCDCrate()` 方法，CD 箱子使用 Container 接口填充，30% 概率混入其他模组物品 + 5% 保底 TACZ 武器
+
+**全部门统一为 1 格宽 × 2 格高，方便其他模组防御物品留通道**
+- 新增 `StructureGenSupport.placeDoor1x2(level, x, y, z, facing, doorBlock, lintelBlock)` 统一工具方法：LOWER+UPPER+门楣
+- 修复 5 个生成器的门 Bug：Shop（1×1→1×2）、School（2 格宽→1 格宽）、GasStation（1×1→1×2）、Highrise（1×1→1×2）
+- 所有 11 个生成器 + 3 个新生成器统一使用 placeDoor1x2，门口保证 1 格宽度，方便放置其他模组防御物品（铁丝网/陷阱/爆炸物等）时仍可从门进出
+
+**所有战利品箱子 5% 保底 TACZ 武器**
+- `StructureGenSupport.findTaczWeapons()`：延迟扫描 ForgeRegistries 中 `tacz` 命名空间/含 "gun" 关键字的武器物品，排除 ammo/scope/magazine/stock/barrel/grip/muzzle/bayonet 配件
+- `maybeInjectTaczWeapon(level, pos, random, chance=0.05)`：5% 概率向箱子塞入一把 TACZ 武器（空槽插入，无空槽则替换最后槽位）
+- 每个箱子调用 `fillChest`/`fillCDCrate` 后自动调用此方法，概率从 `QLMConfig.TACZ_GUARANTEE_CHANCE` 读取（默认 5%）
+
+**调度器优先级重排**
+- `BuildingGenScheduler.generators` 顺序改为大型优先：军事基地 → 商业广场 → 商业街 → 高楼 → 学校 → 办公楼 → 商店 → 加油站 → 小屋 → 废墟 → 海洋遗迹，避免小型建筑占满区块后大型建筑无法生成
+- `.distinct()` 去除重复声明
+
+**配置扩展 QLMConfig**
+- 新增 `structure.*` 类别 27 个配置项：11 个生成器 × (Chance + Spacing) + FLAT_TOLERANCE_SMALL/MEDIUM/LARGE + TACZ_GUARANTEE_CHANCE
+
+---
 
 ### v3.0.0.beta.build51（2026-08-18）
 

@@ -1,6 +1,7 @@
 package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.config.QLMConfig
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
@@ -18,8 +19,6 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object RuinsGenerator : BuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.28
-    private const val MIN_SPACING = 3
     private const val RUIN_RADIUS = 5
 
     /** 每区块仅评估一次（无论是否生成），避免重复扫描时反复掷概率 */
@@ -54,8 +53,9 @@ object RuinsGenerator : BuildingGenerator {
 
         // 区块就绪后，每区块仅评估一次（无论是否生成），保持概率语义
         if (!decidedChunks.add(key)) return false
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
-        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
+        if (level.random.nextDouble() >= QLMConfig.RUINS_CHANCE.get()) return false
+        if (!StructureGenSupport.isFlatTerrain(chunk, QLMConfig.FLAT_TOLERANCE_SMALL.get())) return false
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, QLMConfig.RUINS_SPACING.get())) return false
 
         val origin = BlockPos.MutableBlockPos(chunkX * 16 + 8, surfaceY, chunkZ * 16 + 8)
 
@@ -147,6 +147,7 @@ object RuinsGenerator : BuildingGenerator {
             val chestPos = BlockPos.MutableBlockPos(x0 + cx, y0 + 1, z0 + cz)
             level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
             StructureGenSupport.fillChest(level, chestPos.immutable(), random, themedLoot, 0.5, 2, 5)
+            StructureGenSupport.maybeInjectTaczWeapon(level, chestPos.immutable(), random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
         }
     }
 }

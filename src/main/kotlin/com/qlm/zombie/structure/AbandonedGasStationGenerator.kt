@@ -1,11 +1,15 @@
 package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.config.QLMConfig
+import com.qlm.zombie.craftingdead.block.CDBlocks
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.DoorBlock
 import net.minecraft.world.level.levelgen.Heightmap
 import java.util.concurrent.ConcurrentHashMap
 
@@ -17,8 +21,6 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object AbandonedGasStationGenerator : BuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.18
-    private const val MIN_SPACING = 4
     private const val SHOP_WIDTH = 10
     private const val SHOP_DEPTH = 8
     private const val SHOP_HEIGHT = 4
@@ -56,8 +58,9 @@ object AbandonedGasStationGenerator : BuildingGenerator {
 
         // 区块就绪后，每区块仅评估一次（无论是否生成），保持概率语义
         if (!decidedChunks.add(key)) return false
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
-        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
+        if (level.random.nextDouble() >= QLMConfig.GAS_STATION_CHANCE.get()) return false
+        if (!StructureGenSupport.isFlatTerrain(chunk, QLMConfig.FLAT_TOLERANCE_MEDIUM.get())) return false
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, QLMConfig.GAS_STATION_SPACING.get())) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8 - SHOP_WIDTH / 2,
@@ -107,11 +110,9 @@ object AbandonedGasStationGenerator : BuildingGenerator {
                 if (!isWall) continue
                 for (dy in 1..SHOP_HEIGHT) {
                     val pos = BlockPos.MutableBlockPos(x0 + dx, y0 + dy, z0 + dz)
-                    val isDoor = dy == 1 && dx == SHOP_WIDTH / 2 && dz == 0
                     val isWindow = dy == 2 && dz == 0 && dx in 2..(SHOP_WIDTH - 3) && dx != SHOP_WIDTH / 2
                     val isBrokenWindow = isWindow && random.nextDouble() < 0.4
                     when {
-                        isDoor -> level.setBlock(pos, Blocks.IRON_DOOR.defaultBlockState(), 3)
                         isBrokenWindow -> level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3)
                         isWindow -> level.setBlock(pos, Blocks.GLASS_PANE.defaultBlockState(), 3)
                         else -> level.setBlock(pos, Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(), 3)
@@ -119,6 +120,17 @@ object AbandonedGasStationGenerator : BuildingGenerator {
                 }
             }
         }
+
+        // 便利店正门：1 格宽 × 2 格高铁门 + 混凝土门楣（朝北外开，面向加油棚）
+        StructureGenSupport.placeDoor1x2(
+            level,
+            x0 + SHOP_WIDTH / 2,
+            y0 + 1,
+            z0,
+            Direction.NORTH,
+            Blocks.IRON_DOOR as DoorBlock,
+            Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState()
+        )
 
         // 屋顶
         for (dx in 0 until SHOP_WIDTH) {
@@ -135,6 +147,12 @@ object AbandonedGasStationGenerator : BuildingGenerator {
             }
         }
         level.setBlock(BlockPos.MutableBlockPos(x0 + 3, y0 + 2, z0 + 3), Blocks.IRON_BLOCK.defaultBlockState(), 3)
+
+        // 收银台后 CD 补给箱（弹药/武器高级战利品）
+        val cdCratePos = BlockPos.MutableBlockPos(x0 + 3, y0 + 1, z0 + 4)
+        level.setBlock(cdCratePos, CDBlocks.SUPPLY_CRATE.get().defaultBlockState(), 3)
+        StructureGenSupport.fillCDCrate(level, cdCratePos.immutable(), random, themedLoot, 0.5, 3, 6)
+        StructureGenSupport.maybeInjectTaczWeapon(level, cdCratePos.immutable(), random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
 
         // 货架（橡木木板 + 台阶）
         for (shelf in 0 until 2) {
@@ -190,6 +208,7 @@ object AbandonedGasStationGenerator : BuildingGenerator {
             val chestPos = BlockPos.MutableBlockPos(x0 + cx, y0 + cy, z0 + cz)
             level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
             StructureGenSupport.fillChest(level, chestPos.immutable(), random, themedLoot, 0.55, 2, 5)
+            StructureGenSupport.maybeInjectTaczWeapon(level, chestPos.immutable(), random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
         }
     }
 }

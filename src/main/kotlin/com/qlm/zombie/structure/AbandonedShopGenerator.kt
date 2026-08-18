@@ -1,6 +1,7 @@
 package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.config.QLMConfig
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
@@ -12,8 +13,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 object AbandonedShopGenerator : BuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.30
-    private const val MIN_SPACING = 3
     private const val SHOP_WIDTH = 9
     private const val SHOP_DEPTH = 7
     private const val SHOP_HEIGHT = 4
@@ -87,9 +86,11 @@ object AbandonedShopGenerator : BuildingGenerator {
         // 区块就绪后，每区块仅评估一次（无论是否生成），保持概率语义
         if (!decidedChunks.add(chunkKey)) return false
 
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
+        if (level.random.nextDouble() >= QLMConfig.SHOP_CHANCE.get()) return false
 
-        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
+        if (!StructureGenSupport.isFlatTerrain(chunk, QLMConfig.FLAT_TOLERANCE_MEDIUM.get())) return false
+
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, QLMConfig.SHOP_SPACING.get())) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8 - SHOP_WIDTH / 2,
@@ -215,6 +216,7 @@ object AbandonedShopGenerator : BuildingGenerator {
                 }
                 chest.setChanged()
             }
+            StructureGenSupport.maybeInjectTaczWeapon(level, chestPos, random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
         }
 
         for (dx in 0 until SHOP_WIDTH) {

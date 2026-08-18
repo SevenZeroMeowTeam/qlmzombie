@@ -1,11 +1,15 @@
 package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.config.QLMConfig
+import com.qlm.zombie.craftingdead.block.CDBlocks
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.DoorBlock
 import net.minecraft.world.level.levelgen.Heightmap
 import java.util.concurrent.ConcurrentHashMap
 
@@ -17,8 +21,6 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object AbandonedSchoolGenerator : BuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.12
-    private const val MIN_SPACING = 5
     private const val SCHOOL_WIDTH = 16
     private const val SCHOOL_DEPTH = 12
     private const val SCHOOL_HEIGHT = 5
@@ -80,8 +82,9 @@ object AbandonedSchoolGenerator : BuildingGenerator {
 
         // 区块就绪后，每区块仅评估一次（无论是否生成），保持概率语义
         if (!decidedChunks.add(key)) return false
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
-        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
+        if (level.random.nextDouble() >= QLMConfig.SCHOOL_CHANCE.get()) return false
+        if (!StructureGenSupport.isFlatTerrain(chunk, QLMConfig.FLAT_TOLERANCE_MEDIUM.get())) return false
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, QLMConfig.SCHOOL_SPACING.get())) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8 - SCHOOL_WIDTH / 2,
@@ -131,11 +134,9 @@ object AbandonedSchoolGenerator : BuildingGenerator {
                 if (!isWall) continue
                 for (dy in 1..SCHOOL_HEIGHT) {
                     val pos = BlockPos.MutableBlockPos(x0 + dx, y0 + dy, z0 + dz)
-                    val isDoor = dy == 1 && dz == SCHOOL_DEPTH - 1 && dx in (SCHOOL_WIDTH / 2 - 1)..(SCHOOL_WIDTH / 2)
                     val isWindow = dy == 2 && ((dz == 0 || dz == SCHOOL_DEPTH - 1) || (dx == 0 || dx == SCHOOL_WIDTH - 1))
                     val isBrokenWindow = isWindow && random.nextDouble() < 0.45
                     when {
-                        isDoor -> level.setBlock(pos, Blocks.OAK_DOOR.defaultBlockState(), 3)
                         isBrokenWindow -> level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3)
                         isWindow -> level.setBlock(pos, Blocks.GLASS_PANE.defaultBlockState(), 3)
                         else -> level.setBlock(pos, Blocks.BRICKS.defaultBlockState(), 3)
@@ -143,6 +144,17 @@ object AbandonedSchoolGenerator : BuildingGenerator {
                 }
             }
         }
+
+        // 正门：1 格宽 × 2 格高橡木门 + 砖块门楣（朝南外开）
+        StructureGenSupport.placeDoor1x2(
+            level,
+            x0 + SCHOOL_WIDTH / 2,
+            y0 + 1,
+            z0 + SCHOOL_DEPTH - 1,
+            Direction.SOUTH,
+            Blocks.OAK_DOOR as DoorBlock,
+            Blocks.BRICKS.defaultBlockState()
+        )
 
         // 走廊内部墙（把学校分成左右各 5 个房间区域，中间走廊 z=5..6）
         val corridorZ = SCHOOL_DEPTH / 2
@@ -202,13 +214,15 @@ object AbandonedSchoolGenerator : BuildingGenerator {
             val chestPos = BlockPos.MutableBlockPos(x0 + rx - 1, y0 + 1, z0 + rz)
             level.setBlock(chestPos, Blocks.CHEST.defaultBlockState(), 3)
             StructureGenSupport.fillChest(level, chestPos.immutable(), random, roomLoot[theme], 0.5, 3, 6)
+            StructureGenSupport.maybeInjectTaczWeapon(level, chestPos.immutable(), random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
             QLMZombieMod.LOGGER.debug("[学校] 房间 {} 箱子已生成于 {}", roomIndex, chestPos)
         }
 
-        // 校长室（走廊尽头）大箱子
+        // 校长室（走廊尽头）CD 补给箱（高级战利品）
         val officeChest = BlockPos.MutableBlockPos(x0 + SCHOOL_WIDTH - 2, y0 + 1, z0 + corridorZ)
-        level.setBlock(officeChest, Blocks.CHEST.defaultBlockState(), 3)
-        StructureGenSupport.fillChest(level, officeChest.immutable(), random, roomLoot[4], 0.7, 3, 7)
+        level.setBlock(officeChest, CDBlocks.SUPPLY_CRATE.get().defaultBlockState(), 3)
+        StructureGenSupport.fillCDCrate(level, officeChest.immutable(), random, roomLoot[4], 0.7, 3, 7)
+        StructureGenSupport.maybeInjectTaczWeapon(level, officeChest.immutable(), random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
 
         // 屋顶（部分坍塌）
         for (dx in 0 until SCHOOL_WIDTH) {

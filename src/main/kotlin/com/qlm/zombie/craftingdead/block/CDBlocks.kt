@@ -1,12 +1,17 @@
 package com.qlm.zombie.craftingdead.block
 
 import com.qlm.zombie.QLMZombieMod
+import net.minecraft.core.BlockPos
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.Item
+import net.minecraft.world.level.block.BaseEntityBlock
 import net.minecraft.world.level.block.Block
+import net.minecraft.world.level.block.RenderShape
 import net.minecraft.world.level.block.SoundType
+import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
+import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.material.MapColor
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.registries.DeferredRegister
@@ -60,11 +65,18 @@ object CDBlocks {
     }
 }
 
-class SupplyCrateBlock : Block(
+class SupplyCrateBlock : BaseEntityBlock(
     BlockBehaviour.Properties.of()
         .mapColor(MapColor.WOOD)
         .strength(2.0f, 3.0f)
         .sound(SoundType.WOOD)
 ) {
-    companion object
+    override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity {
+        return SupplyCrateBlockEntity(pos, state)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun getRenderShape(state: BlockState): RenderShape {
+        return RenderShape.MODEL
+    }
 }

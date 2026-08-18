@@ -3,8 +3,8 @@ package com.qlm.zombie.craftingdead.tab
 import com.qlm.zombie.QLMZombieMod
 import com.qlm.zombie.craftingdead.block.CDBlocks
 import com.qlm.zombie.craftingdead.item.CDItems
-import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.eventbus.api.IEventBus
@@ -12,7 +12,7 @@ import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.RegistryObject
 
 object CDCreativeTabs {
-    private val TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, QLMZombieMod.MOD_ID)
+    private val TABS = DeferredRegister.create<CreativeModeTab>(ResourceLocation.withDefaultNamespace("creative_mode_tab"), QLMZombieMod.MOD_ID)
 
     val CD_COMBAT: RegistryObject<CreativeModeTab> = TABS.register("cd_combat") {
         CreativeModeTab.builder()

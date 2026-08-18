@@ -1,6 +1,7 @@
 package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.config.QLMConfig
 import com.qlm.zombie.craftingdead.item.CDItems
 import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
@@ -13,8 +14,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 object OceanRuinGenerator : BuildingGenerator {
 
-    private const val SPAWN_CHANCE = 0.40
-    private const val MIN_SPACING = 3
     private const val RUIN_SIZE = 10
     private const val SEA_LEVEL = 62
 
@@ -68,7 +67,7 @@ object OceanRuinGenerator : BuildingGenerator {
         // 区块就绪后，每区块仅评估一次（无论是否生成），保持概率语义
         if (!decidedChunks.add(chunkKey)) return false
 
-        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, MIN_SPACING)) return false
+        if (!StructureGenSupport.isFarEnough(chunkX, chunkZ, QLMConfig.OCEAN_RUIN_SPACING.get())) return false
 
         val origin = BlockPos.MutableBlockPos(
             chunkX * 16 + 8 - RUIN_SIZE / 2,
@@ -82,7 +81,7 @@ object OceanRuinGenerator : BuildingGenerator {
             return false
         }
 
-        if (level.random.nextDouble() >= SPAWN_CHANCE) return false
+        if (level.random.nextDouble() >= QLMConfig.OCEAN_RUIN_CHANCE.get()) return false
 
         return try {
             generateRuin(level, chunk, origin)
@@ -202,10 +201,12 @@ object OceanRuinGenerator : BuildingGenerator {
         val chest1Pos = BlockPos.MutableBlockPos(x0 + 2, floorY + 1, z0 + 2)
         level.setBlock(chest1Pos, Blocks.CHEST.defaultBlockState(), 3)
         fillChestWithLoot(level, chest1Pos, random)
+        StructureGenSupport.maybeInjectTaczWeapon(level, chest1Pos, random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
 
         val chest2Pos = BlockPos.MutableBlockPos(x0 + RUIN_SIZE - 3, floorY + 1, z0 + RUIN_SIZE - 3)
         level.setBlock(chest2Pos, Blocks.CHEST.defaultBlockState(), 3)
         fillChestWithLoot(level, chest2Pos, random)
+        StructureGenSupport.maybeInjectTaczWeapon(level, chest2Pos, random, QLMConfig.TACZ_GUARANTEE_CHANCE.get())
 
         for (dx in 0 until RUIN_SIZE) {
             for (dz in 0 until RUIN_SIZE) {
