@@ -198,9 +198,10 @@ val generateKotlinForForgeMetadata by tasks.registering {
 }
 
 // MixinGradle 负责：注入 Mixin 注解处理器 + 生成/重混淆 refmap
-// （mixin json 中已手动声明 "refmap": "qlmzombie-thirst.refmap.json"）
+// （mixin json 中已手动声明 "refmap": "qlmzombie-thirst.refmap.json" / "qlmzombie.refmap.json"）
 configure<org.spongepowered.asm.gradle.plugins.MixinExtension> {
     add(sourceSets.main.get(), "qlmzombie-thirst.refmap.json")
+    add(sourceSets.main.get(), "qlmzombie.refmap.json")
 }
 
 tasks.withType<JavaCompile>().configureEach {

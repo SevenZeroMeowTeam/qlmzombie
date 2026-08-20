@@ -46,3 +46,6 @@ side = "BOTH"
 
 [[mixins]]
 config = "qlmzombie-thirst.mixins.json"
+
+[[mixins]]
+config = "qlmzombie.mixins.json"

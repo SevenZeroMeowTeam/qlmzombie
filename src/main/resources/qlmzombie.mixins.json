@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.qlm.zombie.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "qlmzombie.refmap.json",
+  "mixins": [
+    "MixinLivingEntity"
+  ],
+  "client": [],
+  "server": []
+}

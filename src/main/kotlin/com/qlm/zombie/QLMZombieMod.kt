@@ -254,7 +254,7 @@ class QLMZombieMod {
         const val MOD_ID = "qlmzombie"
         @JvmField
         val LOGGER: Logger = LogUtils.getLogger()
-        const val MOD_VERSION = "3.0.0.beta.build63"
+        const val MOD_VERSION = "3.0.0.beta.build64"
 
         @JvmField
         @Volatile

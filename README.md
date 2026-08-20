@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build63-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build64-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD63%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD64%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build63` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build63.jar` / `qlmzombie-3.0.0.beta.build63-server.jar` |
+| **当前版本** | `3.0.0.beta.build64` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build64.jar` / `qlmzombie-3.0.0.beta.build64-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,25 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build64（2026-08-20）
+
+**🛡️ 修复 CdInfectionGuard 崩溃（Crafting Dead 感染效果拦截重构）**
+
+**背景**：build63 上线后玩家被 CD 僵尸攻击时服务器崩溃——
+`UnsupportedOperationException: setCanceled() on non-cancelable event of type:
+MobEffectEvent.Applicable`（`CdInfectionGuard.onEffectApplicable`）。
+Forge 1.20.1 中 `MobEffectEvent.Applicable` 与 `Added` 均<b>不可取消</b>，
+调用 `setCanceled()` 必然抛异常（2026-08-19 18:32 用 Added 崩过、2026-08-20 09:19 用 Applicable 又崩，两次同根因）。
+
+**修复内容（改为 mixin 真正拦截）**
+- 新增 `MixinLivingEntity`（`com.qlm.zombie.mixin`）：在 `LivingEntity.addEffect(MobEffectInstance)`
+  入口注入，CD 有害效果（infection/bleeding/broken_leg）直接返回 false，**从源头阻止效果添加**
+- `CdInfectionGuard` 重构：移除不可取消事件上的 `setCanceled()`（崩溃源），仅保留
+  `onEntityJoinLevel` 兜底（登录时移除历史残留效果）
+- 新增 `qlmzombie.mixins.json` mixin 配置 + mods.toml 注册 + refmap 生成
+
+---
 
 ### v3.0.0.beta.build63（2026-08-19）
 
