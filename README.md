@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build64-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build65-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD64%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD65%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build64` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build64.jar` / `qlmzombie-3.0.0.beta.build64-server.jar` |
+| **当前版本** | `3.0.0.beta.build65` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build65.jar` / `qlmzombie-3.0.0.beta.build65-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,27 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build65（2026-08-20）
+
+**🛡️ 修复玩家被感染效果踢下线（crafting-dead-survival 静态初始化崩溃）**
+
+**背景**：build64 上线后玩家被 CD 僵尸攻击感染后会被服务器断开
+（`Internal server error`，2026-08-20 10:44）。根因：crafting-dead-survival 1.2.5.10 的
+`SurvivalDamageSource.<clinit>` 静态初始化用 `RegistryAccess.FROZEN`（仅含静态注册表）查询
+数据驱动注册表 `minecraft:damage_type`，抛 `IllegalStateException: Missing registry`。
+而玩家身上<b>已存在</b>的感染效果（NBT 持久化，build64 之前遗留）在 `applyEffectTick` 时
+引用 `SurvivalDamageSource.INFECTION` → 触发 `ExceptionInInitializerError`（JVM 缓存），
+玩家被踢下线。
+
+**修复内容**
+- 新增 `MixinInfectionMobEffect`（`com.qlm.zombie.mixin`）：拦截
+  `InfectionMobEffect.applyEffectTick`（SRG `m_6742_`，`remap=false` 直配 srg 混淆 jar）
+  使其无害化——不造成伤害、不触发 `SurvivalDamageSource` 类加载，效果 duration 递减后自然消失
+- `MixinLivingEntity` 继续在 `addEffect` 入口拦截新感染/流血/断腿效果（双保险）
+- ⚠ **客户端注意**：玩家旧档中残留的感染效果在服务端更新后无害化，无需额外操作
+
+---
 
 ### v3.0.0.beta.build64（2026-08-20）
 
