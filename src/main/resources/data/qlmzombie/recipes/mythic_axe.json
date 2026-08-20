@@ -2,14 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "group": "qlmzombie_mythic",
   "pattern": [
-    "ana",
+    "ada",
     "dnd",
-    "ana"
+    "aca"
   ],
   "key": {
     "a": { "item": "minecraft:netherite_ingot" },
     "d": { "item": "minecraft:diamond" },
-    "n": { "item": "minecraft:netherite_axe" }
+    "n": { "item": "minecraft:netherite_axe" },
+    "c": { "item": "qlmzombie:mythic_core" }
   },
   "result": {
     "item": "minecraft:netherite_axe",

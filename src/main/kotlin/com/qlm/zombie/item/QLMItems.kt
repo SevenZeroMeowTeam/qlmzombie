@@ -49,6 +49,15 @@ object QLMItems {
         Item(Item.Properties().rarity(Rarity.EPIC))
     }
 
+    /**
+     * 下界星核（神话合成核心）：神话装备合成的必需核心物品。
+     * 由下界合金锭 + 钻石 + 金苹果等高阶材料合成，合成神话装备时必须消耗 1 个。
+     */
+    @JvmField
+    val MYTHIC_CORE: RegistryObject<Item> = ITEMS.register("mythic_core") {
+        Item(Item.Properties().rarity(Rarity.EPIC).fireResistant())
+    }
+
     @JvmField
     val TACTICAL_AMMO: RegistryObject<Item> = ITEMS.register("tactical_ammo") {
         Item(Item.Properties().rarity(Rarity.UNCOMMON))

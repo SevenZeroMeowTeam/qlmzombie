@@ -189,6 +189,31 @@ object QLMConfig {
         .comment("怪物击退抗性", "  0.0 = 完全可被击退，1.0 = 完全免疫击退", "  默认: 0.1", "  范围: 0.0 ~ 1.0")
         .defineInRange("mobAiKnockbackResistance", 0.1, 0.0, 1.0)
 
+    // ---------------- 敌对生物随天数增强 ----------------
+    @JvmField val HOSTILE_DAY_SCALING_ENABLED = builder
+        .comment("是否启用敌对生物随天数增强", "  启用后所有敌对生物（非僵尸）的生命上限/攻击力/护甲随天数线性增长", "  默认: true")
+        .define("hostileDayScalingEnabled", true)
+
+    @JvmField val HOSTILE_SCALING_START_DAY = builder
+        .comment("敌对生物增强起始天数", "  第 N 天前不增强（与僵尸进化一致）", "  默认: 25", "  范围: 0 ~ 365")
+        .defineInRange("hostileScalingStartDay", 25, 0, 365)
+
+    @JvmField val HOSTILE_HEALTH_PER_DAY = builder
+        .comment("每过一天敌对生物生命上限提升百分比", "  第 25 天后每天 +1% 生命（示例：第 50 天 +25%，第 100 天 +75%）", "  默认: 0.01", "  范围: 0.0 ~ 1.0")
+        .defineInRange("hostileHealthPerDay", 0.01, 0.0, 1.0)
+
+    @JvmField val HOSTILE_DAMAGE_PER_DAY = builder
+        .comment("每过一天敌对生物攻击力提升百分比", "  第 25 天后每天 +1.5% 攻击（示例：第 50 天 +37.5%，第 100 天 +112.5%）", "  默认: 0.015", "  范围: 0.0 ~ 1.0")
+        .defineInRange("hostileDamagePerDay", 0.015, 0.0, 1.0)
+
+    @JvmField val HOSTILE_ARMOR_PER_DAY = builder
+        .comment("每过一天敌对生物护甲加成", "  第 25 天后每天 +0.05 护甲（示例：第 100 天 +3.75 护甲）", "  默认: 0.05", "  范围: 0.0 ~ 10.0")
+        .defineInRange("hostileArmorPerDay", 0.05, 0.0, 10.0)
+
+    @JvmField val HOSTILE_KNOCKBACK_RESISTANCE_PER_DAY = builder
+        .comment("每过一天敌对生物击退抗性加成", "  第 25 天后每天 +0.001 击退抗性（上限 0.5，示例：第 100 天 +0.075）", "  默认: 0.001", "  范围: 0.0 ~ 0.01")
+        .defineInRange("hostileKnockbackResistancePerDay", 0.001, 0.0, 0.01)
+
     // ---------------- 特殊僵尸 ----------------
     @JvmField val SUICIDE_ZOMBIE_CHANCE = builder
         .comment("自爆僵尸生成概率", "  靠近玩家自爆，破坏地形", "  默认: 0.05 (5%)", "  范围: 0.0 ~ 1.0")

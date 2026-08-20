@@ -20,6 +20,7 @@ object QLMTabs {
                 output.accept(QLMItems.ZOMBIE_CORE.get())
                 output.accept(QLMItems.INFECTED_ESSENCE.get())
                 output.accept(QLMItems.BIOHAZARD_SAMPLE.get())
+                output.accept(QLMItems.MYTHIC_CORE.get())
                 output.accept(QLMItems.REINFORCED_PARTS.get())
                 output.accept(QLMItems.TACTICAL_AMMO.get())
                 output.accept(QLMItems.MEDICAL_SUPPLY.get())

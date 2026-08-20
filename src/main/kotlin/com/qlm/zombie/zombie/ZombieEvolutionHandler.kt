@@ -1,6 +1,7 @@
 package com.qlm.zombie.zombie
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.config.QLMConfig
 import com.qlm.zombie.dayphase.DayPhaseManager
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.ai.attributes.AttributeModifier
@@ -23,10 +24,10 @@ object ZombieEvolutionHandler {
     private val ZOMBIE_SPEED_MODIFIER_ID = ResourceLocation(QLMZombieMod.MOD_ID, "zombie_speed_bonus")
     private val ZOMBIE_ARMOR_MODIFIER_ID = ResourceLocation(QLMZombieMod.MOD_ID, "zombie_armor_bonus")
 
-    /** 僵尸攻击力随天数增强起始天数（第 25 天后开始增长） */
+    /** 僵尸攻击力随天数增强起始天数（第 25 天后开始增长，与敌对生物统一由配置控制） */
     private const val ZOMBIE_ATTACK_SCALE_START_DAY = 25
 
-    /** 每过一天攻击力增量（+1.5%/天，无上限） */
+    /** 每过一天攻击力增量（+1.5%/天，无上限，与敌对生物统一由配置控制） */
     private const val ZOMBIE_ATTACK_PER_DAY = 0.015
 
     @JvmStatic
@@ -52,17 +53,25 @@ object ZombieEvolutionHandler {
         val phase = DayPhaseManager.getCurrentPhase()
         val multiplier = phase.difficultyMultiplier
 
+        // 起始天数/每级增量统一读取配置（与 HostileEvolutionHandler 一致）
+        val startDay = QLMConfig.HOSTILE_SCALING_START_DAY.get().toInt()
+        val healthPerDay = QLMConfig.HOSTILE_HEALTH_PER_DAY.get()
+        val damagePerDay = QLMConfig.HOSTILE_DAMAGE_PER_DAY.get()
+
         // 僵尸攻击力随天数线性增强：第 25 天后每过一天 +1.5%（无上限）
         // 第25天 1.0x → 第50天 1.375x → 第76天 1.765x → 第100天 2.125x → 第200天 3.625x
         val day = DayPhaseManager.getCurrentDay().toInt()
-        val dayAttackMult = 1.0 +
-            maxOf(0.0, (day - ZOMBIE_ATTACK_SCALE_START_DAY).toDouble()) * ZOMBIE_ATTACK_PER_DAY
+        val dayProgress = maxOf(0.0, (day - startDay).toDouble())
+        val dayAttackMult = 1.0 + dayProgress * damagePerDay
+        // 生命上限同样随天数增长（第 25 天后每天 +1%，与敌对生物一致）
+        val dayHealthMult = 1.0 + dayProgress * healthPerDay
 
-        if (multiplier <= 1.0 && dayAttackMult <= 1.0) return
+        if (multiplier <= 1.0 && dayAttackMult <= 1.0 && dayHealthMult <= 1.0) return
 
         val healthAttribute = zombie.getAttribute(Attributes.MAX_HEALTH)
         if (healthAttribute != null) {
-            val healthBonus = healthAttribute.baseValue * (multiplier - 1.0)
+            // 生命：阶段难度倍率 × 天数增长叠加
+            val healthBonus = healthAttribute.baseValue * (multiplier * dayHealthMult - 1.0)
             val healthModifier = AttributeModifier(
                 ZOMBIE_HEALTH_MODIFIER_ID.toString(),
                 healthBonus,

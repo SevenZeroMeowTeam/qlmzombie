@@ -232,7 +232,16 @@ ServerEvents.recipes(event => {
         '#forge:string'
     ]);
 
-    // === 神话装备合成（中心装备 + 四角下界合金锭 + 四边钻石） ===
+    // === 下界星核合成（神话合成核心物品） ===
+    // 下界合金锭×4 + 钻石×4 + 金苹果×1 → 下界星核
+    // 神话装备合成必须消耗 1 个下界星核（核心物品）
+    event.shaped('qlmzombie:mythic_core', ['NDN', 'DGD', 'NDN'], {
+        N: '#forge:ingots/netherite',
+        D: '#forge:gems/diamond',
+        G: 'minecraft:golden_apple'
+    });
+
+    // === 神话装备合成（中心装备 + 下界星核核心 + 四角下界合金锭 + 钻石） ===
     // 配方产物带 qlm_mythic_forced=true NBT，由 MythicCraftHandler 拦截并赋予神话品质
     //
     // 统一 3×3 模板结构（图示）：
@@ -241,98 +250,108 @@ ServerEvents.recipes(event => {
     //   +----------------+----------------+----------------+
     //   | 钻石 (D)       |  对应装备 (X)  | 钻石 (D)       |
     //   +----------------+----------------+----------------+
-    //   | 下界合金锭 (N) |  钻石 (D)      | 下界合金锭 (N) |
+    //   | 下界合金锭 (N) | 下界星核 (C)   | 下界合金锭 (N) |
     //   +----------------+----------------+----------------+
-    // 耗材总计：下界合金锭 × 4 + 钻石 × 4 + 对应下界合金装备 × 1
+    // 耗材总计：下界合金锭 × 4 + 钻石 × 3 + 下界星核 × 1 + 对应下界合金装备 × 1
 
     // 神话剑
     event.shaped({ item: 'minecraft:netherite_sword', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_sword'
+            X: 'minecraft:netherite_sword',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话斧
     event.shaped({ item: 'minecraft:netherite_axe', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_axe'
+            X: 'minecraft:netherite_axe',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话镐
     event.shaped({ item: 'minecraft:netherite_pickaxe', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_pickaxe'
+            X: 'minecraft:netherite_pickaxe',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话锹
     event.shaped({ item: 'minecraft:netherite_shovel', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_shovel'
+            X: 'minecraft:netherite_shovel',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话锄
     event.shaped({ item: 'minecraft:netherite_hoe', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_hoe'
+            X: 'minecraft:netherite_hoe',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话弓
     event.shaped({ item: 'minecraft:bow', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:bow'
+            X: 'minecraft:bow',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话头盔
     event.shaped({ item: 'minecraft:netherite_helmet', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_helmet'
+            X: 'minecraft:netherite_helmet',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话胸甲
     event.shaped({ item: 'minecraft:netherite_chestplate', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_chestplate'
+            X: 'minecraft:netherite_chestplate',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话护腿
     event.shaped({ item: 'minecraft:netherite_leggings', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_leggings'
+            X: 'minecraft:netherite_leggings',
+            C: 'qlmzombie:mythic_core'
         });
 
     // 神话靴子
     event.shaped({ item: 'minecraft:netherite_boots', nbt: { qlm_mythic_forced: true } },
-        ['NDN', 'DXD', 'NDN'],
+        ['NDN', 'DXD', 'NCN'],
         {
             N: '#forge:ingots/netherite',
             D: '#forge:gems/diamond',
-            X: 'minecraft:netherite_boots'
+            X: 'minecraft:netherite_boots',
+            C: 'qlmzombie:mythic_core'
         });
 });
 

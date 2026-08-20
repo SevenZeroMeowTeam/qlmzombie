@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build65-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build66-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD65%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD66%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build65` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build65.jar` / `qlmzombie-3.0.0.beta.build65-server.jar` |
+| **当前版本** | `3.0.0.beta.build66` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build66.jar` / `qlmzombie-3.0.0.beta.build66-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,33 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build66（2026-08-20）
+
+**⚔️ 神话合成消耗下界星核核心 + 敌对生物随天数增强**
+
+**🔱 神话合成配方升级（消耗核心物品）**
+- 新增核心物品 **下界星核**（`qlmzombie:mythic_core`）：下界合金锭×4 + 钻石×4 + 金苹果×1 合成
+- 神话装备合成（剑/镐/斧/锹/锄/弓/头盔/胸甲/护腿/靴子）现在<b>必须消耗 1 个下界星核</b>：
+
+```
+下界合金锭 │ 钻石 │ 下界合金锭
+钻石      │ 装备 │ 钻石
+下界合金锭 │ 星核 │ 下界合金锭
+```
+
+- 合成模板：四角下界合金锭×4 + 上/左/右钻石×3 + 中心对应装备×1 + 下中下界星核×1
+- KubeJS 脚本 + datapack（`data/qlmzombie/recipes/mythic_*.json` + `mythic_core.json`）双端同步更新
+
+**📈 敌对生物随天数增强**
+- 新增 `HostileEvolutionHandler`：所有敌对生物（骷髅/蜘蛛/女巫/苦力怕/末影人/尸壳/溺尸等非僵尸）
+  在第 25 天后随天数线性增长——生命上限每天 +1%、攻击力每天 +1.5%、护甲每天 +0.05、击退抗性每天 +0.001
+- `ZombieEvolutionHandler` 升级：僵尸<b>生命上限</b>也随天数增长（原先仅随阶段），与攻击力天数增强统一
+- 新增配置（`qlmzombie-server.toml`）：`hostileDayScalingEnabled` / `hostileScalingStartDay` /
+  `hostileHealthPerDay` / `hostileDamagePerDay` / `hostileArmorPerDay` / `hostileKnockbackResistancePerDay`
+- 示例：第 50 天敌对生物 生命 +25% / 攻击 +37.5%；第 100 天 生命 +75% / 攻击 +112.5%
+
+---
 
 ### v3.0.0.beta.build65（2026-08-20）
 
