@@ -219,8 +219,8 @@ object QLMConfig {
         .defineInRange("summonerZombieSpawnInterval", 200, 1, 10000)
 
     @JvmField val ZOMBIE_MAX_POPULATION = builder
-        .comment("主世界僵尸数量上限（人口控制）", "  超过上限会按离玩家由远到近自动移除超限僵尸", "  太高（如 500+）会导致服务器 tick 卡顿（Can't keep up），", "  太低会失去末日氛围", "  默认: 400", "  范围: 50 ~ 5000")
-        .defineInRange("zombieMaxPopulation", 400, 50, 5000)
+        .comment("主世界僵尸数量上限（人口控制）", "  超过上限会按离玩家由远到近自动移除超限僵尸", "  太高（如 500+）会导致服务器 tick 卡顿（Can't keep up）", "  太低会失去末日氛围", "  默认: 250", "  范围: 50 ~ 5000")
+        .defineInRange("zombieMaxPopulation", 250, 50, 5000)
 
     // ---------------- 骷髅 ----------------
     @JvmField val SKELETON_PERFECT_SHOT_CHANCE = builder
@@ -432,12 +432,12 @@ object QLMConfig {
     init { builder.push("drops") }
 
     @JvmField val HOSTILE_DROP_CHANCE = builder
-        .comment("敌对生物掉落物保留概率", "  击杀敌对生物时，每个掉落物按该概率保留（减少地面物品堆积导致的卡顿）", "  1.0 = 全部保留（原版）", "  默认: 0.6 (60%)", "  范围: 0.0 ~ 1.0")
-        .defineInRange("hostileDropChance", 0.6, 0.0, 1.0)
+        .comment("敌对生物掉落物保留概率", "  击杀敌对生物时，每个掉落物按该概率保留（减少地面物品堆积导致的卡顿）", "  1.0 = 全部保留（原版）", "  默认: 0.04 (4%)", "  范围: 0.0 ~ 1.0")
+        .defineInRange("hostileDropChance", 0.04, 0.0, 1.0)
 
     @JvmField val HOSTILE_GUNPOWDER_CHANCE = builder
-        .comment("击杀敌对生物掉落火药概率", "  苦力怕已被封禁，火药只能靠击杀敌对生物获取（用于 TaCZ 弹药/火药相关合成）", "  概率受控，不会满地图都是", "  默认: 0.12 (12%)", "  范围: 0.0 ~ 0.5")
-        .defineInRange("hostileGunpowderChance", 0.12, 0.0, 0.5)
+        .comment("击杀敌对生物掉落火药概率", "  苦力怕已被封禁，火药只能靠击杀敌对生物获取（用于 TaCZ 弹药/火药相关合成）", "  概率受控，不会满地图都是", "  默认: 0.05 (5%)", "  范围: 0.0 ~ 0.5")
+        .defineInRange("hostileGunpowderChance", 0.05, 0.0, 0.5)
 
     @JvmField val HOSTILE_GUNPOWDER_LOOTING_BONUS = builder
         .comment("每级抢夺附魔增加的火药掉落概率", "  默认: 0.03 (每级+3%，最多不超过 50%)", "  范围: 0.0 ~ 0.2")
@@ -458,6 +458,27 @@ object QLMConfig {
     @JvmField val DROP_CLEANUP_CHANCE = builder
         .comment("每次清理时单个陈旧掉落物被清理的概率", "  默认: 0.5 (50%)", "  范围: 0.0 ~ 1.0")
         .defineInRange("dropCleanupChance", 0.5, 0.0, 1.0)
+
+    init { builder.pop() }
+
+    // ==================== 优化：防爆破 + 自动释放内存 ====================
+    init { builder.push("optimization") }
+
+    @JvmField val ANTI_EXPLOSION_ENABLED = builder
+        .comment("是否启用防爆破", "  true  - 爆炸不再破坏方块（保留对实体伤害/击退），保护地形与建筑", "  默认: true")
+        .define("antiExplosionEnabled", true)
+
+    @JvmField val MEMORY_RELEASE_ENABLED = builder
+        .comment("是否启用自动释放内存", "  true  - 定时检查 JVM 内存占用，超过阈值自动触发 GC", "  默认: true")
+        .define("memoryReleaseEnabled", true)
+
+    @JvmField val MEMORY_RELEASE_INTERVAL = builder
+        .comment("内存检查间隔（单位: 分钟）", "  默认: 10", "  范围: 1 ~ 120")
+        .defineInRange("memoryReleaseInterval", 10, 1, 120)
+
+    @JvmField val MEMORY_RELEASE_THRESHOLD = builder
+        .comment("触发自动 GC 的内存占用阈值（已用/最大）", "  默认: 0.85 (85%)", "  范围: 0.5 ~ 0.98")
+        .defineInRange("memoryReleaseThreshold", 0.85, 0.5, 0.98)
 
     init { builder.pop() }
 

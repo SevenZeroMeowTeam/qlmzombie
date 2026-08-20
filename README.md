@@ -4,11 +4,11 @@
 >
 > 基于开源模组准则整合的末日生存模组 —— 让每一个夜晚都充满紧张与刺激
 
-![Version](https://img.shields.io/badge/版本-3.0.0.beta.build54-blue)
+![Version](https://img.shields.io/badge/版本-3.0.0.beta.build63-blue)
 ![MC Version](https://img.shields.io/badge/Minecraft-1.20.1-green)
 ![Forge](https://img.shields.io/badge/Forge-47.4.22-orange)
 ![License](https://img.shields.io/badge/许可证-MIT-yellow)
-![Build](https://img.shields.io/badge/构建-BUILD54%20SUCCESSFUL-brightgreen)
+![Build](https://img.shields.io/badge/构建-BUILD63%20SUCCESSFUL-brightgreen)
 
 ---
 
@@ -19,8 +19,8 @@
 | **Mod ID** | `qlmzombie` |
 | **Mod 名称** | 七零喵僵尸末日生存mod |
 | **版本号格式** | `主版本.次版本.修订版本.beta.build构建号` |
-| **当前版本** | `3.0.0.beta.build54` |
-| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build54.jar` / `qlmzombie-3.0.0.beta.build54-server.jar` |
+| **当前版本** | `3.0.0.beta.build63` |
+| **发布 JAR 文件名** | `qlmzombie-3.0.0.beta.build63.jar` / `qlmzombie-3.0.0.beta.build63-server.jar` |
 | **Minecraft 版本** | 1.20.1 |
 | **Forge 版本** | 47.4.22 |
 | **映射** | Official 1.20.1 |
@@ -31,6 +31,170 @@
 ---
 
 ## 🆕 更新日志
+
+### v3.0.0.beta.build63（2026-08-19）
+
+**🗑️ 移除 playerengine / player2npc（服务器崩溃根治）**
+
+**背景**：build62 的缓解措施（防御性排除 + 降低僵尸人口）**未能阻止崩溃**——
+playerengine 1.4.0 的 AI 机器人（Player2NPC `AutomatoneEntity`）Baritone 寻路
+（`PathingBehavior.secretInternalSetGoalAndPath` → `pathPlanLock` 锁死循环）在玩家
+登录召唤 AI 伴侣后必崩（单 tick 60s → watchdog 强杀）。playerengine/player2npc 已是
+Modrinth 最新版（1.4.0，2026-07-19），**无更新版本可升级**。
+
+**修复内容（彻底移除）**
+- 从 `src/main/libs` **移除 playerengine / player2npc** 两个内嵌依赖 → 重新构建后
+  jar 不再释放它们，服务器/客户端双端一致（无 channel 不匹配）
+- 同步更新三个 `libs-list.txt`（SeverAdmin/mc、deploy-upload、scripts）
+- **⚠ 客户端注意**：旧客户端若仍加载 playerengine/player2npc，会因 channel 不匹配
+  被服务器拒绝连接——请更新整合包，移除这两个 mod
+- 保留防御性排除逻辑（`MobDayNightHandler.isPlayer2NpcEntity`，无害）
+- `zombieMaxPopulation` 维持 250（降低实体负载仍有益）
+
+---
+
+### v3.0.0.beta.build62（2026-08-19）
+
+**🔧 playerengine/player2npc 兼容性修复（服务器崩溃）**
+
+**背景**：playerengine 1.4.0 的 AI 机器人（Player2NPC `AutomatoneEntity`）Baritone 寻路
+（`PathingBehavior.secretInternalSetGoalAndPath`）在高实体负载下卡死 60 秒，
+触发 watchdog 强杀 → 服务器反复崩溃重启 → 玩家连接超时。
+
+**修复内容**
+- **防御性排除**：`MobDayNightHandler` 显式识别并跳过 player2npc/playerengine 的 AI 机器人实体
+  （按实体注册命名空间 + 类名兜底），确保 qlmzombie 的任何实体处理都不干扰其寻路 AI
+- **降低实体负载**：`zombieMaxPopulation` 默认 **400 → 250**，大幅减少主世界僵尸数量，
+  给 playerengine 寻路计算留出空间（服务器配置需同步更新）
+
+---
+
+### v3.0.0.beta.build61（2026-08-19）
+
+**🎯 击杀掉落精简 + 封禁确认**
+
+- **移除封禁维度（下界/末地）物品掉落**：末影珍珠 / 末影之眼 / 鞘翅 全部移除
+- **保留下界合金锭** 2.5% 击杀掉落（神话系统必需品，下界封禁唯一来源）
+- **确认封禁**：蜘蛛（含洞穴蜘蛛）/女巫已在 `MobRestrictionHandler` 封禁名单中，任何途径生成都会被拦截
+
+---
+
+### v3.0.0.beta.build60（2026-08-19）
+
+**🌗 昼夜行为全面升级 + 废弃建筑物资 + 击杀掉落系统**
+
+**🌞 所有敌对生物白天不攻击玩家**
+- 所有敌对生物（Monster：僵尸/骷髅/蜘蛛/女巫等）白天不主动攻击玩家，四处游荡；被玩家攻击（招惹）后才反击
+- 白天可安心收集物资；夜晚僵尸/骷髅保持 64 格锁定追击
+
+**💀 骷髅召唤同伴调整**
+- 骷髅被招惹后**仅白天**召唤同伴反击（夜晚不召唤，防止打不完）
+- 每只骷髅累计召唤上限 **10 只**（NBT 持久化计数），超过不再召唤
+
+**📦 废弃建筑五类物资**
+- 所有废弃建筑箱子额外注入五类物资：军用（枪械/弹药/防具）/ 医用（医疗物品/解毒剂）/ 平民（食物/工具）/ 稀有平民（金银钻石/附魔书）/ 警用（手枪/近战/盾牌）
+- 60% 概率注入 1-2 个物资（民用/医用常见，军用/警用中等，稀有较低）
+
+**🎁 击杀掉落系统重构**
+- 特效药（解毒剂）/ 医疗补给：击杀敌对生物各 **1%** 掉落
+- 原版掉落保留概率 **5% → 4%**（hostileDropChance，减少堆积卡顿）
+- **下界合金锭保持 2.5%** 击杀掉落（神话系统必需品，下界封禁唯一来源）
+
+---
+
+### v3.0.0.beta.build59（2026-08-19）
+
+**🔐 管理员权限管理（获取/撤销最高权限）+ 防爆破运行时开关**
+
+**👑 管理员 OP 管理指令（仅 OP，权限 2）**
+- `/qlm op <玩家>`：授予管理员权限（OP 最高权限），并全服公告
+- `/qlm deop <玩家>`：撤销管理员权限
+- `/qlm ops`：查看当前管理员列表
+- 支持离线模式玩家（自动用离线 UUID 解析）：在线玩家 → 玩家档案缓存 → 离线 UUID 兜底
+
+**🧨 防爆破运行时开关指令（仅 OP）**
+- `/qlm antiExplosion`：查看当前防爆破状态（跟随配置 / 指令覆盖）
+- `/qlm antiExplosion on`：立即开启防爆破（爆炸不再破坏方块）
+- `/qlm antiExplosion off`：立即关闭防爆破
+- `/qlm antiExplosion config`：恢复跟随配置文件
+- `/qlm info` 新增防爆破状态显示
+
+---
+
+### v3.0.0.beta.build58（2026-08-19）
+
+**⚡ 服务器优化：防爆破 + 自动释放内存**
+
+**🧨 防爆破（防地形/建筑被炸毁）**
+- 新增 `ExplosionProtectionHandler`：爆炸不再破坏任何方块（保留对实体伤害/击退），保护地形与玩家建筑不被 TNT 僵尸、手雷、自爆僵尸等炸毁
+- 配置项：`optimization#antiExplosionEnabled`（默认 `true`）
+
+**🖥️ 自动释放内存**
+- 新增 `MemoryReleaseHandler`：定时检查 JVM 内存占用，已用/最大超过阈值自动触发 GC 并记录释放前后内存到日志
+- 配置项：
+  - `optimization#memoryReleaseEnabled`（默认 `true`）
+  - `optimization#memoryReleaseInterval`（检查间隔分钟，默认 `10`）
+  - `optimization#memoryReleaseThreshold`（触发阈值，默认 `0.85` = 85%）
+
+---
+
+### v3.0.0.beta.build57（2026-08-19）
+
+**🛡️ 死亡不掉落默认开启 + 存活时间计分板 + 管理员重置指令**
+
+**🛡️ 死亡不掉落（keepInventory）**
+- 服务器启动时默认强制开启死亡不掉落（`gamerule keepInventory = true`，所有维度），玩家死亡不掉落物品
+
+**⏱ 存活时间计分板**
+- 新增 `SurvivalTimeHandler`：计分板目标 `qlm_survival_time` 记录每位玩家存活时间（秒），在线且存活时每秒 +1
+- 侧边栏计分板顶部常驻显示 `⏱ 存活: X天X小时X分`
+- `/qlm stats` 同步展示存活时间
+
+**🔐 管理员重置指令 `/qlm reset`（仅 OP，权限 2）**
+- `/qlm reset`：进入确认流程（仅提示警告，不直接执行，防止随便重置）
+- `/qlm reset confirm`：确认执行 —— 重置所有玩家存活时间计分板 + 把「死亡不掉落」模式重置回默认开启，并向全服广播公告
+- `/qlm info` 新增显示当前死亡不掉落状态
+
+---
+
+### v3.0.0.beta.build56（2026-08-19）
+
+**🔻 掉落物概率统一降至 5%（修复服务器卡顿）**
+
+- 敌对生物掉落保留概率 `hostileDropChance`：60% → **5%**（击杀敌对生物时每个掉落物按 5% 保留，大幅减少地面物品堆积）
+- 火药掉落 `hostileGunpowderChance`：12% → **5%**
+- 随机品质装备掉落：30% → **5%**
+- 肉肉掉落（牛/猪/羊/鸡/兔/狐狸等）：100%/50%/30% → **5%**（Loot Modifier + Event 双通道同步）
+- 下界合金锭（2.5%）与击杀手持物品（1%）本就低于 5%，保持不变，避免反而增加掉落
+- 服务器地面掉落物已全部清除（RCON `kill @e[type=item]`）
+- 配置文件已备份为 `qlmzombie-common.toml.bak-20260819`
+
+---
+
+### v3.0.0.beta.build55（2026-08-19）
+
+**⚙️ Crafting Dead 服务器白名单 + 空投脚本修复**
+
+**Crafting Dead 服务器加载（白名单）**
+- 从 `ModDependencyHandler.SERVER_DISABLED_PREFIXES` 移除 crafting-dead 全部前缀 → 专用服务器现在加载全部 4 个 CD 子模组（core / decoration / survival / worldguard）
+- 服务器提供 CD 补给箱（SupplyCrate / MedicalSupplyCrate / AmmoCrate）、CD 僵尸实体、CD 感染/流血/治疗系统，保证客户端与服务器 mod 通道匹配
+- 保留纯客户端渲染模组禁用（entity_texture_features / entity_model_features / skinlayers3d / sodiumdynamiclights 等）
+
+**CD 版本统一 .10**
+- `src/main/libs` 清理 core `.8` 残包，统一为 1.9.4.10 / 1.0.6.10 / 1.2.5.10 / 0.0.6.10
+- 4 个 `libs-list.txt`（SeverAdmin / deploy-upload / scripts）CD 条目统一 `.8` → `.10`
+
+**🐛 空投脚本修复**
+- `airdrop_scheduler.js` 修复 `ReferenceError: "Heightmap" is not defined`（每 20 分钟报错）
+- 根因：脚本开头用 `Java.loadClass` 加载了 BlockPos/ItemStack/Blocks，但漏了 `net.minecraft.world.level.levelgen.Heightmap` 类
+- 修复：添加 `const Heightmap = Java.loadClass('net.minecraft.world.level.levelgen.Heightmap')`，两处副本同步更新
+
+**🛠️ 服务器运维修复**（本次发布配套）
+- 玩家 30 秒被踢：宝塔面板 Docker 卷回收导致玩家数据丢失 → 从服务器回收站快照恢复 playerdata + advancements（玩家背包/等级/成就完整保留）
+- 客户端 CD 崩溃：玩家感染效果触发 Crafting Dead `SurvivalDamageSource` bug（`Missing registry: damage_type`）→ 清除感染状态（InfectionLevel=0 + 移除 `craftingdeadsurvival:infection` / `craftingdead:bleeding` 效果）
+- 玩家淹死：旧世界坐标在新世界为水域 → 重置位置到安全出生点
+
+---
 
 ### v3.0.0.beta.build54（2026-08-18）
 
@@ -741,6 +905,41 @@ D:\mcmod\
 
 生物掉落覆盖：僵尸类(4种)、牛、猪、羊、鸡、兔、狐狸、爬行者、骷髅(2种)、蜘蛛(2种)、末影人、凋灵骷髅。
 
+### 9. 服务器优化与保护
+
+**🔻 掉落物控制（4% 掉落）**
+- 敌对生物掉落保留概率 `drops#hostileDropChance` 默认 **4%**：击杀敌对生物时每个掉落物仅 4% 保留，大幅减少地面物品堆积
+- 火药掉落 `drops#hostileGunpowderChance` 默认 **5%**（苦力怕封禁后的唯一火药来源，概率受控）
+- 随机品质装备掉落 5% · 肉肉掉落 5% · 下界合金锭 2.5% · 击杀手持物品 1%
+- **击杀掉落（build60/61）**：特效药（解毒剂）/医疗补给各 **1%**；下界合金锭 **2.5%**（神话系统必需品，下界封禁唯一来源；封禁维度其他物品掉落已全部移除）
+- 每 1 分钟自动清理地面陈旧掉落物（`dropCleanupEnabled`，默认开启）
+
+**🛡️ 死亡不掉落（keepInventory）**
+- 服务器启动默认强制开启 `keepInventory=true`（`SurvivalTimeHandler`），玩家死亡不掉落物品
+
+**⏱ 存活时间计分板**
+- 目标 `qlm_survival_time` 记录每位玩家存活时间（秒），在线且存活时每秒 +1
+- 侧边栏计分板顶部常驻显示 `⏱ 存活`，`/qlm stats` 可查看详情
+
+**🔐 管理员重置指令 `/qlm reset`（仅 OP）**
+- 二次确认防误操作：`/qlm reset` → `/qlm reset confirm`
+- 重置所有玩家存活时间计分板 + 重置「死亡不掉落」模式为默认开启
+
+**👑 管理员 OP 管理（获取/撤销最高权限，仅 OP）**
+- `/qlm op <玩家>`：授予管理员权限（OP 最高权限）
+- `/qlm deop <玩家>`：撤销管理员权限
+- `/qlm ops`：查看管理员列表
+- 支持离线模式玩家（离线 UUID 自动解析）
+
+**🧨 防爆破**
+- `ExplosionProtectionHandler`：爆炸不再破坏任何方块（保留实体伤害/击退），保护地形与建筑
+- 配置 `optimization#antiExplosionEnabled`（默认开启）
+- 运行时开关（仅 OP）：`/qlm antiExplosion on|off|config`，`/qlm info` 可查看状态
+
+**🖥️ 自动释放内存**
+- `MemoryReleaseHandler`：定时检查 JVM 内存，超过阈值自动触发 GC 并记录日志
+- 配置 `optimization#memoryReleaseEnabled` / `memoryReleaseInterval` / `memoryReleaseThreshold`
+
 ---
 
 ## 🧩 自动依赖释放系统
@@ -876,16 +1075,13 @@ D:\mcmod\
 | 88 | True POWER | mrqx0195/true-power | GPL-3.0 |
 | 89 | Placebo | Shadows-of-Fire/Placebo | MIT |
 | 90 | FastBoot | GUN2RAS/FastBoot | - |
-| 91 | Player2NPC | shakey2/Player2NPC | - |
-| 92 | PlayerEngine | shakey2/PlayerEngine | - |
-| 93 | Player2 - AI Players | SevenZeroMeowTeam/player2-code | - |
-| 94 | Zombie Survival Kit | Scarasol/Zombie-Survival-Kit | - |
-| 95 | Uncrafting Table | Pitan76/uncraftingtable | MIT |
-| 96 | KubeJS Additions | Hunter19823/kubejsadditions | - |
-| 97 | Drop the Meat | Moralle/DropTheMeat | MIT |
-| 98 | Fast Workbench | Shadows-of-Fire/FastWorkbench | MIT |
-| 99 | Thirst was Taken | ghen-git/Thirst-Mod | MIT（源码整合，见 [THIRSTMOD_LICENSE.md](THIRSTMOD_LICENSE.md)） |
-| 100 | SevenZeroMeow/qlmzombie | SevenZeroMeowTeam/qlmzombie | MIT |
+| 91 | Zombie Survival Kit | Scarasol/Zombie-Survival-Kit | - |
+| 92 | Uncrafting Table | Pitan76/uncraftingtable | MIT |
+| 93 | KubeJS Additions | Hunter19823/kubejsadditions | - |
+| 94 | Drop the Meat | Moralle/DropTheMeat | MIT |
+| 95 | Fast Workbench | Shadows-of-Fire/FastWorkbench | MIT |
+| 96 | Thirst was Taken | ghen-git/Thirst-Mod | MIT（源码整合，见 [THIRSTMOD_LICENSE.md](THIRSTMOD_LICENSE.md)） |
+| 97 | SevenZeroMeow/qlmzombie | SevenZeroMeowTeam/qlmzombie | MIT |
 
 > ⚖️ **开源合规说明**：所有内嵌模组均保留其原始 JAR、纹理、语言文件、许可证信息。
 > QLM Zombie 仅通过 `ModDependencyHandler` 做运行时动态释放，不修改任何第三方 JAR 内部字节码。
@@ -1033,17 +1229,29 @@ copy build\libs\qlmzombie-*.jar %APPDATA%\.minecraft\mods\
 
 ## ⚙️ 配置文件
 
-模组配置文件位于 `.minecraft/config/qlmzombie.toml` (通过 Cloth Config 提供)：
+模组配置文件位于 `.minecraft/config/qlmzombie-common.toml`（Forge 配置系统自动生成，含中文注释）：
 
-| 配置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `enableThirst` | Boolean | true | 是否启用心渴系统（Thirst-Mod 整合） |
-| `enableInfection` | Boolean | true | 是否启用感染系统 |
-| `enableDayPhase` | Boolean | true | 是否启用昼夜阶段系统 |
-| `enableZombieEvolution` | Boolean | true | 是否启用僵尸进化 |
-| `thirstDecayRate` | Integer | 1 | 口渴值每 N tick 衰减 1 点 |
-| `baseInfectionChance` | Float | 0.15 | 基础感染概率 |
-| `structureSpawnMultiplier` | Float | 1.0 | 建筑生成概率倍率 (0 = 禁用) |
+| 配置段 | 配置项 | 类型 | 默认值 | 说明 |
+|--------|--------|------|--------|------|
+| 综合 | `enableThirst` | Boolean | true | 是否启用心渴系统（Thirst-Mod 整合） |
+| 综合 | `enableInfection` | Boolean | true | 是否启用感染系统 |
+| 综合 | `enableDayPhase` | Boolean | true | 是否启用昼夜阶段系统 |
+| 综合 | `enableZombieEvolution` | Boolean | true | 是否启用僵尸进化 |
+| 综合 | `zombieMaxPopulation` | Integer | **250** | 主世界僵尸数量上限（build62 由 400 下调） |
+| `drops` | `hostileDropChance` | Double | **0.04** | 敌对生物掉落保留概率（4%） |
+| `drops` | `hostileGunpowderChance` | Double | **0.05** | 火药掉落概率（5%） |
+| `drops` | `hostileGunpowderLootingBonus` | Double | 0.03 | 每级抢夺火药概率加成 |
+| `drops` | `dropCleanupEnabled` | Boolean | true | 定期清理地面陈旧掉落物 |
+| `drops` | `dropCleanupInterval` | Integer | 1200 | 清理间隔（tick） |
+| `drops` | `dropCleanupMinAge` | Integer | 600 | 掉落物最小存在时间（tick） |
+| `drops` | `dropCleanupChance` | Double | 0.5 | 单个陈旧掉落物清理概率 |
+| `optimization` | `antiExplosionEnabled` | Boolean | **true** | 防爆破：爆炸不破坏方块 |
+| `optimization` | `memoryReleaseEnabled` | Boolean | **true** | 自动释放内存（定时 GC） |
+| `optimization` | `memoryReleaseInterval` | Integer | 10 | 内存检查间隔（分钟） |
+| `optimization` | `memoryReleaseThreshold` | Double | 0.85 | 触发 GC 的内存占用阈值（85%） |
+| 其他 | `thirstDecayRate` | Integer | 1 | 口渴值每 N tick 衰减 1 点 |
+| 其他 | `baseInfectionChance` | Float | 0.15 | 基础感染概率 |
+| 其他 | `structureSpawnMultiplier` | Float | 1.0 | 建筑生成概率倍率 (0 = 禁用) |
 
 ---
 
@@ -1228,10 +1436,11 @@ SOFTWARE.
 
 | 项 | 说明 |
 |:---|:-----|
+| **所有敌对生物白天** | **不主动攻击玩家、四处游荡**；被玩家攻击（招惹）后才反击 —— 白天可安心收集物资 |
 | 僵尸白天 | 游荡、不燃烧、**不主动攻击玩家**（被攻击才反击） |
 | 僵尸夜晚 | **64 格内锁定玩家追击**（自动索敌并寻路） |
 | 骷髅白天 | **不行动、不燃烧、不主动攻击**；若被招惹会反击 |
-| 骷髅被攻击 | **召唤附近 2-3 只骷髅同伴反击并追击玩家**（追击距离提升到64格） |
+| 骷髅被攻击 | **仅白天召唤同伴反击**（每只累计上限 **10 只**，夜晚不召唤，防止打不完）；追击距离提升到64格 |
 | 铁傀儡 | AI 增强：索敌范围 48、攻击+2、护甲+4、速度+15%；被攻击立即锁定攻击者并让附近铁傀儡协同 |
 | 僵尸破坏/搭建 | 保留：破坏方块（NORMAL+），搭建方块追击（LOCKED_HARD） |
 
@@ -2392,6 +2601,8 @@ object NonConflictKeysFeature {
 
 **只有被玩家攻击后才会反击**，白天游荡缓慢，晚上行动加速
 
+> 🔄 **build60 升级**：该机制已扩展至**所有敌对生物**（Monster：蜘蛛/女巫/洞穴蜘蛛等），白天一律不主动攻击玩家、四处游荡，被玩家攻击后才反击；骷髅召唤同伴改为**仅白天触发、每只累计上限 10 只**（见更新日志 build60）。当前行为由 [MobDayNightHandler.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/ai/MobDayNightHandler.java) 驱动。
+
 关键代码：[MobBehaviorHandler.java](file:///D:/mcmod/src/main/java/com/qlm/zombie/zombie/MobBehaviorHandler.java)
 
 #### 新功能：特殊僵尸系统
@@ -2663,7 +2874,7 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 |------|------|
 | `/qlm` | 显示帮助菜单（同 `/qlm help`） |
 | `/qlm help` | 显示完整命令帮助（玩家版/管理员版自动切换） |
-| `/qlm stats` | 查看永久击杀属性：总击杀数 / ❤ 永久生命上限 / ⚔ 永久攻击上限 |
+| `/qlm stats` | 查看永久击杀属性：总击杀数 / ⏱ 存活时间 / ❤ 永久生命上限 / ⚔ 永久攻击上限 |
 | `/qlm quality` | 查看**手持物品**的品质详情：品质等级、攻击倍率、攻击/生命/护甲/随机伤害加成、神话级特殊属性 |
 | `/qlm moon` | 查看当前月相状态（☠ 血月 / ★ 幸运之月 / ✿ 丰收之月 / 原版 8 相）及合成加成百分比 |
 
@@ -2674,12 +2885,17 @@ Boss释放技能时使用游戏内粒子系统制作视觉特效，无需额外�
 | `/qlm day` / `/qlm day <N>` | 查看/设置当前游戏天数 |
 | `/qlm phase` | 查看当前难度阶段（和平/简单/普通/困难/极限/锁定） |
 | `/qlm difficulty` | 查看当前游戏难度 + 阶段锁定状态 |
-| `/qlm info` | 完整状态面板（天数/阶段/难度/月相/依赖释放/冲突/重复） |
+| `/qlm info` | 完整状态面板（天数/阶段/难度/月相/死亡不掉落/防爆破/依赖释放/冲突/重复） |
 | `/qlm phases` | 所有难度阶段一览表（含天数范围与难度乘数） |
 | `/qlm mods` | 内部 Mod 扫描列表（已安装✔ / 待释放○）+ 冲突检测 |
 | `/qlm download` | 重新释放所有内嵌依赖 Mod + 冲突检测解决 |
 | `/qlm starter <玩家名>` | 重置指定玩家初始装备标记（下次登录自动重发） |
 | `/qlm moon force <blood\|lucky\|harvest>` | 强制触发血月/幸运之月/丰收之月 |
+| `/qlm reset` / `/qlm reset confirm` | 重置所有玩家存活时间 + 死亡不掉落模式（二次确认） |
+| `/qlm op <玩家>` | 授予管理员权限（OP 最高权限） |
+| `/qlm deop <玩家>` | 撤销管理员权限 |
+| `/qlm ops` | 查看管理员列表 |
+| `/qlm antiExplosion [on\|off\|config]` | 防爆破运行时开关/状态 |
 | `/qlm aiplayer ...` | AI 玩家：spawn / skin / tame / list / tp / kill |
 | `/qlm mcp` | Player2 MCP 服务器集成信息（连接配置 JSON） |
 

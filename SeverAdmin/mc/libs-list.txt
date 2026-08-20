@@ -1,4 +1,4 @@
-﻿3d-armor-0.9.4.1-mod.jar
+﻿﻿3d-armor-0.9.4.1-mod.jar
 AdvancedSkillsRe-forge-1.1.0-beta.1.jar
 architectury-9.2.14-forge.jar
 artifacts-forge-9.5.19.jar
@@ -13,10 +13,10 @@ cloth-config-11.1.136-forge.jar
 cofh_core-1.20.1-11.0.2.56.jar
 collective-1.20.1-8.39.jar
 Corgilib-Forge-1.20.1-4.0.3.4.jar
-crafting-dead-core-1.20.1-1.9.4.8-all.jar
-crafting-dead-decoration-1.20.1-1.0.6.8.jar
-crafting-dead-survival-1.20.1-1.2.5.8.jar
-crafting-dead-worldguard-1.20.1-0.0.6.8.jar
+crafting-dead-core-1.20.1-1.9.4.10-all.jar
+crafting-dead-decoration-1.20.1-1.0.6.10.jar
+crafting-dead-survival-1.20.1-1.2.5.10.jar
+crafting-dead-worldguard-1.20.1-0.0.6.10.jar
 create-1.20.1-6.0.8.jar
 CreativeCore_FORGE_v2.12.39_mc1.20.1.jar
 curios-forge-5.14.1+1.20.1.jar
@@ -56,8 +56,6 @@ mutil-1.20.1-6.3.0.jar
 Patchouli-1.20.1-85-FORGE.jar
 Placebo-1.20.1-8.6.3.jar
 player-animation-lib-forge-1.0.2-rc1+1.20.jar
-player2npc-forge-1.20.1-1.4.0.jar
-playerengine-forge-1.20.1-1.4.0.jar
 pneumaticcraft-repressurized-6.0.22+mc1.20.1.jar
 polyeng-forge-0.1.1-1.20.1.jar
 PuzzlesLib-v8.1.33-1.20.1-Forge.jar
