@@ -1,11 +1,15 @@
 package com.qlm.zombie.structure
 
 import com.qlm.zombie.QLMZombieMod
+import com.qlm.zombie.craftingdead.item.CDItems
+import com.qlm.zombie.item.QLMItems
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.Container
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.DoorBlock
 import net.minecraft.world.level.block.entity.ChestBlockEntity
@@ -126,6 +130,108 @@ object StructureGenSupport {
             chest.setItem(i % chest.containerSize, stack)
         }
         chest.setChanged()
+        // 五类废弃建筑物资注入（军用/医用/平民/稀有平民/警用）
+        maybeInjectSupplies(level, pos, random)
+    }
+
+    // ================= 废弃建筑五类物资 =================
+    // 用户需求：军用/医用/平民/稀有平民/警用物资添加到废弃建筑物中。
+    // 下界/末地物品（下界合金锭/末影珍珠等）不放箱子——它们只能靠击杀敌对生物获取。
+
+    /** 军用物资：CD 枪械/弹药/防具/投掷物 */
+    private val militarySupplies by lazy {
+        listOf(
+            CDItems.AK47.get(), CDItems.M4A1.get(), CDItems.MP5.get(),
+            CDItems.RIFLE_AMMO.get(), CDItems.PISTOL_AMMO.get(),
+            CDItems.SHOTGUN_SHELL.get(), CDItems.SNIPER_AMMO.get(),
+            CDItems.BALLISTIC_HELMET.get(), CDItems.PLATE_CARRIER.get(),
+            CDItems.TACTICAL_VEST.get(), CDItems.COMBAT_BOOTS.get(),
+            CDItems.FRAGMENT_GRENADE.get(), CDItems.FLASHBANG.get(),
+            QLMItems.TACTICAL_AMMO.get(),
+        )
+    }
+
+    /** 医用物资：CD 医疗物品 + QLM 医疗补给/解毒剂 */
+    private val medicalSupplies by lazy {
+        listOf(
+            CDItems.BANDAGE.get(), CDItems.FIRST_AID_KIT.get(),
+            CDItems.ADRENALINE_SYRINGE.get(), CDItems.PAINKILLERS.get(),
+            CDItems.TOURNIQUET.get(), CDItems.SALINE_BAG.get(),
+            CDItems.SPLINT.get(), CDItems.SURGICAL_SCISSORS.get(),
+            QLMItems.MEDICAL_SUPPLY.get(), QLMItems.ANTIDOTE.get(),
+            QLMItems.PURIFIED_WATER_BOTTLE.get(),
+        )
+    }
+
+    /** 平民物资：食物/基础工具/日用品 */
+    private val civilianSupplies by lazy {
+        listOf(
+            Items.BREAD, Items.APPLE, Items.COOKED_BEEF, Items.COOKED_PORKCHOP,
+            Items.COOKED_CHICKEN, Items.BAKED_POTATO,
+            Items.IRON_INGOT, Items.IRON_SWORD, Items.IRON_PICKAXE,
+            Items.IRON_AXE, Items.IRON_SHOVEL, Items.IRON_HELMET,
+            Items.STRING, Items.LEATHER, Items.PAPER, Items.COAL, Items.STICK,
+            QLMItems.EMERGENCY_RATION.get(), QLMItems.SURVIVAL_KIT.get(),
+        )
+    }
+
+    /** 稀有平民物资：金银/钻石/附魔书/经验瓶等稀有品 */
+    private val rareCivilianSupplies by lazy {
+        listOf(
+            Items.GOLD_INGOT, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE,
+            Items.DIAMOND, Items.EMERALD, Items.DIAMOND_SWORD, Items.DIAMOND_CHESTPLATE,
+            Items.ENCHANTED_BOOK, Items.EXPERIENCE_BOTTLE,
+            QLMItems.REINFORCED_PARTS.get(), QLMItems.BIOHAZARD_SAMPLE.get(),
+        )
+    }
+
+    /** 警用物资：CD 手枪/近战/盾牌 */
+    private val policeSupplies by lazy {
+        listOf(
+            CDItems.GLOCK17.get(), CDItems.DESERT_EAGLE.get(),
+            CDItems.PISTOL_AMMO.get(),
+            CDItems.COMBAT_KNIFE.get(), CDItems.BOWIE_KNIFE.get(), CDItems.CROWBAR.get(),
+            Items.SHIELD, Items.IRON_SWORD, Items.CHAINMAIL_HELMET, Items.CHAINMAIL_CHESTPLATE,
+        )
+    }
+
+    /**
+     * 向箱子按概率注入 1-2 个五类物资（民用/医用常见，军用/警用中等，稀有较低）。
+     * 在 fillChest / fillCDCrate 末尾调用。
+     */
+    fun maybeInjectSupplies(
+        level: Level,
+        pos: BlockPos,
+        random: net.minecraft.util.RandomSource,
+        chance: Double = 0.6
+    ) {
+        if (random.nextDouble() >= chance) return
+        val blockEntity = level.getBlockEntity(pos)
+        if (blockEntity !is Container) return
+        val container = blockEntity
+        val count = 1 + random.nextInt(2)
+        for (i in 0 until count) {
+            // 权重：民用 30% / 医用 25% / 军用 20% / 警用 15% / 稀有 10%
+            val roll = random.nextDouble()
+            val list = when {
+                roll < 0.30 -> civilianSupplies
+                roll < 0.55 -> medicalSupplies
+                roll < 0.75 -> militarySupplies
+                roll < 0.90 -> policeSupplies
+                else -> rareCivilianSupplies
+            }
+            if (list.isEmpty()) continue
+            val stack = ItemStack(list[random.nextInt(list.size)])
+            stack.count = 1 + random.nextInt(3)
+            for (slot in 0 until container.containerSize) {
+                if (container.getItem(slot).isEmpty) {
+                    container.setItem(slot, stack)
+                    break
+                }
+            }
+        }
+        if (container is ChestBlockEntity) container.setChanged()
+        else container.setChanged()
     }
 
     // ================= 平面地形检测 =================
@@ -313,6 +419,8 @@ object StructureGenSupport {
         }
         // 5% 保底 TACZ 武器
         maybeInjectTaczWeapon(level, pos, random, 0.05)
+        // 五类废弃建筑物资注入（军用/医用/平民/稀有平民/警用）
+        maybeInjectSupplies(level, pos, random)
     }
 
     // ================= 统一门放置工具 =================

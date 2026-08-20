@@ -99,32 +99,24 @@ public class ModDependencyHandler {
     /**
      * 服务端专属禁用前缀（仅在 {@code FMLEnvironment.dist == DEDICATED_SERVER} 时生效）。
      *
-     * <p>禁用原因：Crafting Dead 模组以"枪/装饰/生存"为核心的大量客户端资源（动画、
-     * 粒子、渲染器、GUI）在独立专用服务端上毫无意义，反而会触发类加载警告、
-     * 延长启动时间、干扰服务端-only 集成测试。客户端（单人 / LAN 主机）仍然需要。
+     * <p>说明：Crafting Dead 系列（core / decoration / survival / worldguard）已从本列表移除——
+     * 服务器需要加载 CD 以提供补给箱方块（SupplyCrate/MedicalSupplyCrate/AmmoCrate）、
+     * CD 僵尸实体与 qlmzombie 的 CD 集成（CDBlocks/CDItems/CDEntities 等），并保证
+     * 客户端与服务器 mod 通道匹配。
      *
-     * <p>当前列出全部 4 个 Crafting Dead 子模组变体：core / decoration / survival / worldguard。
-     * 以 {@code crafting-dead} 为主前缀，连字符、下划线、空格三种分隔符全部列出
-     * （对付中文前缀、重命名、压缩包解压后各种奇怪变体）。
+     * <p>本列表仅保留纯客户端渲染/UI 模组：专用服务端无作用，且 ETF 的 ResourceLocation mixin
+     * 会在服务端触发客户端类加载（Screen）导致 ExceptionInInitializerError 崩溃。
+     * 注意 1：kleiders_custom_renderer 不在此列表 —— 它注册了网络 channel（客户端皮肤/模型
+     * 同步），服务器端缺失会导致玩家连接报 "mismatched mod channel list"；且其 mixin 配置为空、
+     * 主类无客户端类引用，服务端加载安全（日志已证实 130 mods 含 Kleiders 正常启动），
+     * 因此服务端必须保留它以匹配客户端 channel。
+     * 注意 2：yes_steve_model (ysm) 同样不在此列表 —— 它是 side=BOTH 模组，服务端必须加载：
+     * 其 ServerPlayerMixin 在服务端处理玩家模型数据同步，缺失会导致玩家自定义模型在不同客户端
+     * 间不同步、手持物品在模型上渲染错位（物品错位）；且其公共 mixin（AbstractArrow/Projectile/
+     * ServerPlayer）与 MixinTweaker 插件均无 net/minecraft/client 类引用，服务端加载安全
+     * （客户端专属 mixin 仅在 client 环境应用）。
      */
     private static final List<String> SERVER_DISABLED_PREFIXES = Collections.unmodifiableList(Arrays.asList(
-            "crafting-dead",
-            "crafting_dead",
-            "crafting dead",
-            "[crafting-dead]",
-            "[craftingdead]",
-            "craftingdead",
-            // 纯客户端渲染/UI 模组：专用服务端无作用，且 ETF 的 ResourceLocation mixin
-            // 会在服务端触发客户端类加载（Screen）导致 ExceptionInInitializerError 崩溃。
-            // 注意 1：kleiders_custom_renderer 不在此列表 —— 它注册了网络 channel（客户端皮肤/模型
-            // 同步），服务器端缺失会导致玩家连接报 "mismatched mod channel list"；且其 mixin 配置为空、
-            // 主类无客户端类引用，服务端加载安全（日志已证实 130 mods 含 Kleiders 正常启动），
-            // 因此服务端必须保留它以匹配客户端 channel。
-            // 注意 2：yes_steve_model (ysm) 同样不在此列表 —— 它是 side=BOTH 模组，服务端必须加载：
-            // 其 ServerPlayerMixin 在服务端处理玩家模型数据同步，缺失会导致玩家自定义模型在不同客户端
-            // 间不同步、手持物品在模型上渲染错位（物品错位）；且其公共 mixin（AbstractArrow/Projectile/
-            // ServerPlayer）与 MixinTweaker 插件均无 net/minecraft/client 类引用，服务端加载安全
-            // （客户端专属 mixin 仅在 client 环境应用）。
             "entity_texture_features",
             "entity_model_features",
             "3d-armor",
@@ -191,7 +183,7 @@ public class ModDependencyHandler {
             LOGGER.info("[QLM Zombie] Mod JAR 路径: {}", modJarPath);
 
             if (isDedicatedServerEnv()) {
-                LOGGER.info("[QLM Zombie] 检测到 DEDICATED_SERVER 环境: 将自动禁用服务端不需要的模组 (crafting-dead* 等)");
+                LOGGER.info("[QLM Zombie] 检测到 DEDICATED_SERVER 环境: 将自动禁用纯客户端渲染模组 (entity_texture_features 等)");
             }
 
             List<EmbeddedJar> embeddedJars = readEmbeddedJars(modJarPath);
@@ -658,7 +650,7 @@ public class ModDependencyHandler {
             lines.add("# This file tracks mods that were automatically disabled by unified policy.");
             lines.add("# Policy = DEFAULT_DISABLED_PREFIXES ∪ (SERVER_DISABLED_PREFIXES when dist=DEDICATED_SERVER)");
             lines.add("#   - DEFAULT_DISABLED: e.g. ToughAsNails/ThirstWasTaken/thirstmod (口渴冲突模组，双端都禁用)");
-            lines.add("#   - SERVER_DISABLED: e.g. crafting-dead-core/decoration/survival/worldguard (仅专用服务端禁用)");
+            lines.add("#   - SERVER_DISABLED: e.g. entity_texture_features/entity_model_features (仅专用服务端禁用)");
             lines.add("# NOTE: 已知冲突模组（命中统一禁用策略）即使在此列表中，只要文件为 active 仍会被重新禁用；");
             lines.add("#       要真正启用请从本文件删除对应行。非冲突模组（白名单被误禁用）不受此限制。");
             lines.add("# Whitelist mods (embedded in mod JAR) are auto-restored even if .disabled exists,");
@@ -734,7 +726,7 @@ public class ModDependencyHandler {
         hasConflicts = !disabledMods.isEmpty();
         LOGGER.info("[QLM Zombie] ====== 依赖释放汇总 ======");
         LOGGER.info("[QLM Zombie] 运行环境 Dist: {} ({})", FMLEnvironment.dist,
-                isDedicatedServerEnv() ? "专用服务端 -  crafting-dead* 自动禁用" : "客户端/LAN主机 - 全模组释放");
+                isDedicatedServerEnv() ? "专用服务端 - 仅禁用纯客户端渲染模组" : "客户端/LAN主机 - 全模组释放");
         LOGGER.info("[QLM Zombie] 嵌入 JAR 总数（白名单）: {}", totalLibsCount);
         LOGGER.info("[QLM Zombie] 成功释放: {}", releasedCount);
         LOGGER.info("[QLM Zombie] 跳过(已存在): {}", skippedCount);

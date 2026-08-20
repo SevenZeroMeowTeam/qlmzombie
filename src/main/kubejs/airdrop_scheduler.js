@@ -3,6 +3,7 @@ const MoonHelper = Java.loadClass('com.qlm.zombie.moon.MoonHelper')
 const ServerLevel = Java.loadClass('net.minecraft.server.level.ServerLevel')
 const RandomSource = Java.loadClass('net.minecraft.util.RandomSource')
 const BlockPos = Java.loadClass('net.minecraft.core.BlockPos')
+const Heightmap = Java.loadClass('net.minecraft.world.level.levelgen.Heightmap')
 const ItemStack = Java.loadClass('net.minecraft.world.item.ItemStack')
 const Blocks = Java.loadClass('net.minecraft.world.level.block.Blocks')
 

@@ -59,32 +59,32 @@ class DropTheMeatLootModifier : IGlobalLootModifier {
 
     private fun getMeatDrops(entity: LivingEntity): List<MeatDrop> {
         return when (entity) {
-            is Zombie -> listOf(MeatDrop(ItemStack(Items.ROTTEN_FLESH, 1), 0.3f))
+            is Zombie -> listOf(MeatDrop(ItemStack(Items.ROTTEN_FLESH, 1), 0.05f))
             is Cow -> listOf(
-                MeatDrop(ItemStack(Items.BEEF, 1), 1.0f),
-                MeatDrop(ItemStack(Items.LEATHER, 1), 0.5f)
+                MeatDrop(ItemStack(Items.BEEF, 1), 0.05f),
+                MeatDrop(ItemStack(Items.LEATHER, 1), 0.05f)
             )
-            is Pig -> listOf(MeatDrop(ItemStack(Items.PORKCHOP, 1), 1.0f))
+            is Pig -> listOf(MeatDrop(ItemStack(Items.PORKCHOP, 1), 0.05f))
             is net.minecraft.world.entity.animal.Sheep -> listOf(
-                MeatDrop(ItemStack(Items.MUTTON, 1), 1.0f)
+                MeatDrop(ItemStack(Items.MUTTON, 1), 0.05f)
             )
             is net.minecraft.world.entity.animal.Chicken -> listOf(
-                MeatDrop(ItemStack(Items.CHICKEN, 1), 1.0f)
+                MeatDrop(ItemStack(Items.CHICKEN, 1), 0.05f)
             )
             is net.minecraft.world.entity.animal.Rabbit -> listOf(
-                MeatDrop(ItemStack(Items.RABBIT, 1), 1.0f)
+                MeatDrop(ItemStack(Items.RABBIT, 1), 0.05f)
             )
             is net.minecraft.world.entity.animal.Fox -> listOf(
-                MeatDrop(ItemStack(Items.COD, 1), 0.5f)
+                MeatDrop(ItemStack(Items.COD, 1), 0.05f)
             )
             is net.minecraft.world.entity.monster.Drowned -> listOf(
-                MeatDrop(ItemStack(Items.ROTTEN_FLESH, 1), 0.3f)
+                MeatDrop(ItemStack(Items.ROTTEN_FLESH, 1), 0.05f)
             )
             is net.minecraft.world.entity.monster.Husk -> listOf(
-                MeatDrop(ItemStack(Items.ROTTEN_FLESH, 1), 0.3f)
+                MeatDrop(ItemStack(Items.ROTTEN_FLESH, 1), 0.05f)
             )
             is net.minecraft.world.entity.monster.ZombieVillager -> listOf(
-                MeatDrop(ItemStack(Items.ROTTEN_FLESH, 1), 0.3f)
+                MeatDrop(ItemStack(Items.ROTTEN_FLESH, 1), 0.05f)
             )
             else -> emptyList()
         }
@@ -120,32 +120,32 @@ object DropTheMeatEventHandler {
 
     private fun getDropsForEntity(entity: LivingEntity): List<DropEntry> {
         return when (entity) {
-            is Zombie -> listOf(DropEntry(ItemStack(Items.ROTTEN_FLESH, 1), 0.3f))
+            is Zombie -> listOf(DropEntry(ItemStack(Items.ROTTEN_FLESH, 1), 0.05f))
             is Cow -> listOf(
-                DropEntry(ItemStack(Items.BEEF, 1), 1.0f),
-                DropEntry(ItemStack(Items.LEATHER, 1), 0.5f)
+                DropEntry(ItemStack(Items.BEEF, 1), 0.05f),
+                DropEntry(ItemStack(Items.LEATHER, 1), 0.05f)
             )
-            is Pig -> listOf(DropEntry(ItemStack(Items.PORKCHOP, 1), 1.0f))
+            is Pig -> listOf(DropEntry(ItemStack(Items.PORKCHOP, 1), 0.05f))
             is net.minecraft.world.entity.animal.Sheep -> listOf(
-                DropEntry(ItemStack(Items.MUTTON, 1), 1.0f)
+                DropEntry(ItemStack(Items.MUTTON, 1), 0.05f)
             )
             is net.minecraft.world.entity.animal.Chicken -> listOf(
-                DropEntry(ItemStack(Items.CHICKEN, 1), 1.0f)
+                DropEntry(ItemStack(Items.CHICKEN, 1), 0.05f)
             )
             is net.minecraft.world.entity.animal.Rabbit -> listOf(
-                DropEntry(ItemStack(Items.RABBIT, 1), 1.0f)
+                DropEntry(ItemStack(Items.RABBIT, 1), 0.05f)
             )
             is net.minecraft.world.entity.animal.Fox -> listOf(
-                DropEntry(ItemStack(Items.COD, 1), 0.5f)
+                DropEntry(ItemStack(Items.COD, 1), 0.05f)
             )
             is net.minecraft.world.entity.monster.Drowned -> listOf(
-                DropEntry(ItemStack(Items.ROTTEN_FLESH, 1), 0.3f)
+                DropEntry(ItemStack(Items.ROTTEN_FLESH, 1), 0.05f)
             )
             is net.minecraft.world.entity.monster.Husk -> listOf(
-                DropEntry(ItemStack(Items.ROTTEN_FLESH, 1), 0.3f)
+                DropEntry(ItemStack(Items.ROTTEN_FLESH, 1), 0.05f)
             )
             is net.minecraft.world.entity.monster.ZombieVillager -> listOf(
-                DropEntry(ItemStack(Items.ROTTEN_FLESH, 1), 0.3f)
+                DropEntry(ItemStack(Items.ROTTEN_FLESH, 1), 0.05f)
             )
             else -> emptyList()
         }

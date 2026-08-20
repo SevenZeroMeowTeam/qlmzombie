@@ -13,12 +13,16 @@ import com.qlm.zombie.item.EquipmentQuality;
 import com.qlm.zombie.item.PermanentKillStats;
 import com.qlm.zombie.item.StarterKitHandler;
 import com.qlm.zombie.moon.MoonHelper;
+import com.qlm.zombie.optimization.ExplosionProtectionHandler;
+import com.qlm.zombie.scoreboard.SurvivalTimeHandler;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
@@ -29,10 +33,15 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = QLMZombieMod.MOD_ID)
 public class QLMCommands {
+
+    /** /qlm reset 二次确认标记：必须先执行 /qlm reset 再执行 /qlm reset confirm 才生效 */
+    private static boolean PENDING_RESET = false;
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
@@ -63,6 +72,9 @@ public class QLMCommands {
                                 .append("\n")
                                 .append(Component.literal("☠ 击杀总数: ").withStyle(ChatFormatting.GRAY))
                                 .append(Component.literal(String.valueOf(k)).withStyle(ChatFormatting.RED))
+                                .append("\n")
+                                .append(Component.literal("⏱ 存活时间: ").withStyle(ChatFormatting.AQUA))
+                                .append(Component.literal(SurvivalTimeHandler.formatTime(SurvivalTimeHandler.getSurvivalTime(p))).withStyle(ChatFormatting.WHITE))
                                 .append("\n")
                                 .append(Component.literal("❤ 永久生命上限: ").withStyle(ChatFormatting.GRAY))
                                 .append(Component.literal(String.format("+%.1f", h)).withStyle(ChatFormatting.GREEN))
@@ -344,6 +356,9 @@ public class QLMCommands {
                         " §7(" + phase.getMinDay() + "-" + (phase.getMaxDay() == Integer.MAX_VALUE ? "∞" : String.valueOf(phase.getMaxDay())) + "天)"), false);
                     ctx.getSource().sendSuccess(() -> Component.literal("§e难度: §c" + diff.getKey() +
                         " §7(锁定: " + (phase.isLocked() ? "§c是" : "§a否") + "§7)"), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal("§e死亡不掉落: " +
+                        (SurvivalTimeHandler.isKeepInventory(ctx.getSource().getServer()) ? "§a开启 (keepInventory=true)" : "§c关闭 (keepInventory=false)")), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal("§e防爆破: " + ExplosionProtectionHandler.getStateText()), false);
                     ctx.getSource().sendSuccess(() -> Component.literal("§e配置: §7安全日=" + QLMConfig.PEACEFUL_DAYS.get() + 
                         " 简单截止=" + QLMConfig.NORMAL_DAYS.get() + 
                         " 普通截止=" + QLMConfig.HARD_DAYS.get() + 
@@ -589,7 +604,127 @@ public class QLMCommands {
                     return 1;
                 })
             )
+            .then(Commands.literal("reset")
+                .executes(ctx -> {
+                    // 第一次：仅提示警告并进入确认流程，不直接执行（防止随便重置）
+                    PENDING_RESET = true;
+                    ctx.getSource().sendSuccess(() -> Component.literal("§c⚠ 危险操作！该指令将重置所有玩家的存活时间计分板，并把「死亡不掉落」模式重置为默认开启！"), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal("§c⚠ 该操作不可撤销！输入 §e/qlm reset confirm §c 确认执行"), false);
+                    return 1;
+                })
+                .then(Commands.literal("confirm")
+                    .executes(ctx -> {
+                        if (!PENDING_RESET) {
+                            ctx.getSource().sendFailure(Component.literal("§c✘ 请先输入 §e/qlm reset §c 进入确认流程"));
+                            return 0;
+                        }
+                        PENDING_RESET = false;
+                        MinecraftServer server = ctx.getSource().getServer();
+                        // 重置存活时间计分板 + 重置死亡不掉落模式（二者捆绑重置）
+                        SurvivalTimeHandler.resetAll(server);
+                        SurvivalTimeHandler.setKeepInventory(server, true);
+                        String summary = "§6[管理] §c管理员已重置服务器：所有玩家存活时间已清零，「死亡不掉落」模式已重置开启";
+                        server.getPlayerList().broadcastSystemMessage(Component.literal(summary), false);
+                        ctx.getSource().sendSuccess(() -> Component.literal("§a✔ 已重置所有玩家存活时间，并重置死亡不掉落模式（keepInventory=true）"), true);
+                        return 1;
+                    })
+                )
+            )
+            .then(Commands.literal("op")
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .executes(ctx -> {
+                        String name = StringArgumentType.getString(ctx, "player");
+                        MinecraftServer server = ctx.getSource().getServer();
+                        GameProfile profile = resolveProfile(server, name);
+                        if (profile == null) {
+                            ctx.getSource().sendFailure(Component.literal("§c✘ 无法解析玩家 " + name));
+                            return 0;
+                        }
+                        if (server.getPlayerList().isOp(profile)) {
+                            ctx.getSource().sendSuccess(() -> Component.literal("§e玩家 " + name + " 已是管理员 (OP)"), false);
+                            return 1;
+                        }
+                        server.getPlayerList().op(profile);
+                        server.getPlayerList().broadcastSystemMessage(
+                                Component.literal("§6[管理] §b" + name + " §a已被授予管理员权限（最高权限）"), false);
+                        ctx.getSource().sendSuccess(() -> Component.literal("§a✔ 已授予 " + name + " 管理员权限（OP 最高权限）"), true);
+                        return 1;
+                    })
+                )
+            )
+            .then(Commands.literal("deop")
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .executes(ctx -> {
+                        String name = StringArgumentType.getString(ctx, "player");
+                        MinecraftServer server = ctx.getSource().getServer();
+                        GameProfile profile = resolveProfile(server, name);
+                        if (profile != null && server.getPlayerList().isOp(profile)) {
+                            server.getPlayerList().deop(profile);
+                            server.getPlayerList().broadcastSystemMessage(
+                                    Component.literal("§6[管理] §b" + name + " §c已被撤销管理员权限"), false);
+                            ctx.getSource().sendSuccess(() -> Component.literal("§a✔ 已撤销 " + name + " 的管理员权限"), true);
+                        } else {
+                            ctx.getSource().sendSuccess(() -> Component.literal("§e玩家 " + name + " 不是管理员"), false);
+                        }
+                        return 1;
+                    })
+                )
+            )
+            .then(Commands.literal("ops")
+                .executes(ctx -> {
+                    MinecraftServer server = ctx.getSource().getServer();
+                    String[] ops = server.getPlayerList().getOpNames();
+                    ctx.getSource().sendSuccess(() -> Component.literal("§6===== 管理员列表 (OP) §7(共" + ops.length + "人) ====="), false);
+                    if (ops.length == 0) {
+                        ctx.getSource().sendSuccess(() -> Component.literal("§7暂无管理员"), false);
+                    } else {
+                        for (String op : ops) {
+                            ctx.getSource().sendSuccess(() -> Component.literal("§a- " + op), false);
+                        }
+                    }
+                    ctx.getSource().sendSuccess(() -> Component.literal("§6================================"), false);
+                    return 1;
+                })
+            )
+            .then(Commands.literal("antiExplosion")
+                .executes(ctx -> {
+                    ctx.getSource().sendSuccess(() -> Component.literal("§e防爆破状态: " + ExplosionProtectionHandler.getStateText()
+                            + " §7(/qlm antiExplosion on|off|config 切换)"), false);
+                    return 1;
+                })
+                .then(Commands.literal("on")
+                    .executes(ctx -> {
+                        ExplosionProtectionHandler.setEnabled(true);
+                        ctx.getSource().sendSuccess(() -> Component.literal("§a✔ 防爆破已开启（爆炸不再破坏方块）"), true);
+                        return 1;
+                    })
+                )
+                .then(Commands.literal("off")
+                    .executes(ctx -> {
+                        ExplosionProtectionHandler.setEnabled(false);
+                        ctx.getSource().sendSuccess(() -> Component.literal("§c✔ 防爆破已关闭（爆炸可破坏方块）"), true);
+                        return 1;
+                    })
+                )
+                .then(Commands.literal("config")
+                    .executes(ctx -> {
+                        ExplosionProtectionHandler.resetToConfig();
+                        ctx.getSource().sendSuccess(() -> Component.literal("§a✔ 防爆破已恢复跟随配置（" + QLMConfig.ANTI_EXPLOSION_ENABLED.get() + "）"), true);
+                        return 1;
+                    })
+                )
+            )
         );
+    }
+
+    /** 解析玩家 GameProfile：在线玩家 → 缓存 → 离线模式 UUID 兜底 */
+    private static GameProfile resolveProfile(MinecraftServer server, String name) {
+        ServerPlayer online = server.getPlayerList().getPlayerByName(name);
+        if (online != null) return online.getGameProfile();
+        GameProfile cached = server.getProfileCache().get(name).orElse(null);
+        if (cached != null) return cached;
+        UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
+        return new GameProfile(offlineUuid, name);
     }
 
     // ==================== 帮助菜单 ====================
@@ -613,6 +748,11 @@ public class QLMCommands {
             source.sendSuccess(() -> Component.literal("§b/qlm mods§7 - 列出内部Mod及安装状态"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm download§7 - 重新释放内部Mod"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm starter <玩家名>§7 - 重置玩家初始装备标记"), false);
+            source.sendSuccess(() -> Component.literal("§b/qlm reset§7 - 重置所有玩家存活时间 + 死亡不掉落模式（二次确认，仅OP）"), false);
+            source.sendSuccess(() -> Component.literal("§b/qlm op <玩家>§7 - 授予管理员权限（OP 最高权限）"), false);
+            source.sendSuccess(() -> Component.literal("§b/qlm deop <玩家>§7 - 撤销管理员权限"), false);
+            source.sendSuccess(() -> Component.literal("§b/qlm ops§7 - 查看管理员列表"), false);
+            source.sendSuccess(() -> Component.literal("§b/qlm antiExplosion [on|off|config]§7 - 防爆破运行时开关"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm moon force <blood|lucky|harvest>§7 - 强制触发月相"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm aiplayer spawn§7 - 生成AI玩家"), false);
             source.sendSuccess(() -> Component.literal("§b/qlm aiplayer list§7 - 列出AI玩家"), false);

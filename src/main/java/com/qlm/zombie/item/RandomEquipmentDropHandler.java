@@ -52,8 +52,8 @@ public class RandomEquipmentDropHandler {
         if (isExcluded(entity)) return;
         if (!(entity.level() instanceof ServerLevel serverLevel)) return;
 
-        // 30% 概率掉落
-        if (serverLevel.getRandom().nextFloat() > 0.30F) return;
+        // 5% 概率掉落
+        if (serverLevel.getRandom().nextFloat() > 0.05F) return;
 
         EquipmentQuality quality = EquipmentQuality.randomRoll(serverLevel.getRandom());
         ItemStack drop = generateRandomEquipment(quality, serverLevel.getRandom());

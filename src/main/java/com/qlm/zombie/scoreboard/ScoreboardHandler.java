@@ -61,6 +61,8 @@ public class ScoreboardHandler {
     // 25 天后新增的 emoji 行（新手期后显示）
     private static final int SLOT_ENEMY        = 8;
     private static final int SLOT_ACHIEVEMENT  = 9;
+    // 存活时间（顶部常驻，来自 SurvivalTimeHandler）
+    private static final int SLOT_SURVIVAL     = 10;
 
     private static final String[] COLOR_PREFIXES = new String[] {
             "\u00a70", "\u00a71", "\u00a72", "\u00a73", "\u00a74",
@@ -172,6 +174,13 @@ public class ScoreboardHandler {
         double totalAtk = (atkAttr == null) ? 1.0 : atkAttr.getValue();
 
         // ===== 写入各 slot =====
+        // 0. 存活时间（顶部常驻，来自 SurvivalTimeHandler）
+        setEntry(scoreboard, objective, SLOT_SURVIVAL,
+                Component.literal("⏱ ").withStyle(ChatFormatting.AQUA)
+                        .append(Component.literal("存活: ").withStyle(ChatFormatting.GRAY))
+                        .append(Component.literal(SurvivalTimeHandler.formatTime(SurvivalTimeHandler.getSurvivalTime(player)))
+                                .withStyle(ChatFormatting.WHITE).withStyle(s -> s.withBold(true))));
+
         // 1. 天数
         setEntry(scoreboard, objective, SLOT_DAY,
                 Component.literal("☀ ").withStyle(ChatFormatting.GOLD)
